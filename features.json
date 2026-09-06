@@ -797,7 +797,7 @@
     ]
   },
   "gan-layer-separation": {
-    "status": "in_progress",
+    "status": "completed",
     "commits": [
       {
         "id": "pr0",
@@ -852,6 +852,16 @@
       {
         "id": "pr4b",
         "title": "Pin bump to v1-cards; just regen-agents; generated avril.md; plan record + §7 correction",
+        "status": "completed"
+      },
+      {
+        "id": "pr5a",
+        "title": "Book infrastructure + rust/ book",
+        "status": "completed"
+      },
+      {
+        "id": "pr5b",
+        "title": "ocaml/ book",
         "status": "completed"
       }
     ]
