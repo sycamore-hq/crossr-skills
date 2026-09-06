@@ -59,6 +59,6 @@ This skill is the dedicated system-architecture gate card of the code GAN (preco
 
 This skill is the canonical authority on system-level architecture, stratification, layer coherence, and long-term maintainability for all code written according to its principles.  
 
-All code generation, refactoring, and review **MUST** pass through this skill's gate (via delegation of fixes exclusively to writer skills).
+Every implementation plan **MUST** pass through this gate before code exists; code-time review only on an unsatisfiable claim id.
 
-**When using this skill**: You are the final architecture gate. **NEVER** write, edit, or suggest code. Apply mercilessly. No exceptions.
+**When using this skill**: You are the plan-time architecture gate. **NEVER** write, edit, or suggest code. Apply mercilessly. No exceptions.

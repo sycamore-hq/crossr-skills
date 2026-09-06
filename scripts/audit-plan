@@ -7,16 +7,16 @@ named, every gap and preservation constraint must be a claim.
 
 Usage:
   ./scripts/audit-plan <plan.md>
-  ./scripts/audit-plan --check <plan.md>
 
-Exit 0 on pass, 1 on fail. Calculations are pure; loading the file is the
-action.
+Exit 0 on pass, 1 on fail, 2 on usage error. Calculations are pure; loading
+the file is the action.
 """
 
 from __future__ import annotations
 
 import re
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 
 JUDGMENT_QUOTA = 0.30
@@ -38,53 +38,47 @@ PHASE_RE = re.compile(r"^### Phase\s+\d+")
 SECTION_RE = re.compile(r"^## (.+)$")
 
 
+@dataclass(frozen=True)
 class Claim:
-    def __init__(
-        self,
-        cid: str,
-        typ: str,
-        acs: tuple[str, ...],
-        text: str,
-        superseded: bool = False,
-    ) -> None:
-        self.cid = cid
-        self.typ = typ
-        self.acs = acs
-        self.text = text
-        self.superseded = superseded
+    cid: str
+    typ: str
+    acs: tuple[str, ...]
+    text: str
+    superseded: bool = False
 
 
+@dataclass(frozen=True)
 class Acceptance:
-    def __init__(self, aid: str, text: str) -> None:
-        self.aid = aid
-        self.text = text
+    aid: str
+    text: str
 
 
+@dataclass(frozen=True)
 class PreserveItem:
-    def __init__(self, pid: str, claim: str, text: str) -> None:
-        self.pid = pid
-        self.claim = claim
-        self.text = text
+    pid: str
+    claim: str
+    text: str
 
 
+@dataclass(frozen=True)
 class GapMap:
-    def __init__(self, gid: str, claim: str) -> None:
-        self.gid = gid
-        self.claim = claim
+    gid: str
+    claim: str
 
 
+@dataclass
 class Plan:
-    def __init__(self, pbi: str) -> None:
-        self.pbi = pbi
-        self.acs: list[Acceptance] = []
-        self.claims: list[Claim] = []
-        self.preserve: list[PreserveItem] = []
-        self.preserve_none = False
-        self.gaps: list[GapMap] = []
-        self.evidence_path: str | None = None
-        self.phase_count = 0
-        self.has_questions = False
-        self.sections: list[str] = []
+    pbi: str
+    acs: list[Acceptance] = field(default_factory=list)
+    claims: list[Claim] = field(default_factory=list)
+    preserve: list[PreserveItem] = field(default_factory=list)
+    preserve_maps: list[PreserveItem] = field(default_factory=list)
+    preserve_none: bool = False
+    gaps: list[GapMap] = field(default_factory=list)
+    evidence_path: str | None = None
+    phase_count: int = 0
+    has_questions: bool = False
+    sections: list[str] = field(default_factory=list)
 
 
 def parse_ac_list(raw: str) -> tuple[str, ...]:
@@ -92,11 +86,17 @@ def parse_ac_list(raw: str) -> tuple[str, ...]:
 
 
 def parse_plan(text: str) -> Plan:
-    """Parse a plan artifact. Unknown lines are ignored."""
+    """Parse a plan artifact. Unknown lines and fenced blocks are ignored."""
     plan = Plan(pbi="")
     section = ""
+    in_fence = False
     for raw in text.splitlines():
         line = raw.rstrip()
+        if line.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
         heading = HEADING_RE.match(line)
         if heading:
             plan.pbi = heading.group(1)
@@ -108,7 +108,7 @@ def parse_plan(text: str) -> Plan:
             if section == "Unresolved questions":
                 plan.has_questions = True
             continue
-        if PHASE_RE.match(line):
+        if section == "Phases" and PHASE_RE.match(line):
             plan.phase_count += 1
             continue
         if section == "Acceptance Criteria":
@@ -144,7 +144,7 @@ def parse_plan(text: str) -> Plan:
                 plan.gaps.append(GapMap(g.group(1), g.group(2)))
             pv = PRESERVE_MAP_RE.match(line)
             if pv:
-                plan.preserve.append(
+                plan.preserve_maps.append(
                     PreserveItem(pv.group(1), pv.group(2), "")
                 )
     return plan
@@ -195,14 +195,27 @@ def mechanical_without_check(plan: Plan) -> list[str]:
     ]
 
 
+def preserve_union(plan: Plan) -> list[PreserveItem]:
+    by_id: dict[str, PreserveItem] = {}
+    for item in plan.preserve:
+        by_id[item.pid] = item
+    for item in plan.preserve_maps:
+        by_id.setdefault(item.pid, item)
+    return list(by_id.values())
+
+
 def unmapped_preserve(plan: Plan) -> list[str]:
     active = {c.cid for c in active_claims(plan)}
-    return [p.pid for p in plan.preserve if p.claim not in active]
+    return [p.pid for p in preserve_union(plan) if p.claim not in active]
 
 
 def unmapped_gaps(plan: Plan) -> list[str]:
     active = {c.cid for c in active_claims(plan)}
     return [g.gid for g in plan.gaps if g.claim not in active]
+
+
+def has_packet(plan: Plan) -> bool:
+    return bool(plan.evidence_path or plan.gaps or plan.preserve_maps)
 
 
 def required_sections_missing(plan: Plan) -> list[str]:
@@ -247,17 +260,44 @@ def audit(plan: Plan) -> list[str]:
         )
     if plan.preserve_none and plan.preserve:
         fails.append("Preserve declares none but also lists items")
+    if plan.preserve_none and plan.preserve_maps:
+        fails.append("Preserve declares none but packet maps preserve items")
+    mismatched: set[str] = set()
+    if has_packet(plan):
+        section_by = {p.pid: p for p in plan.preserve}
+        map_by = {p.pid: p for p in plan.preserve_maps}
+        for pid, mapped in map_by.items():
+            item = section_by.get(pid)
+            if item is None:
+                if not plan.preserve_none:
+                    fails.append(
+                        f"packet preserve {pid} is not listed in ## Preserve"
+                    )
+                continue
+            if item.claim != mapped.claim:
+                fails.append(
+                    f"preserve {pid} packet maps to {mapped.claim} "
+                    f"but ## Preserve maps to {item.claim}"
+                )
+                mismatched.add(pid)
+        for pid in section_by:
+            if pid not in map_by:
+                fails.append(
+                    f"preserve {pid} listed in ## Preserve but packet has no preserve map"
+                )
     fails.extend(
         f"preserve {p} maps to a missing/superseded claim"
         for p in unmapped_preserve(plan)
+        if p not in mismatched
     )
-    if plan.evidence_path:
-        if not plan.gaps and not plan.preserve:
-            fails.append(
-                "evidence packet present but no gap or preserve maps to claims"
-            )
-        fails.extend(
-            f"gap {g} maps to a missing/superseded claim" for g in unmapped_gaps(plan)
+    fails.extend(
+        f"gap {g} maps to a missing/superseded claim" for g in unmapped_gaps(plan)
+    )
+    if (plan.gaps or plan.preserve_maps) and not plan.evidence_path:
+        fails.append("evidence packet has maps but no path")
+    if plan.evidence_path and not plan.gaps and not plan.preserve_maps:
+        fails.append(
+            "evidence packet present but no gap or preserve maps to claims"
         )
     return fails
 
@@ -267,8 +307,8 @@ def audit_text(text: str) -> list[str]:
 
 
 def main(argv: list[str]) -> int:
-    args = [a for a in argv[1:] if a != "--check"]
-    if not args:
+    args = argv[1:]
+    if len(args) != 1:
         print("usage: audit-plan <plan.md>", file=sys.stderr)
         return 2
     path = Path(args[0])
