@@ -18,7 +18,7 @@ Adversaries load the disclosed book's `RULES.md` only. Never `<book>/references/
 
 ## What this gate verifies
 
-Quality, layering, error handling, tooling, and API surface against `code-writer` and the disclosed book's Rules projection when one exists. Fail any rule = reject.
+Faithfulness to the blessed plan and the PBI AC (conformance), plus one bounded unanticipated-risk pass — at most three findings, each a concrete failure mode. Architectural risk escalates; do not resolve it inline. Quality, layering, error handling, tooling, and API surface against `code-writer` and the disclosed book's Rules projection when one exists. Fail any rule = reject.
 
 **Response contract**: verdicts and report envelope follow the `gan-verdict` skill — `code-review: BLESS | REJECT`, a `REJECT` citing concrete blockers.
 

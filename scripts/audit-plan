@@ -1,0 +1,289 @@
+#!/usr/bin/env python3
+"""Mechanical plan-gate audit. No LLM.
+
+Checks bidirectional AC↔claim coverage, the 30% judgment quota, append-only
+id integrity, and preserve-vs-grow (rule 5). When an evidence packet is
+named, every gap and preservation constraint must be a claim.
+
+Usage:
+  ./scripts/audit-plan <plan.md>
+  ./scripts/audit-plan --check <plan.md>
+
+Exit 0 on pass, 1 on fail. Calculations are pure; loading the file is the
+action.
+"""
+
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+
+JUDGMENT_QUOTA = 0.30
+PRESERVE_NONE = "none — no prior verified record"
+CLAIM_TYPES = frozenset({"mechanical", "observable", "judgment"})
+
+HEADING_RE = re.compile(r"^# Plan:\s+(\S+)\s*$")
+AC_RE = re.compile(r"^- (AC-\d+):\s+(.+)$")
+CLAIM_RE = re.compile(
+    r"^- (C-\d+)(?:\s+\[(superseded)\])?:\s+"
+    r"(mechanical|observable|judgment)\s+·\s+"
+    r"(AC-\d+(?:,\s*AC-\d+)*)\s+·\s+(.+)$"
+)
+PRESERVE_ITEM_RE = re.compile(r"^- (PV-\d+)\s+→\s+(C-\d+):\s+(.+)$")
+GAP_MAP_RE = re.compile(r"^- gap (G-\d+)\s+→\s+(C-\d+)")
+PRESERVE_MAP_RE = re.compile(r"^- preserve (PV-\d+)\s+→\s+(C-\d+)")
+PACKET_PATH_RE = re.compile(r"^- path:\s+(\S+)")
+PHASE_RE = re.compile(r"^### Phase\s+\d+")
+SECTION_RE = re.compile(r"^## (.+)$")
+
+
+class Claim:
+    def __init__(
+        self,
+        cid: str,
+        typ: str,
+        acs: tuple[str, ...],
+        text: str,
+        superseded: bool = False,
+    ) -> None:
+        self.cid = cid
+        self.typ = typ
+        self.acs = acs
+        self.text = text
+        self.superseded = superseded
+
+
+class Acceptance:
+    def __init__(self, aid: str, text: str) -> None:
+        self.aid = aid
+        self.text = text
+
+
+class PreserveItem:
+    def __init__(self, pid: str, claim: str, text: str) -> None:
+        self.pid = pid
+        self.claim = claim
+        self.text = text
+
+
+class GapMap:
+    def __init__(self, gid: str, claim: str) -> None:
+        self.gid = gid
+        self.claim = claim
+
+
+class Plan:
+    def __init__(self, pbi: str) -> None:
+        self.pbi = pbi
+        self.acs: list[Acceptance] = []
+        self.claims: list[Claim] = []
+        self.preserve: list[PreserveItem] = []
+        self.preserve_none = False
+        self.gaps: list[GapMap] = []
+        self.evidence_path: str | None = None
+        self.phase_count = 0
+        self.has_questions = False
+        self.sections: list[str] = []
+
+
+def parse_ac_list(raw: str) -> tuple[str, ...]:
+    return tuple(part.strip() for part in raw.split(",") if part.strip())
+
+
+def parse_plan(text: str) -> Plan:
+    """Parse a plan artifact. Unknown lines are ignored."""
+    plan = Plan(pbi="")
+    section = ""
+    for raw in text.splitlines():
+        line = raw.rstrip()
+        heading = HEADING_RE.match(line)
+        if heading:
+            plan.pbi = heading.group(1)
+            continue
+        sec = SECTION_RE.match(line)
+        if sec:
+            section = sec.group(1).strip()
+            plan.sections.append(section)
+            if section == "Unresolved questions":
+                plan.has_questions = True
+            continue
+        if PHASE_RE.match(line):
+            plan.phase_count += 1
+            continue
+        if section == "Acceptance Criteria":
+            m = AC_RE.match(line)
+            if m:
+                plan.acs.append(Acceptance(m.group(1), m.group(2).strip()))
+        elif section == "Claims":
+            m = CLAIM_RE.match(line)
+            if m:
+                plan.claims.append(
+                    Claim(
+                        cid=m.group(1),
+                        typ=m.group(3),
+                        acs=parse_ac_list(m.group(4)),
+                        text=m.group(5).strip(),
+                        superseded=m.group(2) == "superseded",
+                    )
+                )
+        elif section == "Preserve":
+            if PRESERVE_NONE in line:
+                plan.preserve_none = True
+            m = PRESERVE_ITEM_RE.match(line)
+            if m:
+                plan.preserve.append(
+                    PreserveItem(m.group(1), m.group(2), m.group(3).strip())
+                )
+        elif section == "Evidence packet":
+            p = PACKET_PATH_RE.match(line)
+            if p:
+                plan.evidence_path = p.group(1)
+            g = GAP_MAP_RE.match(line)
+            if g:
+                plan.gaps.append(GapMap(g.group(1), g.group(2)))
+            pv = PRESERVE_MAP_RE.match(line)
+            if pv:
+                plan.preserve.append(
+                    PreserveItem(pv.group(1), pv.group(2), "")
+                )
+    return plan
+
+
+def active_claims(plan: Plan) -> list[Claim]:
+    return [c for c in plan.claims if not c.superseded]
+
+
+def judgment_ratio(claims: list[Claim]) -> float:
+    if not claims:
+        return 0.0
+    n = sum(1 for c in claims if c.typ == "judgment")
+    return n / len(claims)
+
+
+def uncovered_acs(plan: Plan) -> list[str]:
+    covered: set[str] = set()
+    for claim in active_claims(plan):
+        covered.update(claim.acs)
+    return [a.aid for a in plan.acs if a.aid not in covered]
+
+
+def orphan_claims(plan: Plan) -> list[str]:
+    known = {a.aid for a in plan.acs}
+    out = []
+    for claim in active_claims(plan):
+        if not claim.acs or any(ac not in known for ac in claim.acs):
+            out.append(claim.cid)
+    return out
+
+
+def duplicate_ids(plan: Plan) -> list[str]:
+    seen: set[str] = set()
+    dups: list[str] = []
+    for claim in plan.claims:
+        if claim.cid in seen:
+            dups.append(claim.cid)
+        seen.add(claim.cid)
+    return dups
+
+
+def mechanical_without_check(plan: Plan) -> list[str]:
+    return [
+        c.cid
+        for c in active_claims(plan)
+        if c.typ == "mechanical" and "→" not in c.text
+    ]
+
+
+def unmapped_preserve(plan: Plan) -> list[str]:
+    active = {c.cid for c in active_claims(plan)}
+    return [p.pid for p in plan.preserve if p.claim not in active]
+
+
+def unmapped_gaps(plan: Plan) -> list[str]:
+    active = {c.cid for c in active_claims(plan)}
+    return [g.gid for g in plan.gaps if g.claim not in active]
+
+
+def required_sections_missing(plan: Plan) -> list[str]:
+    needed = (
+        "Phases",
+        "Acceptance Criteria",
+        "Claims",
+        "Preserve",
+        "Unresolved questions",
+    )
+    have = set(plan.sections)
+    return [s for s in needed if s not in have]
+
+
+def audit(plan: Plan) -> list[str]:
+    """Return human-readable failure lines. Empty means pass."""
+    fails: list[str] = []
+    if not plan.pbi:
+        fails.append("missing `# Plan: <id>` heading")
+    fails.extend(f"missing section ## {s}" for s in required_sections_missing(plan))
+    if plan.phase_count < 1:
+        fails.append("no ### Phase N heading")
+    if not plan.acs:
+        fails.append("no acceptance criteria")
+    if not active_claims(plan):
+        fails.append("no active claims")
+    fails.extend(f"duplicate claim id {i}" for i in duplicate_ids(plan))
+    fails.extend(f"AC {a} has no claim" for a in uncovered_acs(plan))
+    fails.extend(f"claim {c} is orphan (no known AC)" for c in orphan_claims(plan))
+    fails.extend(
+        f"mechanical claim {c} has no `→` check" for c in mechanical_without_check(plan)
+    )
+    ratio = judgment_ratio(active_claims(plan))
+    if ratio > JUDGMENT_QUOTA + 1e-12:
+        fails.append(
+            f"judgment quota {ratio:.0%} exceeds {JUDGMENT_QUOTA:.0%}"
+        )
+    if not plan.preserve_none and not plan.preserve:
+        fails.append(
+            "Preserve is empty — list what must survive, or "
+            f"`{PRESERVE_NONE}`"
+        )
+    if plan.preserve_none and plan.preserve:
+        fails.append("Preserve declares none but also lists items")
+    fails.extend(
+        f"preserve {p} maps to a missing/superseded claim"
+        for p in unmapped_preserve(plan)
+    )
+    if plan.evidence_path:
+        if not plan.gaps and not plan.preserve:
+            fails.append(
+                "evidence packet present but no gap or preserve maps to claims"
+            )
+        fails.extend(
+            f"gap {g} maps to a missing/superseded claim" for g in unmapped_gaps(plan)
+        )
+    return fails
+
+
+def audit_text(text: str) -> list[str]:
+    return audit(parse_plan(text))
+
+
+def main(argv: list[str]) -> int:
+    args = [a for a in argv[1:] if a != "--check"]
+    if not args:
+        print("usage: audit-plan <plan.md>", file=sys.stderr)
+        return 2
+    path = Path(args[0])
+    if not path.is_file():
+        print(f"✗ {path} is not a file", file=sys.stderr)
+        return 1
+    fails = audit_text(path.read_text())
+    if fails:
+        print(f"✗ {path}: {len(fails)} plan-audit failure(s)")
+        for line in fails:
+            print(f"  - {line}")
+        return 1
+    print(f"✓ {path}: plan audit pass")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))

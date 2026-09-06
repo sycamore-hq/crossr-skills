@@ -7,6 +7,11 @@
       "purpose": "Core coding philosophy (Grokking Simplicity + SICP)"
     },
     {
+      "name": "plan-writer",
+      "category": "Foundation",
+      "purpose": "Plan-time generator: typed claims, bidirectional AC coverage"
+    },
+    {
       "name": "rust",
       "category": "Rust Book",
       "purpose": "Rust language book: situational Rules + How, generated RULES.md"

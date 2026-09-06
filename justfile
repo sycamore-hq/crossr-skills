@@ -19,6 +19,10 @@ clippy:
 fmt:
     cargo fmt --all --check 2>/dev/null || echo "(no Rust crates)"
 
+# Mechanical plan-gate audit (no LLM)
+plan-audit FILE:
+    @./scripts/audit-plan {{FILE}}
+
 # Language-book Rules projection
 rules-sync:
     @./scripts/extract-rules

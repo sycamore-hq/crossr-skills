@@ -888,6 +888,19 @@
         "id": "pr5g",
         "title": "Landing rider: drop rust-team-lead and retired names",
         "status": "completed"
+      },
+      {
+        "id": "pr6a",
+        "title": "plan-writer + mechanical claim audit",
+        "status": "completed",
+        "features": [
+          "plan-writer-skill",
+          "audit-plan-script",
+          "preserve-vs-grow",
+          "plan-time-architecture",
+          "reviewer-conformance-risk",
+          "tester-ac-regressions"
+        ]
       }
     ]
   },
