@@ -18,6 +18,7 @@ id and lands **before** the first implementation commit.
 
 ## Phases
 ### Phase 1 of n: <name>
+- est. LOC: <added + deleted, only when decomposition mode is disclosed>
 …
 
 ## Acceptance Criteria
@@ -36,7 +37,10 @@ id and lands **before** the first implementation commit.
 ```
 
 `## Phases` **is** the decomposition. The conductor does not invent
-phase boundaries after the fact.
+phase boundaries after the fact. An over-threshold phase is rejected
+here, by the Architect. A phase that measures over threshold at code
+time halts the commit and returns to this plan with superseding
+claims; nobody splits it at code time.
 
 ## Five rules (restated)
 
