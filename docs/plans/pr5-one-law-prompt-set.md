@@ -56,7 +56,7 @@ twin must agree with each other.
 |---|---|---|---|
 | 5a | skills | **Landed** | [#117](https://github.com/sycamore-hq/crossr-skills/pull/117), rebase-merged 2026-09-03 as `ecc1e62`..`94e3a15` (7 commits). 15 review threads, all resolved. |
 | 5b | skills | **Landed** | [#118](https://github.com/sycamore-hq/crossr-skills/pull/118), rebase-merged 2026-09-03 as `e2647be`..`0bd2c40` (3 commits). `ocaml/` book on main; extractor unchanged. |
-| 5c | skills | Not started | 5c acceptance grep hits 13 files. No skills tag exists; `v1-one-law` uncut. |
+| 5c | skills | **Landed** | [#120](https://github.com/sycamore-hq/crossr-skills/pull/120), rebase-merged 2026-09-03 as `4b8601e`..`507c509` (3 commits). `ocaml-code-writer` deleted; `v1-one-law` cut on `507c509`. |
 | 5d | loops | Not started | `graphs/code-gan.json` still names `rust-code-writer` / `rust-code-reviewer` / `rust-code-tester`. Pins `skills = v1-gan-layers`, `loops = v0`. |
 | 5e | harness | Not started | `HARNESS-SPEC.md:196-197`, `AGENTS.md:12`, `templates/harness/AGENTS.md.template:12` still name dead skills. Pins `v1-gan-layers` / `v1-cards`. |
 | 5f | skills | Not started | Loops pin `v1-cards` at all four loci. Plan §4 PR 5 not marked landed. |

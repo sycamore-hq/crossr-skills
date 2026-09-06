@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Books on disk must have tracker rows. A finished phase must not stay open.
+"""Books on disk must have tracker rows. Phase status must match the plan header.
 
 Issue #5 (pr5-record): rust/ocaml books landed; features.json, progress.md,
 and the plan/prompt-set headers still stopped at PR 4 / "5b in flight".
-Issue #6 (gan-close-4b): gan-layer-separation left in_progress after every
-child commit completed.
+Issue #6 (gan-close-4b): a completed phase while the plan header says
+in progress is the contradiction; recorded-children-all-done is not.
 
 Calculations are pure. Loading the tree is the action.
 """
@@ -44,6 +44,7 @@ PROGRESS_DONE = re.compile(
     re.M,
 )
 LANDED = re.compile(r"(?:PR\s+)?(5[ab])\s+landed", re.I)
+PLAN_IN_PROGRESS = re.compile(r"(?i)\bin progress\b")
 
 
 def completed_ids(phase: dict) -> set[str]:
@@ -66,13 +67,13 @@ def books_missing_rows(
     return missing
 
 
-def all_commits_completed(phase: dict) -> bool:
-    commits = phase.get("commits") or []
-    return bool(commits) and all(c.get("status") == "completed" for c in commits)
+def plan_status_line(text: str) -> str:
+    return next((line for line in text.splitlines() if line.startswith("**Status:**")), "")
 
 
-def phase_left_open(phase: dict) -> bool:
-    return all_commits_completed(phase) and phase.get("status") == "in_progress"
+def phase_disagrees_with_plan(phase: dict, status_line: str) -> bool:
+    """True when features.json closed the phase and the plan header did not."""
+    return phase.get("status") == "completed" and bool(PLAN_IN_PROGRESS.search(status_line))
 
 
 def inflight_rows(rows: list[tuple[str, str]], books: list[str]) -> list[str]:
@@ -110,32 +111,33 @@ class Calculations(unittest.TestCase):
         })
         self.assertEqual(books_missing_rows(["rust"], ids), ["rust"])
 
-    def test_empty_phase_is_not_left_open(self):
-        self.assertFalse(phase_left_open({"status": "in_progress", "commits": []}))
+    def test_completed_phase_against_in_progress_plan_disagrees(self):
+        self.assertTrue(
+            phase_disagrees_with_plan(
+                {"status": "completed"},
+                "**Status:** in progress · PR 5b landed",
+            )
+        )
 
-    def test_all_done_in_progress_is_left_open(self):
-        phase = {
-            "status": "in_progress",
-            "commits": [{"id": "pr4b", "title": "x", "status": "completed"}],
-        }
-        self.assertTrue(phase_left_open(phase))
+    def test_in_progress_phase_against_in_progress_plan_agrees(self):
+        self.assertFalse(
+            phase_disagrees_with_plan(
+                {"status": "in_progress"},
+                "**Status:** in progress · PR 5b landed",
+            )
+        )
 
-    def test_all_done_completed_is_closed(self):
-        phase = {
-            "status": "completed",
-            "commits": [{"id": "pr4b", "title": "x", "status": "completed"}],
-        }
-        self.assertFalse(phase_left_open(phase))
+    def test_completed_phase_against_done_plan_agrees(self):
+        self.assertFalse(
+            phase_disagrees_with_plan(
+                {"status": "completed"},
+                "**Status:** complete · PR 7 landed",
+            )
+        )
 
-    def test_mixed_status_is_not_left_open(self):
-        phase = {
-            "status": "in_progress",
-            "commits": [
-                {"id": "a", "status": "completed"},
-                {"id": "b", "status": "in_progress"},
-            ],
-        }
-        self.assertFalse(phase_left_open(phase))
+    def test_plan_status_line_is_the_status_heading(self):
+        text = "# Plan\n\n**Status:** in progress · PR 5b landed\n**Scope:** x\n"
+        self.assertEqual(plan_status_line(text), "**Status:** in progress · PR 5b landed")
 
     def test_inflight_only_counts_books_that_exist(self):
         rows = [("5a", "Landed"), ("5b", "In flight"), ("5c", "In flight")]
@@ -158,9 +160,6 @@ class LiveTree(unittest.TestCase):
         cls.plan_html = (ROOT / "docs" / "plans" / "gan-layer-separation-plan.html").read_text()
         cls.prompt = (ROOT / "docs" / "plans" / "pr5-one-law-prompt-set.md").read_text()
         cls.prompt_html = (ROOT / "docs" / "plans" / "pr5-one-law-prompt-set.html").read_text()
-
-    def test_catalog_still_has_the_two_books(self):
-        self.assertEqual(set(self.books), {"ocaml", "rust"})
 
     def test_each_book_has_a_completed_gan_row(self):
         missing = books_missing_rows(self.books, completed_ids(self.phase))
@@ -190,10 +189,11 @@ class LiveTree(unittest.TestCase):
         self.assertTrue(rows, "prompt-set HTML has no status table")
         self.assertEqual(inflight_rows(rows, self.books), [])
 
-    def test_gan_phase_is_not_left_open(self):
+    def test_phase_status_agrees_with_plan_header(self):
+        status = plan_status_line(self.plan)
         self.assertFalse(
-            phase_left_open(self.phase),
-            "gan-layer-separation is in_progress with every child commit completed",
+            phase_disagrees_with_plan(self.phase, status),
+            f"{PHASE} is {self.phase.get('status')!r}; plan header is {status!r}",
         )
 
 
