@@ -1,6 +1,6 @@
 # Plan: crossr v2 — Layer Separation, Shared Ruleset, Plan-First GAN
 
-**Status:** in progress · PR 0 merged (#105) · PR 1 landed · PR 2 landed · PR 3 landed · PR 4 landed (loops [#7](https://github.com/sycamore-hq/crossr-loops/pull/7), skills [#110](https://github.com/sycamore-hq/crossr-skills/pull/110)) · PR 5 landed (skills [#117](https://github.com/sycamore-hq/crossr-skills/pull/117) / [#118](https://github.com/sycamore-hq/crossr-skills/pull/118) / [#120](https://github.com/sycamore-hq/crossr-skills/pull/120), loops [#9](https://github.com/sycamore-hq/crossr-loops/pull/9), harness [#8](https://github.com/sycamore-hq/crossr-harness/pull/8), landing [#10](https://github.com/sycamore-hq/crossr-web-landing/pull/10); tags `v1-one-law` / `v1-one-law-consumers`)
+**Status:** in progress · PR 0 merged (#105) · PR 1 landed · PR 2 landed · PR 3 landed · PR 4 landed (loops [#7](https://github.com/sycamore-hq/crossr-loops/pull/7), skills [#110](https://github.com/sycamore-hq/crossr-skills/pull/110)) · PR 5 landed (skills [#117](https://github.com/sycamore-hq/crossr-skills/pull/117) / [#118](https://github.com/sycamore-hq/crossr-skills/pull/118) / [#120](https://github.com/sycamore-hq/crossr-skills/pull/120) / [#124](https://github.com/sycamore-hq/crossr-skills/pull/124), loops [#9](https://github.com/sycamore-hq/crossr-loops/pull/9), harness [#8](https://github.com/sycamore-hq/crossr-harness/pull/8), landing [#10](https://github.com/sycamore-hq/crossr-web-landing/pull/10); tags `v1-one-law` / `v1-one-law-consumers`)
 **Scope:** `crossr-skills`, `crossr-loops`, `crossr-harness`
 **Origin:** token-burn critique of the crossr-* agent infrastructure, verified against the trees 2026-08-30.
 
@@ -794,7 +794,7 @@ never re-point):
 - skills [#120](https://github.com/sycamore-hq/crossr-skills/pull/120) (5c) — gate cards, absorb writers, featured = decision 7. Tag `v1-one-law` (`88d9ee2`) peels to `507c509`.
 - loops [#9](https://github.com/sycamore-hq/crossr-loops/pull/9) (5d) — `skills = "v1-one-law"`; `code-gan` names no language; `requires.book` in schema + verifier. Tag `v1-one-law-consumers` (`69a05d2`) peels to `cea6e59`.
 - harness [#8](https://github.com/sycamore-hq/crossr-harness/pull/8) (5e) — HARNESS-SPEC §6; lockfile `books`; empty-books smoke fixture.
-- skills (5f, this PR) — catalog `loops = "v1-one-law-consumers"` at all four pin loci; `just regen-agents`; this record.
+- skills [#124](https://github.com/sycamore-hq/crossr-skills/pull/124) (5f) — catalog `loops = "v1-one-law-consumers"` at all four pin loci; `just regen-agents`; this record.
 - landing [#10](https://github.com/sycamore-hq/crossr-web-landing/pull/10) (5g) — drop `rust-team-lead`; featured pills = decision 7.
 
 Parked from PR 1a review — **discharged:**

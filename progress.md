@@ -781,8 +781,8 @@ brief 5f.
   [#120](https://github.com/sycamore-hq/crossr-skills/pull/120) → 5d
   [loops#9](https://github.com/sycamore-hq/crossr-loops/pull/9) → 5e
   [harness#8](https://github.com/sycamore-hq/crossr-harness/pull/8) → 5g
-  [landing#10](https://github.com/sycamore-hq/crossr-web-landing/pull/10) → this
-  PR. Next is PR 6.
+  [landing#10](https://github.com/sycamore-hq/crossr-web-landing/pull/10) →
+  [#124](https://github.com/sycamore-hq/crossr-skills/pull/124). Next is PR 6.
 
 ### github-pr-skills — gh-pr-01 (COMPLETED)
 
