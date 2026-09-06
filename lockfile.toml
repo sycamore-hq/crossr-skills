@@ -1,4 +1,4 @@
 # Pins consumed by harness-bootstrap / sync-skills.
 # Not a third tracker — features.json remains the work log. No git submodules.
 skills = "v1-gan-layers"
-loops  = "v1-cards"
+loops  = "v1-one-law-consumers"

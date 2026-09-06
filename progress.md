@@ -773,6 +773,38 @@ Second book. The extractor did not move. Per [`docs/plans/pr5-one-law-prompt-set
 
 Recorded after the fact. #119 said 5b was in flight; 5b then merged without a follow-up row. 5c is on main (#120). 5f still closes the PR 5 stack.
 
+### gan-layer-separation — PR 5f (COMPLETED)
+
+Pin bump + `just regen-agents` + plan record after 5a–5e and 5g landed. Per
+[`docs/plans/gan-layer-separation-plan.md`](docs/plans/gan-layer-separation-plan.md)
+§4 PR 5 / [`docs/plans/pr5-one-law-prompt-set.md`](docs/plans/pr5-one-law-prompt-set.md)
+brief 5f.
+
+- Pin: `loops = "v1-one-law-consumers"` at all four loci (lockfile.toml, AGENTS.md
+  consumer pins + topo, README.md current pins + topo). Skills pin stays
+  `v1-gan-layers`.
+- `just regen-agents` twice, git status clean. No orphan-persona warnings. The
+  five generated files that still named dying skills (reviewer / tester /
+  brick-coder / brick-mutator / brick-refactorer) now read the 5d personas.
+- Plan + HTML: PR 5 marked landed with all seven PR links and both tags
+  (`v1-one-law` peels to `507c509`; `v1-one-law-consumers` peels to `cea6e59`).
+  §7 row 5 restated (unlanded draft → 5f merge freezes it): one writer + N books;
+  drift-detectable; gate cards ≤2 KB; graph names no language. Measured: rust 52
+  rules / ocaml 75; `code-review` 1,454 B / `testing` 1,734 B; rust reviewer load
+  6,596 B vs pre-PR 5,059 B.
+- §2.4 monoculture table updated. OCaml reversal recorded (5b extractor
+  zero-line). Parks from 1a / 2a / 3a / 3b discharged. 5g already merged
+  (landing #10), so no leftover landing park.
+- Acceptance condition 1: unblocked, not demonstrated. Needs an `elm` book and
+  `books = ["elm"]`.
+- Stack: 5a [#117](https://github.com/sycamore-hq/crossr-skills/pull/117) → 5b
+  [#118](https://github.com/sycamore-hq/crossr-skills/pull/118) → 5c
+  [#120](https://github.com/sycamore-hq/crossr-skills/pull/120) → 5d
+  [loops#9](https://github.com/sycamore-hq/crossr-loops/pull/9) → 5e
+  [harness#8](https://github.com/sycamore-hq/crossr-harness/pull/8) → 5g
+  [landing#10](https://github.com/sycamore-hq/crossr-web-landing/pull/10) →
+  [#124](https://github.com/sycamore-hq/crossr-skills/pull/124). Next is PR 6.
+
 ### github-pr-skills — gh-pr-01 (COMPLETED)
 
 Installed two GitHub review-loop skills into the catalog, verbatim from their source.

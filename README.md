@@ -21,9 +21,9 @@ Process, loops, and the public site live in sibling remotes under [sycamore-hq](
 | [crossr-harness](https://github.com/sycamore-hq/crossr-harness) | HARNESS-SPEC, bootstrap, dashboard, `dashboard-prompt`, `chief-of-staff`, `/status` |
 | [crossr-web-landing](https://github.com/sycamore-hq/crossr-web-landing) | Public site. Links out. Owns no law. |
 
-Last tree that still contained everything: [`v0-last-monolith`](https://github.com/sycamore-hq/crossr-skills/releases/tag/v0-last-monolith). Current pins: `skills = "v1-gan-layers"`, `loops = "v1-cards"` ([lockfile.toml](lockfile.toml)).
+Last tree that still contained everything: [`v0-last-monolith`](https://github.com/sycamore-hq/crossr-skills/releases/tag/v0-last-monolith). Current pins: `skills = "v1-gan-layers"`, `loops = "v1-one-law-consumers"` ([lockfile.toml](lockfile.toml)).
 
-**Split complete (split-09 graphs).** Topology lives in [crossr-loops `graphs/`](https://github.com/sycamore-hq/crossr-loops/tree/main/graphs) and is in the `v1-cards` pin. SKILL.md stays the law. Plan: [`docs/plans/skills-loops-harness-split.html`](docs/plans/skills-loops-harness-split.html) ([markdown](docs/plans/skills-loops-harness-split.md)).
+**Split complete (split-09 graphs).** Topology lives in [crossr-loops `graphs/`](https://github.com/sycamore-hq/crossr-loops/tree/main/graphs) and is in the `v1-one-law-consumers` pin. SKILL.md stays the law. Plan: [`docs/plans/skills-loops-harness-split.html`](docs/plans/skills-loops-harness-split.html) ([markdown](docs/plans/skills-loops-harness-split.md)).
 
 The public door is [`crossr-web-landing`](https://github.com/sycamore-hq/crossr-web-landing) → https://sycamore-hq.github.io/crossr-web-landing/ . This repo's Pages host is a **moved stub**, not the catalog UI.
 

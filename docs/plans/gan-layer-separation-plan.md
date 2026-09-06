@@ -1,6 +1,6 @@
 # Plan: crossr v2 — Layer Separation, Shared Ruleset, Plan-First GAN
 
-**Status:** in progress · PR 0 merged (#105) · PR 1 landed · PR 2 landed · PR 3 landed · PR 4 landed (loops [#7](https://github.com/sycamore-hq/crossr-loops/pull/7), skills [#110](https://github.com/sycamore-hq/crossr-skills/pull/110)) · PR 5a landed ([#117](https://github.com/sycamore-hq/crossr-skills/pull/117)) · PR 5b landed ([#118](https://github.com/sycamore-hq/crossr-skills/pull/118))
+**Status:** in progress · PR 0 merged (#105) · PR 1 landed · PR 2 landed · PR 3 landed · PR 4 landed (loops [#7](https://github.com/sycamore-hq/crossr-loops/pull/7), skills [#110](https://github.com/sycamore-hq/crossr-skills/pull/110)) · PR 5a landed ([#117](https://github.com/sycamore-hq/crossr-skills/pull/117)) · PR 5b landed ([#118](https://github.com/sycamore-hq/crossr-skills/pull/118)) · PR 5 landed (skills [#117](https://github.com/sycamore-hq/crossr-skills/pull/117) / [#118](https://github.com/sycamore-hq/crossr-skills/pull/118) / [#120](https://github.com/sycamore-hq/crossr-skills/pull/120) / [#124](https://github.com/sycamore-hq/crossr-skills/pull/124), loops [#9](https://github.com/sycamore-hq/crossr-loops/pull/9), harness [#8](https://github.com/sycamore-hq/crossr-harness/pull/8), landing [#10](https://github.com/sycamore-hq/crossr-web-landing/pull/10); tags `v1-one-law` / `v1-one-law-consumers`)
 **Scope:** `crossr-skills`, `crossr-loops`, `crossr-harness`
 **Origin:** token-burn critique of the crossr-* agent infrastructure, verified against the trees 2026-08-30.
 
@@ -82,11 +82,17 @@ Of ~18.9KB of adversary law, **~16KB is language-neutral and ~2-3KB is actually 
 
 ```
 rust     writer ✓  reviewer ✓  tester ✓  architect ✓
-ocaml    writer ✓  reviewer ✗  tester ✗  architect ✗
-elm / ts / py / go / hs        nothing
+ocaml    writer ✓  reviewer ✓  tester ✓  architect ✓
+elm / ts / py / go / hs        unblocked (no book yet)
 ```
 
-`ocaml-code-writer` is the largest file in the catalog and has no adversaries. Someone
+**Discharged in PR 5.** Writer is `code-writer` plus the language book. Reviewer /
+tester / architect are the language-neutral gate cards (`code-review`, `testing`,
+`architecture`) plus the disclosed book's `RULES.md`. OCaml picked up the three
+adversaries the moment the gate cards dropped the `rust-*` names (5c). Elm / TS / JS
+load the same gates today; what they lack is a book, not a halt.
+
+`ocaml-code-writer` was the largest file in the catalog and had no adversaries. Someone
 already tried to go multi-language, wrote the writer, and hit the wall where every
 adversary was named `rust-*`.
 
@@ -690,11 +696,11 @@ delete the duplicated prose either way.
 
 **Writer-stack window — CLOSED in PR 4.** 3a dropped the RTL name; 4a dropped `code-writer` from the cards, `book/src/pipeline/{axel,avril}.md`, and `templates/harness/opencode/command/{axel,avril}.md`. No surviving locus in those loops files. This catalog's unmarked `.opencode/command/{axel,avril}.md` still teach `code-writer` (regen never overwrites them; `/axel` `/avril` are decorative here — GONE-listed skills).
 
-**Parked from 3a / 3b / 3c review (record here, not only in PR bodies):**
+**Parked from 3a / 3b / 3c review — discharged in PR 5:**
 
-- `graphs/code-gan.json` nodes/`requires` still name `rust-code-writer` / `rust-code-reviewer` / `rust-code-tester` (AXEL card language stack the same). Retarget when PR 5 folds those into the book + `code-review` / `testing` cards.
-- `HARNESS-SPEC.md` §6 gates 2–3 still name `rust-code-reviewer` / `rust-code-tester`. Gate 4 is already `architecture` (3b). Same PR 5 retarget.
-- Landing: `crossr-web-landing/site/templates/index.html` still names `rust-team-lead`; harness `scripts/verify-docs` featured-set still requires it. Dead in this catalog (no `site/`). Move the allowlist and the landing copy together — not a pin-only bump.
+- `graphs/code-gan.json` nodes/`requires` named `rust-code-writer` / `rust-code-reviewer` / `rust-code-tester`. Retargeted in 5d; `requires.book: true`; the graph names no language.
+- `HARNESS-SPEC.md` §6 gates 2–3 named `rust-code-reviewer` / `rust-code-tester`. Retargeted in 5e to `code-review` / `testing`.
+- Landing named `rust-team-lead`; harness `verify-docs` featured-set required it. Harness half in 5e (featured set is decision 7). Landing half in 5g ([#10](https://github.com/sycamore-hq/crossr-web-landing/pull/10)).
 
 ### PR 4 — Card + `references/` split on `axel` and `avril` ✅ landed
 
@@ -757,9 +763,9 @@ into `agent-harness`” — conductors have not loaded `agent-harness` since 2a;
 lifted there would be decorative, which is worse than duplicated. That instruction
 predates the load-set change.
 
-**Owed to harness (not this PR):** [`crossr-harness/lockfile.toml`](https://github.com/sycamore-hq/crossr-harness/blob/main/lockfile.toml) is still `loops = "v1-no-rtl"`. Third pin-bump follow-on (skills#108 → 3b → here). Deleting the avril template only helps consumers once harness pins `v1-cards`.
+**Owed to harness — discharged in 5e.** [`crossr-harness/lockfile.toml`](https://github.com/sycamore-hq/crossr-harness/blob/main/lockfile.toml) is `skills = "v1-one-law"`, `loops = "v1-one-law-consumers"`.
 
-### PR 5 — One ruleset, progressively disclosed
+### PR 5 — One ruleset, progressively disclosed ✅ landed
 
 **Depends on:** the PR 1 peel having landed.
 
@@ -780,27 +786,26 @@ not hand-copied — hand-copying is what created this problem.
 Domain skills (`rust-axum-backend`, `rust-tui`, `rust-frontend`) stay separate skills for now;
 revisit once the reference model is proven.
 
-Parked here from PR 1a review:
+**PR 5 landed** as the seven-PR stack. Tags cut on the merge commits (decision 8 — no CI;
+never re-point):
 
-- `architecture/SKILL.md` Core Principle 2 still cites `code-writer` + `rust-code-writer`
-  inside protected law — a writer-stack reference inside the language-neutral card, left
-  untouched by PR 1's zero-checklist-edits rule. The book Rules projection is its
-  replacement; include it in the absorb list.
-- The verdict gate names (`code-review:`, `testing:`, `architecture:`) already use the
-  final activity names while the skills keep `rust-*` names until this PR (decision #1).
-  The tokens are final — only the skill/directory names move here; `gan-verdict` and the
-  response contracts need no edits.
+- skills [#117](https://github.com/sycamore-hq/crossr-skills/pull/117) (5a) — book infrastructure + `rust/` book. Additive.
+- skills [#118](https://github.com/sycamore-hq/crossr-skills/pull/118) (5b) — `ocaml/` book. Extractor zero-line diff vs 5a.
+- skills [#120](https://github.com/sycamore-hq/crossr-skills/pull/120) (5c) — gate cards, absorb writers, featured = decision 7. Tag `v1-one-law` (`88d9ee2`) peels to `507c509`.
+- loops [#9](https://github.com/sycamore-hq/crossr-loops/pull/9) (5d) — `skills = "v1-one-law"`; `code-gan` names no language; `requires.book` in schema + verifier. Tag `v1-one-law-consumers` (`69a05d2`) peels to `cea6e59`.
+- harness [#8](https://github.com/sycamore-hq/crossr-harness/pull/8) (5e) — HARNESS-SPEC §6; lockfile `books`; empty-books smoke fixture.
+- skills [#124](https://github.com/sycamore-hq/crossr-skills/pull/124) (5f) — catalog `loops = "v1-one-law-consumers"` at all four pin loci; `just regen-agents`; this record.
+- landing [#10](https://github.com/sycamore-hq/crossr-web-landing/pull/10) (5g) — drop `rust-team-lead`; featured pills = decision 7.
 
-Parked here from PR 3a / 3b review:
+Parked from PR 1a review — **discharged:**
 
-- `graphs/code-gan.json` (kept inner subgraph, renamed in 3a) still names
-  `rust-code-writer` / `rust-code-reviewer` / `rust-code-tester` in per-node `uses.skill`
-  and `requires.skills`. Topology is already language-neutral; the skill names are not.
-  Retarget with the absorb — do not invent intermediate `rust-review` / `rust-testing`
-  skills (shape B).
-- `HARNESS-SPEC.md` §6 gates 2–3 still name `rust-code-reviewer` / `rust-code-tester`.
-  Gate 4 became `architecture` in 3b. Same one-word retarget class as loops#4 / skills#107,
-  owned by this PR because those names die when the book lands.
+- `architecture/SKILL.md` Core Principle 2 cited `code-writer` + `rust-code-writer`. 5c rewrote it to `code-writer` or the disclosed book's Rules projection. Verdict tokens were already final; `gan-verdict` untouched.
+- Persona voice still Rust-flavored after PR 2 (the 2a park). 5d de-Rusted `.agents/agents/` and kept the three verdict-format lines.
+
+Parked from PR 3a / 3b review — **discharged:**
+
+- `graphs/code-gan.json` named `rust-code-writer` / `rust-code-reviewer` / `rust-code-tester`. 5d retargeted to `code-writer` / `code-review` / `testing` and added `requires.book: true`. No intermediate `rust-review` / `rust-testing` skills (shape B).
+- `HARNESS-SPEC.md` §6 gates 2–3 named `rust-code-reviewer` / `rust-code-tester`. 5e retargeted them. Featured-set harness half is 5e; landing half is 5g (merged).
 
 ### PR 6 — The v2 chain
 
@@ -927,7 +932,7 @@ Per-PR success criteria:
 | 2 | Conductor load-set bytes drop from 73,031; adversary skills absent from the conductor window; `.opencode/agent/` files carry a generated-do-not-edit header |
 | 3 | `rust-team-lead` gone from all 8 load-bearing referrers; pairing prose 536 B (`axel` 18,148). 14 KB card split is PR 4 |
 | 4 | `axel` **5,989** (irreducible gates **5,443**: Intake 899 + Method 2,998 + Strict 969 + Checklist 480 + frontmatter 97). `avril` **4,984** (irreducible 4,097). Floor is the always-loaded law, not a wish — ≤3KB could only be met by exiling AC evidence / board→done. Second restatement (14KB → PR 4 in 3c; 3KB → ≤6KB here); this one is sound because it is the sum of gates the card still must load. `references/` carries Verification and Specialization |
-| 5 | One law, one location; ~16KB of formerly `rust-*` neutral law now serves all languages; Rules projections generated, not hand-copied; `rust-errors` and the rust-* adversary bodies absorbed; gate cards ≤2KB; **one *code* writer skill remains (`code-writer`)** — language how-to lives only in the book. (`plan-writer`, added in PR 6, is a different artifact class, not a second language writer.) |
+| 5 | One universal writer skill (`code-writer`) plus one book per language. Zero `<lang>-code-writer` skills remain — `rust-code-writer`, `rust-errors` and `ocaml-code-writer` absorbed. Rules projections generated per book and drift-detectable, gated by review discipline (decision 8); gate cards ≤2 KB and book-agnostic; the `code-gan` graph names no language. Measured on the 5f tree: rust **52** rules (`RULES.md` 5,142 B), ocaml **75** rules (`RULES.md` 13,442 B); `code-review` **1,454** B / `testing` **1,734** B (both ≤2 KB). Reviewer load set is the gate card + `RULES.md` (rust 1,454 + 5,142 = **6,596** B) against the pre-PR reviewer skill at 5,059 B. |
 | 6 | `plan-writer` exists and `code-writer` is absent from the plan-time window; architect rejections occur at plan time, not after implementation; zero LLM tokens spent on a mechanically-red phase or an audit-red plan; bidirectional AC↔claim coverage passes by script; plan commit precedes first implementation commit |
 | 7 | Adversary windows carry no sibling SKILL.md, no board dump, no prior-phase prose |
 
@@ -936,6 +941,10 @@ Two acceptance conditions for the whole plan:
 1. **An Elm or Melange AXEL run works.** It loads `code-writer` + the axel card + the disclosed
    language writer, with `architecture` / `code-review` / `testing` in the subagents — and it runs,
    instead of halting or reviewing Elm against `thiserror` rules.
+   **Status after PR 5:** unblocked, not demonstrated. With the book split and the neutral
+   graph, an Elm run loads `code-writer` + the axel card + the universal gate cards and does
+   not halt. What remains before it can be shown live is an `elm` book and `books = ["elm"]`
+   in that repo's lockfile.
 2. **No architect rejection ever discards a finished implementation.** Every seam objection is
    raised against a plan. Track the count of code-time architect escalations; it should trend to
    near zero, and each one is a signal that the plan's claim list was too weak.
@@ -969,6 +978,33 @@ Still open, none blocking PR 1:
    each book reference owns its per-rule `check:` line. A merger script can come later if the
    split ever bites.
 3. **`brick`.** Wait. It is language-clean with its own stage skills; let the AXEL path prove
-   the model first.
+   the model first. The sibling reasoning that parked a second language (OCaml) was
+   **overruled before dispatch**. The pre-dispatch recommendation was to park OCaml; a
+   single book cannot prove the infrastructure is language-agnostic, which is the property
+   Elm / TypeScript / JavaScript targets depend on. 5b's extractor zero-line diff vs 5a is
+   the evidence that it does. `brick` itself stays parked.
 4. **Domain skills** (`rust-axum-backend`, `rust-tui`, `rust-frontend`). Stay skills until the
    book is proven, then become book references if the model holds.
+
+### PR 5 decisions (settled in the prompt-set stack; the plan did not previously contain them)
+
+- **Projection contract vs per-book topic sets.** Topic files carry `## Rules` + `## How`.
+  Which topics a book has is the book's business. The extractor never hardcodes a topic list.
+- **`<book>/RULES.md` placement.** Generated, committed, outside `references/` so the
+  extractor never ingests its own output.
+- **`requires.book`.** A graph that needs a disclosed book sets `requires.book: true` and
+  must not *name* a book skill. Empty `books = []` on a consumer lockfile is a 5e smoke
+  failure, not a loops self-pin failure.
+- **Lockfile `books` declaration.** Disclosure filter, not a copy filter. Bootstrap still
+  copies every skill directory. Multi-book: disclose per PBI, or stop and ask; never
+  default to first-listed.
+- **Book marker is `metadata.book: "true"`** (quoted). Frontmatter, not a top-level key.
+  Same marker `extract-rules` and `verify-skill-refs` select on.
+- **Featured set (decision 7):** `code-writer`, `rust`, `code-review`, `agent-harness`,
+  `skill-evaluator`.
+- **Open prefix registry.** `docs/book-topics.md` is the only home. Extractor accepts
+  unknown prefixes. `check:` does not count against the 3-line cap.
+- **Contract vs topic references.** `specialization.md` / `verification.md` carry neither
+  `## Rules` nor `## How`. Extractor skips them.
+- **No CI (decision 8).** Tags cut after pasted validation. Gates in this stack are
+  drift-detectable, gated by review discipline.
