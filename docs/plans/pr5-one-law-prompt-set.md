@@ -49,14 +49,13 @@ against that commit. There is no CI (decision 8). Never re-point a cut tag.
 
 ## Status (measured 2026-09-03)
 
-Interim record. `progress.md` / `features.json` do not carry PR 5 until 5f (guardrails);
-until then this section and its HTML twin are where the stack's state lives. Both are
-hand-maintained and must agree.
+5a/5b have tracker rows. 5f still closes the PR 5 stack. This section and its HTML
+twin must agree with each other.
 
 | PR | Repo | State | Evidence |
 |---|---|---|---|
 | 5a | skills | **Landed** | [#117](https://github.com/sycamore-hq/crossr-skills/pull/117), rebase-merged 2026-09-03 as `ecc1e62`..`94e3a15` (7 commits). 15 review threads, all resolved. |
-| 5b | skills | **In flight** | [#118](https://github.com/sycamore-hq/crossr-skills/pull/118), branch `claude/ocaml-book-pr-5b-633ooj`. `ocaml-code-writer` (19,551 B) still unabsorbed on main. |
+| 5b | skills | **Landed** | [#118](https://github.com/sycamore-hq/crossr-skills/pull/118), rebase-merged 2026-09-03 as `e2647be`..`0bd2c40` (3 commits). `ocaml/` book on main; extractor unchanged. |
 | 5c | skills | Not started | 5c acceptance grep hits 13 files. No skills tag exists; `v1-one-law` uncut. |
 | 5d | loops | Not started | `graphs/code-gan.json` still names `rust-code-writer` / `rust-code-reviewer` / `rust-code-tester`. Pins `skills = v1-gan-layers`, `loops = v0`. |
 | 5e | harness | Not started | `HARNESS-SPEC.md:196-197`, `AGENTS.md:12`, `templates/harness/AGENTS.md.template:12` still name dead skills. Pins `v1-gan-layers` / `v1-cards`. |
