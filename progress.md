@@ -805,6 +805,23 @@ brief 5f.
   [landing#10](https://github.com/sycamore-hq/crossr-web-landing/pull/10) →
   [#124](https://github.com/sycamore-hq/crossr-skills/pull/124). Next is PR 6.
 
+### gan-layer-separation — PR 6a (COMPLETED)
+
+`plan-writer` + mechanical claim audit. Per
+[`docs/plans/gan-layer-separation-plan.md`](docs/plans/gan-layer-separation-plan.md)
+§4 PR 6 / §3.6 / §3.7 rule 5. HoH fold (work#11): a prior evidence packet
+becomes claims; preserve-vs-grow is plan law.
+
+- `.agents/skills/plan-writer/`: ~2 KB card. Taxonomy, five rules, evidence
+  packet. `code-writer` is absent from the plan-time load. Skill, not a persona.
+- `scripts/audit-plan`: bidirectional AC↔claim coverage, 30% judgment quota,
+  append-only ids, preserve-vs-grow, evidence-packet maps. No LLM.
+- Gate cards: `architecture` is the plan-time gate (underspecification);
+  `code-review` is conformance + ≤3 unanticipated-risk; `testing` is AC
+  coverage + zero regressions.
+- Catalog: `plan-writer` on the allowlist + README. `just plan-audit FILE`.
+- Plan twins: §3.7 rule 5 (must survive).
+
 ### github-pr-skills — gh-pr-01 (COMPLETED)
 
 Installed two GitHub review-loop skills into the catalog, verbatim from their source.

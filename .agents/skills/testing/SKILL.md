@@ -21,7 +21,7 @@ Apply the rules tagged `test` in the disclosed book's Rules projection.
 
 ## What this gate verifies
 
-Coverage, Arrange-Act-Assert, error paths, and test isolation. Fail any = REJECT and re-delegate.
+AC coverage and zero regressions. Do the tests cover every acceptance criterion this phase claims? Did anything already green go red? Coverage, Arrange-Act-Assert, error paths, and test isolation still apply. Fail any = REJECT and re-delegate.
 
 **NEVER** write, edit, or suggest production code. Delegate all implementation changes to `code-writer` + the relevant domain skill. Re-delegate on any gap. You are the final testing gate with zero tolerance.
 

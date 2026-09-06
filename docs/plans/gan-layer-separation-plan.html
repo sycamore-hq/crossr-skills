@@ -409,12 +409,13 @@ RE-02  Cross-layer propagation uses #[from]; never inline .map_err at a call sit
     <p><code>.pinto/plans/</code> also works today, but Pinto has just demonstrated that it errors on unexpected files in directories it owns — staying outside <code>.pinto/</code> removes the class of risk, and <code>docs/plans/</code> is already the established home. Linkage needs no new machinery: the plan&rsquo;s commit carries the PBI id, so <code>pinto link sync</code> binds it through the existing commit-matching path.</p>
   </div>
 
-  <h3>Four rules that make it load-bearing rather than decorative</h3>
+  <h3>Five rules that make it load-bearing rather than decorative</h3>
   <ul>
     <li><strong>Blessed means immutable, and committed before implementation begins.</strong> If the Generator can edit the plan after writing code, conformance review is worthless — the same self-grading failure as letting the conductor own the verdict contract. The blessed plan lands in its own commit, referencing the PBI id, <em>before</em> the first implementation commit.</li>
     <li><strong>Claim ids are append-only.</strong> Architect and Generator iterate, so plans have revisions. A renumbered claim breaks both the reviewer&rsquo;s citations and the escalation trigger. New claims get new ids; superseded claims are marked superseded, never deleted.</li>
     <li><strong>Coverage is bidirectional, and it is a script.</strong> Every AC maps to &ge;1 claim id — nothing silently dropped. And <strong>every claim maps to &ge;1 AC</strong> — nothing silently added. An orphan claim <em>is</em> scope creep, and it is the one failure a plan introduces that the architect will not catch: a plan satisfying the letter of every AC while quietly growing the work. Detecting it would otherwise need a PO voice at plan time; with bidirectional coverage it is <code>comm</code> on two id lists.</li>
     <li><strong>The plan outlives the PBI.</strong> It is the record of why the code looks the way it does. The Completion Record gains a <code>## Plan</code> line naming the path and the per-claim verdicts.</li>
+    <li><strong>Preserve-vs-grow.</strong> Every increment lists functionality that must survive, sourced from verified records when a prior evidence packet exists. Gaps and preservation constraints become claims. Scope change still returns to AVRIL. AXEL does not re-bless product intent.</li>
   </ul>
 
   <div class="callout">

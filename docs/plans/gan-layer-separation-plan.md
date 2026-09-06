@@ -482,7 +482,7 @@ removes the class of risk, and `docs/plans/` is already the established home.
 Linkage needs no new machinery: the plan's own commit carries the PBI id, so `pinto link sync`
 binds it to the PBI through the existing commit-matching path.
 
-**Four rules make the artifact load-bearing rather than decorative.**
+**Five rules make the artifact load-bearing rather than decorative.**
 
 1. **Blessed means immutable, and committed before implementation begins.** If the Generator can
    edit the plan after writing code, conformance review is worthless — it is the same self-grading
@@ -499,6 +499,9 @@ binds it to the PBI through the existing commit-matching path.
    `comm` on two id lists.
 4. **The plan outlives the PBI.** It is the record of why the code looks the way it does. The PBI
    Completion Record gains a `## Plan` line naming the path and the per-claim verdicts.
+5. **Preserve-vs-grow.** Every increment lists functionality that must survive, sourced from
+   verified records when a prior evidence packet exists. Gaps and preservation constraints
+   become claims. Scope change still returns to AVRIL. AXEL does not re-bless product intent.
 
 **A gap this closes that is not otherwise on the list.** Today `axel/SKILL.md` step 3 —
 *Decompose into the smallest semantic phases* — is performed by the conductor alone, with zero
