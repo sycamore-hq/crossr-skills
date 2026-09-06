@@ -10,6 +10,7 @@ check:
     cargo check --workspace 2>/dev/null || echo "(no Rust crates yet)"
 
 test:
+    python3 -m unittest discover -s test -v
     cargo test --workspace 2>/dev/null || echo "(no tests yet)"
 
 clippy:
@@ -37,6 +38,7 @@ harness-validate:
     else \
         echo "jq not found — skipping features.json validation"; \
     fi
+    @python3 -m unittest discover -s test -v
 
 # Refresh loop persona copies from the loops pin, regenerate marked
 # .opencode/agent files, strip catalog-forbidden bootstrap overlay.

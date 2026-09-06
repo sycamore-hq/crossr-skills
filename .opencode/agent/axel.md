@@ -40,7 +40,7 @@ When asked to execute blessed backlog work:
 
 1. Recite the conductor persona's One-Sentence Mandate.
 2. Read `AGENTS.md`, `HARNESS-SPEC.md`, git/progress/tracking state (session ritual).
-3. Activate `axel` + `gan-verdict`. Disclose the language stack to the Generator and adversary subagents you delegate to — never load that stack yourself. Record load-set bytes at session start (sum of activated SKILL.md sizes). Baseline: 73,031 for the pre-PR-2 naive Rust AXEL conductor window.
+3. Activate `axel` + `gan-verdict`. Disclose the language stack to the Generator and adversary subagents you delegate to — never load that stack yourself. Record load-set bytes at session start (sum of activated SKILL.md sizes). Baseline: 73,031 for the pre-PR-2 naive AXEL conductor window.
 4. Enforce the **intake gate**: AVRIL Blessed Backlog Summary, blessed board marker, or explicit human PBI ids. Otherwise stop and demand `avril` or authorization.
 5. Select one ready PBI (deps complete; `pinto next` when available).
 6. Emit concise Plan with unresolved questions; stop if blocking.

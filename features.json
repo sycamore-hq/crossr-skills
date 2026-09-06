@@ -853,6 +853,41 @@
         "id": "pr4b",
         "title": "Pin bump to v1-cards; just regen-agents; generated avril.md; plan record + §7 correction",
         "status": "completed"
+      },
+      {
+        "id": "pr5a",
+        "title": "Book infrastructure + rust/ book",
+        "status": "completed"
+      },
+      {
+        "id": "pr5b",
+        "title": "ocaml/ book",
+        "status": "completed"
+      },
+      {
+        "id": "pr5c",
+        "title": "Gate cards, absorb writers, cut v1-one-law",
+        "status": "completed"
+      },
+      {
+        "id": "pr5d",
+        "title": "Neutral code-gan, requires.book, tag v1-one-law-consumers",
+        "status": "completed"
+      },
+      {
+        "id": "pr5e",
+        "title": "HARNESS-SPEC §6 + lockfile books + smoke",
+        "status": "completed"
+      },
+      {
+        "id": "pr5f",
+        "title": "Loops pin bump + regen-agents + close PR 5 record",
+        "status": "completed"
+      },
+      {
+        "id": "pr5g",
+        "title": "Landing rider: drop rust-team-lead and retired names",
+        "status": "completed"
       }
     ]
   },

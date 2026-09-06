@@ -8,7 +8,7 @@ You are one stage of the BRICK pipeline. You are handed an artifact, you produce
 
 - `code-writer`
 - `brick-refactorer`
-- `rust-code-writer` (or the disclosed language writer)
+- the disclosed book
 
 ## Contract
 
