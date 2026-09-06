@@ -8,8 +8,9 @@ named, every gap and preservation constraint must be a claim.
 Usage:
   ./scripts/audit-plan [--loc-threshold N] <plan.md>
 
-`--loc-threshold N` fails any phase whose `- est. LOC:` exceeds N.
-No flag, no check. Exit 0 on pass, 1 on fail, 2 on usage error.
+`--loc-threshold N` fails any phase whose `- est. LOC:` is missing,
+unparsable, or exceeds N. No flag, no check. Exit 0 on pass, 1 on fail,
+2 on usage error.
 Calculations are pure; loading the file is the action.
 """
 
@@ -69,6 +70,12 @@ class GapMap:
 
 
 @dataclass
+class Phase:
+    num: int
+    est_loc: int | None = None
+
+
+@dataclass
 class Plan:
     pbi: str
     acs: list[Acceptance] = field(default_factory=list)
@@ -78,8 +85,7 @@ class Plan:
     preserve_none: bool = False
     gaps: list[GapMap] = field(default_factory=list)
     evidence_path: str | None = None
-    phase_count: int = 0
-    phase_locs: list[tuple[int, int | None]] = field(default_factory=list)
+    phases: list[Phase] = field(default_factory=list)
     has_questions: bool = False
     sections: list[str] = field(default_factory=list)
 
@@ -114,13 +120,11 @@ def parse_plan(text: str) -> Plan:
         if section == "Phases":
             phase = PHASE_RE.match(line)
             if phase:
-                plan.phase_count += 1
-                plan.phase_locs.append((int(phase.group(1)), None))
+                plan.phases.append(Phase(int(phase.group(1))))
                 continue
             loc = EST_LOC_RE.match(line)
-            if loc and plan.phase_locs:
-                num, _ = plan.phase_locs[-1]
-                plan.phase_locs[-1] = (num, int(loc.group(1)))
+            if loc and plan.phases:
+                plan.phases[-1].est_loc = int(loc.group(1))
                 continue
         if section == "Acceptance Criteria":
             m = AC_RE.match(line)
@@ -247,7 +251,7 @@ def audit(plan: Plan, loc_threshold: int | None = None) -> list[str]:
     if not plan.pbi:
         fails.append("missing `# Plan: <id>` heading")
     fails.extend(f"missing section ## {s}" for s in required_sections_missing(plan))
-    if plan.phase_count < 1:
+    if not plan.phases:
         fails.append("no ### Phase N heading")
     if not plan.acs:
         fails.append("no acceptance criteria")
@@ -311,10 +315,13 @@ def audit(plan: Plan, loc_threshold: int | None = None) -> list[str]:
             "evidence packet present but no gap or preserve maps to claims"
         )
     if loc_threshold is not None:
-        for num, est in plan.phase_locs:
-            if est is not None and est > loc_threshold:
+        for phase in plan.phases:
+            if phase.est_loc is None:
+                fails.append(f"phase {phase.num} has no `- est. LOC: <n>` line")
+            elif phase.est_loc > loc_threshold:
                 fails.append(
-                    f"phase {num} est. LOC {est} exceeds {loc_threshold}"
+                    f"phase {phase.num} est. LOC {phase.est_loc} "
+                    f"exceeds {loc_threshold}"
                 )
     return fails
 

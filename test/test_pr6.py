@@ -332,6 +332,25 @@ class AuditCalculations(unittest.TestCase):
             any("phase 1 est. LOC 2000 exceeds 1500" in f for f in fails), fails
         )
 
+    def test_loc_threshold_fails_a_missing_estimate(self):
+        self.assertEqual(audit_plan.audit_text(good_plan()), [])
+        fails = audit_plan.audit_text(good_plan(), loc_threshold=1500)
+        self.assertTrue(
+            any("phase 1" in f and "est. LOC" in f for f in fails), fails
+        )
+
+    def test_loc_threshold_fails_an_unparsable_estimate(self):
+        text = with_line(
+            good_plan(),
+            "### Phase 1 of 1: land the parser\n",
+            "### Phase 1 of 1: land the parser\n- est. LOC: ~2000\n",
+        )
+        self.assertEqual(audit_plan.audit_text(text), [])
+        fails = audit_plan.audit_text(text, loc_threshold=1500)
+        self.assertTrue(
+            any("phase 1" in f and "est. LOC" in f for f in fails), fails
+        )
+
     def test_cli_loc_threshold_and_plain_invocation(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "plan.md"
