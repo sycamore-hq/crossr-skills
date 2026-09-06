@@ -797,7 +797,7 @@
     ]
   },
   "gan-layer-separation": {
-    "status": "completed",
+    "status": "in_progress",
     "commits": [
       {
         "id": "pr0",
@@ -863,6 +863,16 @@
         "id": "pr5b",
         "title": "ocaml/ book",
         "status": "completed"
+      },
+      {
+        "id": "pr5c",
+        "title": "Gate cards, absorb writers; tag v1-one-law",
+        "status": "completed"
+      },
+      {
+        "id": "pr5d",
+        "title": "crossr-loops: neutral code-gan + requires.book; tag v1-one-law-consumers",
+        "status": "in_progress"
       }
     ]
   },

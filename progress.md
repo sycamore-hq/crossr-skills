@@ -769,9 +769,9 @@ Second book. The extractor did not move. Per [`docs/plans/pr5-one-law-prompt-set
 - [#118](https://github.com/sycamore-hq/crossr-skills/pull/118), rebase-merged 2026-09-03 as `e2647be`..`0bd2c40` (3 commits).
 - `.agents/skills/ocaml/`: card + 9 topic refs (RE RP RL RF RM RT RA RC RS) + 2 contract refs + generated `RULES.md` (75 rules). `RM` (monads) is a prefix the rust book does not use.
 - `git diff --stat` against 5a: zero lines of `scripts/extract-rules` or the `rules-*` justfile targets.
-- Catalog added `ocaml`. `ocaml-code-writer` marked superseded (deleted later in 5c).
+- Catalog added `ocaml`. `ocaml-code-writer` marked superseded; deleted in 5c ([#120](https://github.com/sycamore-hq/crossr-skills/pull/120), `4b8601e`).
 
-Recorded after the fact. #119 said 5b was in flight; 5b then merged without a follow-up row. `gan-layer-separation` phase closed with 5a/5b on the books (work#5, work#6). 5f still closes the PR 5 stack.
+Recorded after the fact. #119 said 5b was in flight; 5b then merged without a follow-up row. 5c is on main (#120). 5f still closes the PR 5 stack.
 
 ### github-pr-skills — gh-pr-01 (COMPLETED)
 
