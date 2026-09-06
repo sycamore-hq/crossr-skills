@@ -752,6 +752,27 @@ Pin bump + `just regen-agents` + plan record after 4a landed. Per [`docs/plans/g
 - Conductor window: 7,121 bytes (`axel` 5,989 + `gan-verdict` 1,132).
 - Stack: loops [#7](https://github.com/sycamore-hq/crossr-loops/pull/7) → [#110](https://github.com/sycamore-hq/crossr-skills/pull/110).
 
+### gan-layer-separation — PR 5a (COMPLETED)
+
+Book infrastructure + the rust book. Per [`docs/plans/gan-layer-separation-plan.md`](docs/plans/gan-layer-separation-plan.md) §4 PR 5 / [`docs/plans/pr5-one-law-prompt-set.md`](docs/plans/pr5-one-law-prompt-set.md) brief 5a.
+
+- [#117](https://github.com/sycamore-hq/crossr-skills/pull/117), rebase-merged 2026-09-03 as `ecc1e62`..`94e3a15` (7 commits). 15 review threads, all resolved.
+- `.agents/skills/rust/`: card + 9 topic refs + 2 contract refs + generated `RULES.md`.
+- `scripts/extract-rules`; `just rules-sync` / `rules-check`; `rules-check` in `harness-validate`.
+- `docs/book-topics.md` is the only home of the prefix rows.
+- Book marker is `metadata.book: "true"`. Rule retirement is supersession, not deletion.
+
+### gan-layer-separation — PR 5b (COMPLETED)
+
+Second book. The extractor did not move. Per [`docs/plans/pr5-one-law-prompt-set.md`](docs/plans/pr5-one-law-prompt-set.md) brief 5b.
+
+- [#118](https://github.com/sycamore-hq/crossr-skills/pull/118), rebase-merged 2026-09-03 as `e2647be`..`0bd2c40` (3 commits).
+- `.agents/skills/ocaml/`: card + 9 topic refs (RE RP RL RF RM RT RA RC RS) + 2 contract refs + generated `RULES.md` (75 rules). `RM` (monads) is a prefix the rust book does not use.
+- `git diff --stat` against 5a: zero lines of `scripts/extract-rules` or the `rules-*` justfile targets.
+- Catalog added `ocaml`. `ocaml-code-writer` marked superseded; deleted in 5c ([#120](https://github.com/sycamore-hq/crossr-skills/pull/120), `4b8601e`).
+
+Recorded after the fact. #119 said 5b was in flight; 5b then merged without a follow-up row. 5c is on main (#120). 5f still closes the PR 5 stack.
+
 ### gan-layer-separation — PR 5f (COMPLETED)
 
 Pin bump + `just regen-agents` + plan record after 5a–5e and 5g landed. Per

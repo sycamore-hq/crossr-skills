@@ -204,7 +204,7 @@ class LiveTree(unittest.TestCase):
             self.plan_html,
             (
                 PIN,
-                "v1-one-law",
+                "507c509",
                 "requires.book",
                 "metadata.book",
                 "zero-line",
