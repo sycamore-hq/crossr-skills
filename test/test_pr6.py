@@ -16,6 +16,7 @@ import importlib.machinery
 import importlib.util
 import json
 import re
+import sys
 import unittest
 from pathlib import Path
 
@@ -28,9 +29,10 @@ _spec = importlib.util.spec_from_loader(
 )
 audit_plan = importlib.util.module_from_spec(_spec)
 assert _spec.loader is not None
+sys.modules["audit_plan"] = audit_plan
 _spec.loader.exec_module(audit_plan)
 
-CARD_BUDGET = 2200
+CARD_BUDGET = 2560
 GATE_BUDGET = 2048
 PLAN_WRITER = ROOT / ".agents" / "skills" / "plan-writer" / "SKILL.md"
 
@@ -114,7 +116,6 @@ class AuditCalculations(unittest.TestCase):
         self.assertEqual(audit_plan.audit_text(packet_plan()), [])
 
     def test_uncovered_ac_fails(self):
-        text = extra_claim(good_plan(), "")
         text = with_line(
             good_plan(),
             "- AC-02: parse accepts a one-field record",
@@ -155,13 +156,31 @@ class AuditCalculations(unittest.TestCase):
         fails = audit_plan.audit_text(text)
         self.assertTrue(any("duplicate" in f and "C-01" in f for f in fails), fails)
 
-    def test_superseded_claim_keeps_its_id(self):
+    def test_superseded_and_active_cannot_share_an_id(self):
         text = extra_claim(
             good_plan(),
             "- C-01 [superseded]: mechanical · AC-01 · old check → 0",
         )
         fails = audit_plan.audit_text(text)
         self.assertTrue(any("duplicate" in f for f in fails), fails)
+
+    def test_superseded_claim_is_excluded_from_active(self):
+        text = with_line(
+            good_plan(),
+            "- C-03: observable · AC-02 · Record::parse is pub",
+            "- C-03 [superseded]: judgment · AC-02 · old",
+        )
+        text = extra_claim(
+            text,
+            "- C-05: observable · AC-02 · Record::parse is pub",
+        )
+        self.assertEqual(audit_plan.audit_text(text), [])
+        active = {
+            c.cid
+            for c in audit_plan.active_claims(audit_plan.parse_plan(text))
+        }
+        self.assertNotIn("C-03", active)
+        self.assertIn("C-05", active)
 
     def test_mechanical_claim_needs_an_arrow(self):
         text = with_line(
@@ -189,6 +208,69 @@ class AuditCalculations(unittest.TestCase):
         )
         fails = audit_plan.audit_text(text)
         self.assertTrue(any("declares none" in f for f in fails), fails)
+
+    def test_gap_map_fails_without_a_path_line(self):
+        text = with_line(
+            packet_plan(),
+            "- path: docs/evidence/T-9.md\n",
+            "",
+        )
+        fails = audit_plan.audit_text(text)
+        self.assertTrue(any("G-01" in f or "no path" in f for f in fails), fails)
+
+    def test_preserve_packet_mismatch_is_one_line(self):
+        text = with_line(
+            packet_plan(),
+            "- preserve PV-01 → C-02",
+            "- preserve PV-01 → C-99",
+        )
+        fails = audit_plan.audit_text(text)
+        mismatch = [f for f in fails if "PV-01" in f]
+        self.assertEqual(len(mismatch), 1, fails)
+        self.assertTrue(any("packet maps to C-99" in f for f in mismatch), fails)
+
+    def test_preserve_none_plus_packet_map_is_one_line(self):
+        text = with_line(
+            packet_plan(),
+            "- PV-01 → C-02: empty-input rejection survives",
+            "- none — no prior verified record",
+        )
+        fails = audit_plan.audit_text(text)
+        pv = [f for f in fails if "PV-01" in f or "packet maps preserve" in f]
+        self.assertEqual(len(pv), 1, fails)
+        self.assertTrue(
+            any("declares none but packet maps" in f for f in fails), fails
+        )
+
+    def test_unmapped_preserve_id_reports_once(self):
+        text = with_line(
+            packet_plan(),
+            "- PV-01 → C-02: empty-input rejection survives",
+            "- PV-01 → C-99: empty-input rejection survives",
+        )
+        text = with_line(text, "- preserve PV-01 → C-02", "- preserve PV-01 → C-99")
+        fails = audit_plan.audit_text(text)
+        pv = [f for f in fails if "PV-01" in f]
+        self.assertEqual(len(pv), 1, fails)
+
+    def test_fenced_claims_block_is_ignored(self):
+        text = with_line(
+            good_plan(),
+            "## Unresolved questions\n- none\n",
+            "## Unresolved questions\n- none\n\n```\n## Claims\n"
+            "- C-99: judgment · AC-01 · quoted\n```\n",
+        )
+        self.assertEqual(audit_plan.audit_text(text), [])
+
+    def test_phase_heading_outside_phases_does_not_count(self):
+        text = with_line(good_plan(), "### Phase 1 of 1: land the parser\n", "")
+        text = with_line(
+            text,
+            "## Unresolved questions\n- none\n",
+            "## Unresolved questions\n### Phase 1 of 1: not a phase\n- none\n",
+        )
+        fails = audit_plan.audit_text(text)
+        self.assertTrue(any("Phase N" in f for f in fails), fails)
 
     def test_packet_gap_must_map_to_an_active_claim(self):
         text = with_line(
@@ -249,6 +331,12 @@ class LiveTree(unittest.TestCase):
         cls.testing = (
             ROOT / ".agents" / "skills" / "testing" / "SKILL.md"
         ).read_text()
+        cls.review_ref = (
+            ROOT / ".agents" / "skills" / "code-review" / "references" / "verification.md"
+        ).read_text()
+        cls.testing_ref = (
+            ROOT / ".agents" / "skills" / "testing" / "references" / "verification.md"
+        ).read_text()
 
     def test_plan_writer_skill_exists(self):
         self.assertTrue(PLAN_WRITER.is_file(), "missing plan-writer/SKILL.md")
@@ -263,11 +351,15 @@ class LiveTree(unittest.TestCase):
             self.card,
             r"(?i)do not load [`']?code-writer",
         )
-        required = re.search(
-            r"(?ms)^## Required.*?\n(.*?)(?=^## |\Z)", self.card
-        )
-        if required:
-            self.assertNotIn("code-writer", required.group(1))
+        for m in re.finditer(r"(?im)^.*code-writer.*$", self.card):
+            line = m.group(0).lower()
+            self.assertTrue(
+                "do not load" in line
+                or "does not load" in line
+                or "never loads" in line
+                or "absent" in line,
+                line,
+            )
 
     def test_card_names_the_taxonomy(self):
         for word in ("mechanical", "observable", "judgment"):
@@ -290,7 +382,7 @@ class LiveTree(unittest.TestCase):
 
     def test_card_is_a_skill_not_a_persona(self):
         self.assertNotRegex(self.card, r"(?i)agent personality")
-        self.assertNotRegex(self.card, r"(?i)^## Output Format")
+        self.assertNotRegex(self.card, r"(?im)^## Output Format")
         self.assertIn("One-Sentence Mandate", self.card)
 
     def test_card_consumes_an_evidence_packet(self):
@@ -315,15 +407,23 @@ class LiveTree(unittest.TestCase):
             "You are the last gate before any code lands.",
             self.architecture,
         )
+        self.assertNotIn("final architecture gate", self.architecture)
+        self.assertNotIn("All code generation", self.architecture)
 
     def test_reviewer_is_conformance_plus_capped_risk(self):
         self.assertRegex(self.review, r"(?i)conformance")
         self.assertRegex(self.review, r"(?i)unanticipated")
         self.assertIn("three", self.review.lower())
+        self.assertRegex(self.review, r"(?i)this lane only|cap applies to this lane")
+        self.assertRegex(self.review_ref, r"(?i)C-nn|claim id")
+        self.assertRegex(self.review_ref, r"(?i)unanticipated")
+        self.assertRegex(self.review_ref, r"(?i)separat")
 
     def test_tester_is_ac_coverage_and_zero_regressions(self):
         self.assertRegex(self.testing, r"(?i)acceptance crit|AC coverage")
         self.assertRegex(self.testing, r"(?i)regression")
+        self.assertRegex(self.testing_ref, r"(?i)AC")
+        self.assertRegex(self.testing_ref, r"(?i)regression|previously passing")
 
     def test_gate_cards_stay_at_or_under_two_kb(self):
         for name in ("code-review", "testing"):

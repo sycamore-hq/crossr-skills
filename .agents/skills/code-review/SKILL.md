@@ -18,7 +18,13 @@ Adversaries load the disclosed book's `RULES.md` only. Never `<book>/references/
 
 ## What this gate verifies
 
-Faithfulness to the blessed plan and the PBI AC (conformance), plus one bounded unanticipated-risk pass — at most three findings, each a concrete failure mode. Architectural risk escalates; do not resolve it inline. Quality, layering, error handling, tooling, and API surface against `code-writer` and the disclosed book's Rules projection when one exists. Fail any rule = reject.
+Three lanes, each with its own bound:
+
+1. **Conformance.** One verdict per plan claim id; every claimed AC accounted for. Any unsatisfied claim = REJECT. No cap.
+2. **Rules.** `code-writer` and the disclosed book's Rules projection, cited by rule id. Any violation = REJECT. No cap.
+3. **Unanticipated risk.** At most three findings, each a concrete failure mode in the diff. Architectural risk escalates; do not resolve it inline. The cap applies to this lane only.
+
+A finding a rule id already covers is lane 2, never lane 3.
 
 **Response contract**: verdicts and report envelope follow the `gan-verdict` skill — `code-review: BLESS | REJECT`, a `REJECT` citing concrete blockers.
 
