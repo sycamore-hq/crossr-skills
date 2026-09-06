@@ -6,10 +6,11 @@ id integrity, and preserve-vs-grow (rule 5). When an evidence packet is
 named, every gap and preservation constraint must be a claim.
 
 Usage:
-  ./scripts/audit-plan <plan.md>
+  ./scripts/audit-plan [--loc-threshold N] <plan.md>
 
-Exit 0 on pass, 1 on fail, 2 on usage error. Calculations are pure; loading
-the file is the action.
+`--loc-threshold N` fails any phase whose `- est. LOC:` exceeds N.
+No flag, no check. Exit 0 on pass, 1 on fail, 2 on usage error.
+Calculations are pure; loading the file is the action.
 """
 
 from __future__ import annotations
@@ -34,7 +35,8 @@ PRESERVE_ITEM_RE = re.compile(r"^- (PV-\d+)\s+→\s+(C-\d+):\s+(.+)$")
 GAP_MAP_RE = re.compile(r"^- gap (G-\d+)\s+→\s+(C-\d+)")
 PRESERVE_MAP_RE = re.compile(r"^- preserve (PV-\d+)\s+→\s+(C-\d+)")
 PACKET_PATH_RE = re.compile(r"^- path:\s+(\S+)")
-PHASE_RE = re.compile(r"^### Phase\s+\d+")
+PHASE_RE = re.compile(r"^### Phase\s+(\d+)")
+EST_LOC_RE = re.compile(r"^- est\. LOC:\s+(\d+)")
 SECTION_RE = re.compile(r"^## (.+)$")
 
 
@@ -77,6 +79,7 @@ class Plan:
     gaps: list[GapMap] = field(default_factory=list)
     evidence_path: str | None = None
     phase_count: int = 0
+    phase_locs: list[tuple[int, int | None]] = field(default_factory=list)
     has_questions: bool = False
     sections: list[str] = field(default_factory=list)
 
@@ -108,9 +111,17 @@ def parse_plan(text: str) -> Plan:
             if section == "Unresolved questions":
                 plan.has_questions = True
             continue
-        if section == "Phases" and PHASE_RE.match(line):
-            plan.phase_count += 1
-            continue
+        if section == "Phases":
+            phase = PHASE_RE.match(line)
+            if phase:
+                plan.phase_count += 1
+                plan.phase_locs.append((int(phase.group(1)), None))
+                continue
+            loc = EST_LOC_RE.match(line)
+            if loc and plan.phase_locs:
+                num, _ = plan.phase_locs[-1]
+                plan.phase_locs[-1] = (num, int(loc.group(1)))
+                continue
         if section == "Acceptance Criteria":
             m = AC_RE.match(line)
             if m:
@@ -230,7 +241,7 @@ def required_sections_missing(plan: Plan) -> list[str]:
     return [s for s in needed if s not in have]
 
 
-def audit(plan: Plan) -> list[str]:
+def audit(plan: Plan, loc_threshold: int | None = None) -> list[str]:
     """Return human-readable failure lines. Empty means pass."""
     fails: list[str] = []
     if not plan.pbi:
@@ -299,23 +310,55 @@ def audit(plan: Plan) -> list[str]:
         fails.append(
             "evidence packet present but no gap or preserve maps to claims"
         )
+    if loc_threshold is not None:
+        for num, est in plan.phase_locs:
+            if est is not None and est > loc_threshold:
+                fails.append(
+                    f"phase {num} est. LOC {est} exceeds {loc_threshold}"
+                )
     return fails
 
 
-def audit_text(text: str) -> list[str]:
-    return audit(parse_plan(text))
+def audit_text(text: str, loc_threshold: int | None = None) -> list[str]:
+    return audit(parse_plan(text), loc_threshold=loc_threshold)
+
+
+def parse_argv(args: list[str]) -> tuple[str, int | None] | None:
+    """Return (path, loc_threshold) or None on usage error."""
+    loc_threshold: int | None = None
+    path: str | None = None
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg == "--loc-threshold":
+            if loc_threshold is not None or i + 1 >= len(args):
+                return None
+            try:
+                loc_threshold = int(args[i + 1])
+            except ValueError:
+                return None
+            i += 2
+            continue
+        if arg.startswith("-") or path is not None:
+            return None
+        path = arg
+        i += 1
+    if path is None:
+        return None
+    return path, loc_threshold
 
 
 def main(argv: list[str]) -> int:
-    args = argv[1:]
-    if len(args) != 1:
-        print("usage: audit-plan <plan.md>", file=sys.stderr)
+    parsed = parse_argv(argv[1:])
+    if parsed is None:
+        print("usage: audit-plan [--loc-threshold N] <plan.md>", file=sys.stderr)
         return 2
-    path = Path(args[0])
+    raw_path, loc_threshold = parsed
+    path = Path(raw_path)
     if not path.is_file():
         print(f"✗ {path} is not a file", file=sys.stderr)
         return 1
-    fails = audit_text(path.read_text())
+    fails = audit_text(path.read_text(), loc_threshold=loc_threshold)
     if fails:
         print(f"✗ {path}: {len(fails)} plan-audit failure(s)")
         for line in fails:

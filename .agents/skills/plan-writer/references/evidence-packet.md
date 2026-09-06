@@ -23,7 +23,9 @@ verified record the harness discloses for a prior increment.
 
 `scripts/audit-plan` fails a named packet that maps a gap or preserve
 id to a missing or superseded claim, or that names a path and then
-maps nothing.
+maps nothing. With a packet named, every `## Preserve` item must also
+appear as a packet `preserve` map; author-added preservation is not
+allowed.
 
 ## Not this card
 

@@ -24,7 +24,8 @@ Judgment ≤ 30% of active claims. Ids `C-01` are append-only.
 `docs/plans/pbi/<id>.plan.md` or `<backlog>/plans/<id>.plan.md`.
 Never `.pinto/tasks/`. `references/artifact.md`.
 
-Required: Phases (the decomposition), Acceptance Criteria, Claims
+Required: Phases (the decomposition; each states an estimated LOC when
+decomposition mode is disclosed), Acceptance Criteria, Claims
 (`C-01: <type> · AC-01 · text`), Preserve, Unresolved questions.
 
 `scripts/audit-plan` runs before the Architect. Red = no LLM.

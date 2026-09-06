@@ -17,6 +17,7 @@ import importlib.util
 import json
 import re
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -307,6 +308,49 @@ class AuditCalculations(unittest.TestCase):
             ("AC-01", "AC-02"),
         )
 
+    def test_author_added_preserve_fails_when_packet_named(self):
+        text = with_line(
+            packet_plan(),
+            "- PV-01 → C-02: empty-input rejection survives",
+            "- PV-01 → C-02: empty-input rejection survives\n"
+            "- PV-02 → C-04: test suite stays green",
+        )
+        fails = audit_plan.audit_text(text)
+        self.assertTrue(
+            any("PV-02" in f and "no preserve map" in f for f in fails), fails
+        )
+
+    def test_loc_threshold_fails_an_oversize_phase(self):
+        text = with_line(
+            good_plan(),
+            "### Phase 1 of 1: land the parser\n",
+            "### Phase 1 of 1: land the parser\n- est. LOC: 2000\n",
+        )
+        self.assertEqual(audit_plan.audit_text(text), [])
+        fails = audit_plan.audit_text(text, loc_threshold=1500)
+        self.assertTrue(
+            any("phase 1 est. LOC 2000 exceeds 1500" in f for f in fails), fails
+        )
+
+    def test_cli_loc_threshold_and_plain_invocation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "plan.md"
+            path.write_text(
+                with_line(
+                    good_plan(),
+                    "### Phase 1 of 1: land the parser\n",
+                    "### Phase 1 of 1: land the parser\n- est. LOC: 2000\n",
+                )
+            )
+            self.assertEqual(audit_plan.main(["audit-plan", str(path)]), 0)
+            self.assertEqual(
+                audit_plan.main(
+                    ["audit-plan", "--loc-threshold", "1500", str(path)]
+                ),
+                1,
+            )
+        self.assertEqual(audit_plan.main(["audit-plan"]), 2)
+
 
 class LiveTree(unittest.TestCase):
     @classmethod
@@ -336,6 +380,17 @@ class LiveTree(unittest.TestCase):
         ).read_text()
         cls.testing_ref = (
             ROOT / ".agents" / "skills" / "testing" / "references" / "verification.md"
+        ).read_text()
+        cls.artifact = (
+            ROOT / ".agents" / "skills" / "plan-writer" / "references" / "artifact.md"
+        ).read_text()
+        cls.packet_ref = (
+            ROOT
+            / ".agents"
+            / "skills"
+            / "plan-writer"
+            / "references"
+            / "evidence-packet.md"
         ).read_text()
 
     def test_plan_writer_skill_exists(self):
@@ -409,6 +464,21 @@ class LiveTree(unittest.TestCase):
         )
         self.assertNotIn("final architecture gate", self.architecture)
         self.assertNotIn("All code generation", self.architecture)
+        self.assertRegex(self.architecture, r"(?i)decomposition mode")
+        self.assertRegex(self.architecture, r"(?i)stated size exceeds")
+
+    def test_phases_state_size_under_decomposition_mode(self):
+        self.assertRegex(self.card, r"(?i)estimated LOC")
+        self.assertRegex(self.card, r"(?i)decomposition mode")
+        self.assertRegex(self.artifact, r"(?i)est\. LOC")
+        self.assertRegex(self.artifact, r"(?i)halts the commit")
+        self.assertRegex(self.artifact, r"(?i)nobody splits")
+
+    def test_packet_ref_states_the_reverse_preserve_check(self):
+        self.assertRegex(
+            self.packet_ref,
+            r"(?is)author-added preservation is not\s+allowed",
+        )
 
     def test_reviewer_is_conformance_plus_capped_risk(self):
         self.assertRegex(self.review, r"(?i)conformance")
