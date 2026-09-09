@@ -7,6 +7,10 @@ the chain. It is written in the plan-artifact shape so `just plan-audit
 docs/plans/graph-runner-prompt-set.md` gates it, and
 `test/test_graph_runner_prompt_set.py` keeps it gated. No HTML twin.
 
+Answers 1–6 (2026-09-09) are folded into the decisions table: serde
+approved; explicit `start` key (R0); toolchain pinned; one book sentence;
+`verify-graphs` shells out to cargo; ledger unparked.
+
 Preconditions, measured 2026-09-09 on `origin/main` of each remote:
 
 | repo | head | `skills` pin | `loops` pin | Rust crates |
@@ -40,16 +44,16 @@ nothing reads the runner).
 
 | # | Decision |
 |---|---|
-| 1 | Rust crate `runner/` in `crossr-loops` (workspace root `Cargo.toml`, binary `graph-runner`). Dependencies: `serde` + `serde_json` for the JSON, `thiserror` for typed errors. Nothing else — argv is hand-parsed. The two serde crates need the human's approval (Unresolved 1). |
+| 1 | Rust crate `runner/` in `crossr-loops` (workspace root `Cargo.toml`, binary `graph-runner`). Dependencies: `serde` + `serde_json` for the JSON (approved 2026-09-09), `thiserror` for typed errors. Nothing else — argv is hand-parsed. Edition `2021` and `rust-version = "1.94"` in `runner/Cargo.toml`; `rust-toolchain.toml` at the workspace root pins `channel = "1.94.1"` (the toolchain measured on the authoring container). A bump is a commit that says why, never a side effect. |
 | 2 | Stepper, not executor. No `std::process::Command`, no network crate, no interpreter. Events come from the caller. The runner never decides a verdict. |
-| 3 | Semantics. Start node = `nodes[0]` (document order; `avril` and `code-gan` have no in-degree-0 node, so in-degree cannot define it). Sink = a node with no out-edges (`code-gan/commit` is a `gate` sink; `role: terminal` is a sink by construction). An unlabeled edge fires on the reserved event `next`; a graph whose edge carries `when: "next"` fails to load. An adversary node accepts `BLESS` / `REJECT` and nothing else. Two out-edges of one node with the same label (or both unlabeled) fail to load as ambiguous. An event with no matching out-edge fails loud, naming the node and its accepted labels. |
+| 3 | Semantics. Start node = the graph's required top-level `start` key, which must name a node (R0 adds it to `schema.json`, every graph, and `verify-graphs`; document order and in-degree are not the rule — `avril` and `code-gan` have no in-degree-0 node). Sink = a node with no out-edges (`code-gan/commit` is a `gate` sink; `role: terminal` is a sink by construction). An unlabeled edge fires on the reserved event `next`; a graph whose edge carries `when: "next"` fails to load. An adversary node accepts `BLESS` / `REJECT` and nothing else. Two out-edges of one node with the same label (or both unlabeled) fail to load as ambiguous. An event with no matching out-edge fails loud, naming the node and its accepted labels. |
 | 4 | Completion. A walk is complete iff it stands on a sink at depth 0 with the event list exhausted. Events left over after a sink → `trailing events`. Events exhausted before a sink → `incomplete at <graph>:<node>`. Exit 0 / 1 / 2 (usage). |
-| 5 | Descent (R3). A `role: graph` node descends into `<dir>/<uses.graph>.json` at its `nodes[0]`; the subgraph's sink returns to the parent node, and the **next** event selects the parent's out-edge. `--flat` treats the node as opaque. Descent is the default from R3 on; R2 commits walks only for graphs without `graph` nodes. |
-| 6 | Walk files. `graphs/walks/<graph>.<name>.walk`, one event per line, `#` comments, blank lines ignored. The prefix before the first `.` names the graph. Committed. `graph-runner cover graphs` replays every walk (descent on) and reports every `(graph, edge)` no walk took; `cargo test` fails while that count is above zero. |
-| 7 | `graphs/schema.json` stays the shape authority and `verify-graphs` stays the shape gate. The Rust loader is a consumer: `deny_unknown_fields`, the same role enum, and a test that reads the schema's role enum and compares it to the Rust enum so the two cannot drift silently. Neither the schema nor any `graphs/*.json` changes in this chain. |
+| 5 | Descent (R3). A `role: graph` node descends into `<dir>/<uses.graph>.json` at that graph's `start`; the subgraph's sink returns to the parent node, and the **next** event selects the parent's out-edge. `--flat` treats the node as opaque. Descent is the default from R3 on; R2 commits walks only for graphs without `graph` nodes. |
+| 6 | Walk files. `graphs/walks/<graph>.<name>.walk`, one event per line, `#` comments, blank lines ignored. The prefix before the first `.` names the graph. Committed. `graph-runner cover graphs` replays every walk (descent on) and reports every `(graph, edge)` no walk took; `cargo test` fails while that count is above zero. From R3, `scripts/verify-graphs` shells out to `cargo run -q -p graph-runner -- cover graphs` whenever `runner/Cargo.toml` exists and fails when cargo is missing or the count is above zero — no silent skip. `just graphs-cover` stays as the direct target. |
+| 7 | `graphs/schema.json` stays the shape authority and `verify-graphs` stays the shape gate. The Rust loader is a consumer: `deny_unknown_fields`, the same role enum, and a test that reads the schema's role enum and compares it to the Rust enum so the two cannot drift silently. The schema and the five graphs change once, in R0, by the `start` key alone, and are byte-identical across R1–R3. |
 | 8 | Not this chain: bootstrap installing the runner in consumers; a conductor card or persona invoking it; Rhai; OpenCode-native execution; a tag; a pin move. `lockfile.toml` is untouched. |
 | 9 | The `justfile` fallbacks `\|\| echo "(no Rust crates)"` are deleted in R1. Once a crate exists they would swallow a red `cargo test`. |
-| 10 | Docs move with the code: `graphs/GRAPH.md`, `README.md` Graphs line, `AGENTS.md` "topology, not a runtime" line. `progress.md` + `features.json` gain a `graph-runner` phase with one row per PR. `book/` untouched (Unresolved 4). |
+| 10 | Docs move with the code: `graphs/GRAPH.md`, `README.md` Graphs line, `AGENTS.md` "topology, not a runtime" line, and one sentence in `book/src/pipeline/overview.md` after "Topology (not law)" naming the replayer. `progress.md` + `features.json` gain a `graph-runner` phase with one row per PR. Nothing else in `book/`. |
 | 11 | No CI (standing decision 8 from PR 5 / PR 7). Every brief's VALIDATE output is pasted in the PR body and re-run on the merge commit. |
 | 12 | Ledger. `work.json` `graph-runner` flips `parked` → `todo` / `planned` with this file as `source` (this prompt set's own PR in `work`). R4 flips it to `done`. `just project-roadmap` refreshes issue #14's labels — the human runs it (org write). |
 
@@ -59,7 +63,8 @@ nothing reads the runner).
 
 | PR | Repo | State | Evidence |
 |---|---|---|---|
-| R1 | loops | Not started | No `Cargo.toml` on `9e5b3f1`. |
+| R0 | loops | Not started | No `start` key in `graphs/schema.json` on `9e5b3f1`. |
+| R1 | loops | Not started | No `Cargo.toml` on `9e5b3f1`. Blocked by R0. |
 | R2 | loops | Not started | Blocked by R1. |
 | R3 | loops | Not started | Blocked by R2. |
 | R4 | work | Not started | `work.json` `graph-runner` is `parked`; this prompt set's PR makes it `todo`. |
@@ -72,19 +77,23 @@ Stack order is merge order. Each loops PR is one reviewable unit; each
 appends its own `progress.md` row and `features.json` commit row under the
 `graph-runner` phase.
 
-### Phase 1 of 4: R1 — loops: crate scaffold, typed graph model, `check`
-- est. LOC: 420
-- Workspace `Cargo.toml` + `runner/` crate; `Graph` / `Node` / `Role` / `Edge` / `NodeId` / `Label` types; loader with `deny_unknown_fields`; load-time checks (reserved `next`, ambiguous edges, edge endpoints, `uses.graph` exclusive of `uses.skill`); `graph-runner check <dir>`; justfile fallbacks deleted; `runner-check` target.
+### Phase 1 of 5: R0 — loops: explicit `start` in schema, graphs, verify-graphs
+- est. LOC: 60
+- `graphs/schema.json` gains required `start` (node-id pattern); each of the five graphs gains `"start": "<entry node>"`; `scripts/verify-graphs` allows the key, requires it, and checks it names a node; `graphs/index.html` regenerated.
 
-### Phase 2 of 4: R2 — loops: stepper, `walk`, happy-path walks
+### Phase 2 of 5: R1 — loops: crate scaffold, typed graph model, `check`
+- est. LOC: 440
+- Workspace `Cargo.toml` + `rust-toolchain.toml` + `runner/` crate; `Graph` / `Node` / `Role` / `Edge` / `NodeId` / `Label` types; loader with `deny_unknown_fields`; load-time checks (reserved `next`, ambiguous edges, edge endpoints, `uses.graph` exclusive of `uses.skill`); `graph-runner check <dir>`; justfile fallbacks deleted; `runner-check` target.
+
+### Phase 3 of 5: R2 — loops: stepper, `walk`, happy-path walks
 - est. LOC: 450
 - `Event` type (`Next` | `Verdict` | `Label`); pure `step` and `walk`; trace rendering; `graph-runner walk <graph.json> <walk-file>`; walk files for `avril`, `code-gan`, `brick`; unmatched-event and adversary tests.
 
-### Phase 3 of 4: R3 — loops: descent, `cover`, full edge coverage, docs
+### Phase 4 of 5: R3 — loops: descent, `cover`, full edge coverage, docs
 - est. LOC: 450
-- Subgraph descent with depth in the trace; `--flat`; `graph-runner cover <dir>`; walks for `axel` and `flagship` plus the REJECT / fail / missing-evidence / unsatisfiable-claim walks so every edge is taken; `cargo test` gate on zero uncovered edges; GRAPH.md / README / AGENTS.md wording.
+- Subgraph descent with depth in the trace; `--flat`; `graph-runner cover <dir>`; walks for `axel` and `flagship` plus the REJECT / fail / missing-evidence / unsatisfiable-claim walks so every edge is taken; `cargo test` gate on zero uncovered edges; `verify-graphs` shells out to cover; GRAPH.md / README / AGENTS.md / book overview wording.
 
-### Phase 4 of 4: R4 — work: ledger close
+### Phase 5 of 5: R4 — work: ledger close
 - est. LOC: 30
 - `work.json` `graph-runner` → `done` with the three loops PR numbers and merge SHAs; board regenerated; `progress.md` line.
 
@@ -92,43 +101,50 @@ appends its own `progress.md` row and `features.json` commit row under the
 
 ## Acceptance Criteria
 
-- AC-01: `graph-runner` loads every committed `graphs/*.json` into typed domain values and refuses unknown keys, unknown roles, dangling edge endpoints, ambiguous out-edges, and the reserved label `next`.
+- AC-01: `graph-runner` loads every committed `graphs/*.json` into typed domain values and refuses unknown keys, unknown roles, dangling edge endpoints, ambiguous out-edges, a `start` that names no node, and the reserved label `next`.
+- AC-09: Every graph names its entry node in a required `start` key; `schema.json` and `verify-graphs` enforce it, and the five graphs change by that key alone.
 - AC-02: The runner is a stepper and replayer only — no model call, no process spawn, no network, no interpreter, no `SKILL.md` read.
-- AC-03: Stepping semantics are fixed and observable: start is `nodes[0]`, a sink has no out-edges, unlabeled edges fire on `next`, adversary nodes accept only `BLESS` / `REJECT`, an unmatched event fails loud naming the node and its accepted labels, and the exit code says whether the walk completed.
+- AC-03: Stepping semantics are fixed and observable: start is the graph's `start` node, a sink has no out-edges, unlabeled edges fire on `next`, adversary nodes accept only `BLESS` / `REJECT`, an unmatched event fails loud naming the node and its accepted labels, and the exit code says whether the walk completed.
 - AC-04: `role: graph` nodes descend into the referenced graph and return at its sink; `flagship` replays to its sink through `avril`, `axel`, and `code-gan`.
-- AC-05: Every edge of every committed graph is taken by at least one committed walk under `graphs/walks/`, proven by `graph-runner cover` and gated by `cargo test`.
-- AC-06: The existing gates stay green and the law stays byte-identical: `verify-graphs`, `verify-protocol`, `verify-skill-refs`, the Python tests; `graphs/*.json`, `graphs/schema.json`, every `SKILL.md`, every persona, and `lockfile.toml` unchanged across R1–R3.
-- AC-07: The `just` ritual runs the Rust matrix for real — no `|| echo` fallback — and `cargo fmt --check`, `cargo clippy` (pedantic, `-D warnings`), and `cargo test` are green on every loops PR.
-- AC-08: Docs and trackers say what the runner is and is not (GRAPH.md, README, AGENTS.md, `progress.md`, `features.json`), name no Rhai and no OpenCode executor as a capability, and the work ledger closes `graph-runner`.
+- AC-05: Every edge of every committed graph is taken by at least one committed walk under `graphs/walks/`, proven by `graph-runner cover`, gated by `cargo test`, and re-run by `verify-graphs` through cargo.
+- AC-06: The existing gates stay green and the law stays byte-identical: `verify-graphs`, `verify-protocol`, `verify-skill-refs`, the Python tests; `graphs/*.json` and `graphs/schema.json` unchanged across R1–R3, every `SKILL.md`, every persona, and `lockfile.toml` unchanged across R0–R3.
+- AC-07: The `just` ritual runs the Rust matrix for real — no `|| echo` fallback — on a pinned toolchain, and `cargo fmt --check`, `cargo clippy` (pedantic, `-D warnings`), and `cargo test` are green on every loops PR.
+- AC-08: Docs and trackers say what the runner is and is not (GRAPH.md, README, AGENTS.md, the book overview, `progress.md`, `features.json`), name no Rhai and no OpenCode executor as a capability, and the work ledger closes `graph-runner`.
 
 ## Claims
 
 - C-01: mechanical · AC-01 · `cargo run -q -p graph-runner -- check graphs` → exit 0, one `✓` line per graph, `5 graphs OK`
-- C-02: mechanical · AC-01 · `cargo test -p graph-runner load_` → tests `load_rejects_unknown_key`, `load_rejects_unknown_role`, `load_rejects_dangling_edge`, `load_rejects_ambiguous_out_edges`, `load_rejects_reserved_next` pass
+- C-02: mechanical · AC-01 · `cargo test -p graph-runner load_` → tests `load_rejects_unknown_key`, `load_rejects_unknown_role`, `load_rejects_dangling_edge`, `load_rejects_ambiguous_out_edges`, `load_rejects_reserved_next`, `load_rejects_start_naming_no_node` pass
 - C-03: mechanical · AC-01, AC-03 · `cargo test -p graph-runner role_enum_matches_schema` → the `role` enum read from `graphs/schema.json` equals the Rust `Role` variants, in order
 - C-04: observable · AC-02 · `runner/Cargo.toml` `[dependencies]` lists exactly `serde`, `serde_json`, `thiserror`
 - C-05: mechanical · AC-02 · `rg -n 'process::Command|rhai|reqwest|SKILL\.md|std::net' runner/src` → 0 hits
 - C-06: mechanical · AC-03 · `cargo run -q -p graph-runner -- walk graphs/avril.json graphs/walks/avril.happy.walk` → exit 0, last trace line ends at `stop`
 - C-07: mechanical · AC-03 · `printf 'next\nfail\n' > /tmp/bad.walk && cargo run -q -p graph-runner -- walk graphs/avril.json /tmp/bad.walk` → exit 1, stderr names `po` and `BLESS, REJECT`
-- C-08: mechanical · AC-03 · `cargo test -p graph-runner step_` → tests `step_unlabeled_edge_fires_on_next`, `step_adversary_rejects_non_verdict`, `step_start_is_first_node`, `step_sink_has_no_out_edges`, `walk_trailing_events_fail`, `walk_incomplete_names_node` pass
+- C-08: mechanical · AC-03 · `cargo test -p graph-runner step_` → tests `step_unlabeled_edge_fires_on_next`, `step_adversary_rejects_non_verdict`, `step_start_is_the_start_key`, `step_sink_has_no_out_edges`, `walk_trailing_events_fail`, `walk_incomplete_names_node` pass
 - C-09: mechanical · AC-04 · `cargo run -q -p graph-runner -- walk graphs/flagship.json graphs/walks/flagship.happy.walk` → exit 0, trace shows depth 1 lines for `avril` and `axel` and depth 2 lines for `code-gan`
 - C-10: mechanical · AC-05 · `cargo run -q -p graph-runner -- cover graphs` → `uncovered edges: 0`, exit 0
 - C-11: mechanical · AC-05 · `cargo test -p graph-runner committed_walks` → every `graphs/walks/*.walk` replays to a sink and `cover` reports zero uncovered edges
-- C-12: mechanical · AC-06 · `git diff --stat origin/main..HEAD -- graphs/*.json graphs/schema.json .agents lockfile.toml` → empty on R1, R2, and R3
+- C-12: mechanical · AC-06 · `git diff --stat origin/main..HEAD -- graphs/*.json graphs/schema.json .agents lockfile.toml` → empty on R1, R2, and R3 (and `-- .agents lockfile.toml` empty on R0)
 - C-13: mechanical · AC-06 · `./scripts/verify-graphs && ./scripts/verify-protocol && python3 -m unittest discover -s test && CROSSR_SKILLS_PATH=<v1-packets checkout> ./scripts/verify-skill-refs` → PASS, PASS, OK (71 tests), PASS
 - C-14: mechanical · AC-07 · `rg -n 'no Rust crates' justfile` → 0 hits
 - C-15: mechanical · AC-07 · `cargo fmt --all --check && cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::pedantic && cargo test --workspace` → exit 0
 - C-16: mechanical · AC-08 · `rg -in 'rhai' graphs/GRAPH.md README.md AGENTS.md runner/ | rg -v -i 'no rhai'` → 0 lines
-- C-17: observable · AC-08 · `graphs/GRAPH.md` states: start is `nodes[0]`, a sink has no out-edges, `next` is the unlabeled-edge event, `SKILL.md` wins, the runner replays and never runs
+- C-17: observable · AC-08 · `graphs/GRAPH.md` states: start is the `start` key, a sink has no out-edges, `next` is the unlabeled-edge event, `SKILL.md` wins, the runner replays and never runs
 - C-18: mechanical · AC-08 · in `work`: `python3 -m unittest discover -s test && python3 scripts/work-board --markdown` → OK and `graph-runner` absent from Startable / Held / In flight
 - C-19: judgment · AC-02 · the trace vocabulary is the graphs' own labels and nothing a conductor could mistake for a verdict or an instruction
 - C-20: judgment · AC-08 · GRAPH.md and README stay honest about "map, not executor" once a stepper exists
 - C-21: mechanical · AC-01 · `test -f Cargo.lock && rg -n '^target/$' .gitignore` → both present
 - C-22: mechanical · AC-06 · `git -C ../crossr-harness diff --stat origin/main..HEAD` → empty (the harness remote is untouched by this chain)
+- C-23: mechanical · AC-09 · on R0: `git diff origin/main..HEAD -- graphs/*.json | rg '^[+-]\s' | rg -v '"start"'` → 0 lines, and `rg -c '"start":' graphs/*.json` → 1 per graph (5 files)
+- C-24: mechanical · AC-09 · on R0: `python3 -c 'import json;print("start" in json.load(open("graphs/schema.json"))["required"])'` → `True`; `./scripts/verify-graphs` → PASS; a `/tmp` copy of `avril.json` with `start` deleted, and one with `start: "nope"`, each → FAIL naming `start`
+- C-25: mechanical · AC-07 · `rg -n '^channel = "1.94.1"' rust-toolchain.toml && rg -n '^rust-version = "1.94"' runner/Cargo.toml && rg -n '^edition = "2021"' runner/Cargo.toml` → three hits
+- C-26: mechanical · AC-05 · on R3: `./scripts/verify-graphs` → output contains `uncovered edges: 0`; `PATH=/usr/bin:/bin ./scripts/verify-graphs` (no cargo) → exit 1 naming `cargo` and `rust-toolchain.toml`
+- C-27: mechanical · AC-05 · `python3 -m unittest discover -s test -k cover` → `parse_cover` tests pass (a pure parse of the cover output: count found, count missing, non-zero count)
+- C-28: observable · AC-08 · `book/src/pipeline/overview.md` carries one sentence after "Topology (not law)" naming `graph-runner` as a replayer that never runs a loop
 
 ## Preserve
 
-- PV-01 → C-12: every `graphs/*.json`, `graphs/schema.json`, `SKILL.md`, and persona byte-identical across R1–R3
+- PV-01 → C-12: every `graphs/*.json` and `graphs/schema.json` byte-identical across R1–R3; every `SKILL.md` and persona byte-identical across R0–R3
 - PV-02 → C-13: the three Python gates and the 71 loops unittest cases keep passing
 - PV-03 → C-16: the split-09 promise — no Rhai, no OpenCode-native executor, no interpreter
 - PV-04 → C-22: bootstrap, HARNESS-SPEC, and every consumer pin untouched; no tag cut
@@ -146,11 +162,13 @@ GUARDRAILS (crossr v2 review standard — violations get the PR rejected):
   never calls a model, never spawns a process, never opens a socket. Paste
   `rg -n 'process::Command|rhai|reqwest|SKILL\.md|std::net' runner/src` (0 hits)
   in the PR body.
-- graphs/*.json, graphs/schema.json, .agents/, lockfile.toml do not change in
-  this chain. Paste `git diff --stat origin/main..HEAD -- graphs/*.json
-  graphs/schema.json .agents lockfile.toml` (empty) in the PR body.
-- Dependencies are exactly serde, serde_json, thiserror. No clap, no anyhow,
-  no rhai. A new crate is a REJECT.
+- graphs/*.json and graphs/schema.json change only in R0, only by the `start`
+  key. .agents/ and lockfile.toml never change. Paste `git diff --stat
+  origin/main..HEAD -- graphs/*.json graphs/schema.json .agents lockfile.toml`
+  (empty after R0) in the PR body.
+- Dependencies are exactly serde, serde_json, thiserror (approved 2026-09-09).
+  No clap, no anyhow, no rhai. A new crate is a REJECT. Toolchain is
+  rust-toolchain.toml `1.94.1`; do not bump it inside a feature PR.
 - Rust matrix on every commit: cargo fmt --all --check; cargo clippy
   --workspace --all-targets --all-features -- -D warnings -W clippy::pedantic;
   cargo test --workspace. Paste the output. Do not #[allow] your way past
@@ -167,8 +185,70 @@ GUARDRAILS (crossr v2 review standard — violations get the PR rejected):
   features.json: one commit row under the `graph-runner` phase. Nothing else
   in either file.
 - Scope is the declared file list. Scope creep is a REJECT. No tag, no pin move,
-  no bootstrap change, no book change.
+  no bootstrap change. book/ changes only in R3, only the one overview.md
+  sentence.
 - There is no CI. Re-run your pasted VALIDATE on the merge commit.
+```
+
+---
+
+## Brief R0 — loops: explicit `start` in schema, graphs, verify-graphs
+
+```
+You are implementing graph-runner R0 in sycamore-hq/crossr-loops.
+Precondition: origin/main is at or after 9e5b3f1; graphs/schema.json has no
+`start` property.
+
+[paste GUARDRAILS]
+
+GOAL: every graph names its entry node explicitly (decision 3). Today the
+entry is implied by document order, and `avril` / `code-gan` have no
+in-degree-0 node, so nothing mechanical can recover it. This PR is Python
+and JSON only — no crate yet.
+
+FILES (the whole list):
+  graphs/schema.json     add `"start": {"type": "string", "pattern":
+                         "^[a-z][a-z0-9-]*$", "description": "Entry node id.
+                         The runner starts here; document order is not the
+                         rule."}` under properties, and "start" to `required`.
+  graphs/avril.json      "start": "generator"
+  graphs/axel.json       "start": "intake"
+  graphs/brick.json      "start": "task-division"
+  graphs/code-gan.json   "start": "generate"
+  graphs/flagship.json   "start": "intent"
+                         Place the key after "name" so the diff is one line
+                         per file. Nothing else in these files changes.
+  scripts/verify-graphs  ALLOWED_GRAPH gains "start"; validate() fails
+                         `<name>: missing start` when absent and
+                         `<name>: start <id!r> is not a node` when dangling.
+                         Keep the pass line shape; append `start <id>` to it.
+  graphs/index.html      regenerate with ./scripts/verify-graphs --html only.
+  test/test_verify_graphs_start.py
+                         pure tests over vg.validate with fixture graphs:
+                         missing start fails, dangling start fails, present
+                         start passes. Load the script the way test_pr7.py
+                         loads verify_graphs.
+  progress.md, features.json one row each (phase "graph-runner" created
+                         here: status in_progress, commit gr-r0 "explicit
+                         start in schema, graphs, verify-graphs", features
+                         ["schema-start", "graph-start-keys",
+                         "verify-graphs-start"]).
+
+VALIDATE (paste all of it):
+  git diff origin/main..HEAD -- graphs/*.json | rg '^[+-]\s' | rg -v '"start"' → 0 lines (C-23)
+  rg -c '"start":' graphs/*.json                              → 1 per file, 5 files (C-23)
+  python3 -c 'import json;print("start" in json.load(open("graphs/schema.json"))["required"])' → True (C-24)
+  ./scripts/verify-graphs                                     → PASS, 5 graphs, each line names its start (C-24)
+  cp graphs/avril.json /tmp/g/avril.json (dir with schema.json) and delete
+  start → ./scripts/verify-graphs against it fails naming `start`; set
+  start "nope" → fails naming `start` and `nope` (C-24; run the validate
+  function from a python one-liner if the script has no --dir flag — do not
+  add a flag for the demo)
+  ./scripts/verify-graphs --html; git status --short graphs/index.html → regenerated once, second run clean
+  git diff --stat origin/main..HEAD -- .agents lockfile.toml   → empty (C-12)
+  ./scripts/verify-protocol; python3 -m unittest discover -s test;
+  CROSSR_SKILLS_PATH=<v1-packets checkout> ./scripts/verify-skill-refs → PASS/OK/PASS (C-13)
+Stack line in the PR body: merges first; R1 follows; no tag.
 ```
 
 ---
@@ -177,7 +257,8 @@ GUARDRAILS (crossr v2 review standard — violations get the PR rejected):
 
 ```
 You are implementing graph-runner R1 in sycamore-hq/crossr-loops.
-Precondition: origin/main is at or after 9e5b3f1 and has no Cargo.toml.
+Precondition: R0 merged (every graph has a `start` key); origin/main has
+no Cargo.toml.
 
 [paste GUARDRAILS]
 
@@ -187,8 +268,11 @@ refuses, plus `graph-runner check`. No stepping yet.
 FILES (the whole list):
   Cargo.toml                 workspace: members = ["runner"], resolver = "2"
   Cargo.lock                 committed (binary crate)
+  rust-toolchain.toml        [toolchain] channel = "1.94.1", components =
+                             ["rustfmt", "clippy"] (decision 1)
   .gitignore                 add `target/`
-  runner/Cargo.toml          name = "graph-runner", edition 2021,
+  runner/Cargo.toml          name = "graph-runner", edition = "2021",
+                             rust-version = "1.94",
                              deps: serde (derive), serde_json, thiserror
   runner/src/lib.rs          pub mod graph; pub mod load;
   runner/src/graph.rs        data: Graph, Node, Role, Edge, NodeId, Label, Uses
@@ -208,7 +292,8 @@ DOMAIN TYPES (encode the schema, do not re-invent it):
     all Option<String>. deny_unknown_fields on every struct.
   - Edge { from: NodeId, to: NodeId, when: Option<Label> }.
   - Graph { api_version (const "crossr-loops/v0" checked after parse),
-    kind, name, title, description, conductor, nodes, edges, requires }.
+    kind, name, start: NodeId, title, description, conductor, nodes, edges,
+    requires }.
     `requires` is Option<Requires { skills: Option<Vec<String>>,
     book: Option<bool> }>.
   - NodeId and Label are newtypes over String (Display, Eq, Hash, Ord).
@@ -217,6 +302,7 @@ DOMAIN TYPES (encode the schema, do not re-invent it):
 LOAD-TIME CHECKS (typed LoadError via thiserror; every variant names the
 graph and the node/edge):
   - nodes non-empty; duplicate node ids; edge endpoints not nodes;
+  - `start` names no node → StartNotANode { graph, start };
   - two out-edges of one node with the same `when` (or both unlabeled) →
     AmbiguousOutEdges { node, label: Option<Label> };
   - `when: "next"` → ReservedLabel;
@@ -227,7 +313,7 @@ graph and the node/edge):
   file existence — that is verify-skill-refs' job and needs the catalog.
 
 CLI: `graph-runner check <dir>` loads every *.json except schema.json,
-prints `  ✓ <name>: <n> nodes, <m> edges, start <nodes[0].id>, sinks [<ids>]`
+prints `  ✓ <name>: <n> nodes, <m> edges, start <start>, sinks [<ids>]`
 per graph and `✓ <k> graphs OK`, exit 0; any LoadError → the error on
 stderr, exit 1; bad argv → usage on stderr, exit 2. Hand-parse argv; no clap.
 
@@ -243,17 +329,16 @@ JUSTFILE (decision 9):
   graphs-verify / verify-protocol / verify-skill-refs / graphs-verify-html
   exactly as they are.
 
-TRACKING: progress.md new `## graph-runner` heading, `### R1 (COMPLETED)`
-row listing the crate, the checks, and the justfile change; features.json
-new phase "graph-runner" { status in_progress, commits: [ { id "gr-r1",
-title "graph-runner: crate scaffold, typed graph model, check",
-status completed, features ["runner-crate", "graph-model", "load-checks",
-"graphs-check"] } ] }. test/test_features_phase.py must still pass (a phase
-with an in-progress child may stay in_progress).
+TRACKING: progress.md `### R1 (COMPLETED)` row under the `## graph-runner`
+heading R0 created, listing the crate, the checks, and the justfile change;
+features.json commit row under phase "graph-runner": { id "gr-r1", title
+"graph-runner: crate scaffold, typed graph model, check", status completed,
+features ["runner-crate", "graph-model", "load-checks", "graphs-check",
+"toolchain-pin"] }. test/test_features_phase.py must still pass.
 
 VALIDATE (paste all of it):
   cargo run -q -p graph-runner -- check graphs               → 5 graphs OK   (C-01)
-  cargo test -p graph-runner load_                            → 5 tests pass  (C-02)
+  cargo test -p graph-runner load_                            → 6 tests pass  (C-02)
   cargo test -p graph-runner role_enum_matches_schema         → pass          (C-03)
   cat runner/Cargo.toml                                       → deps = serde, serde_json, thiserror (C-04)
   rg -n 'process::Command|rhai|reqwest|SKILL\.md|std::net' runner/src → 0 (C-05)
@@ -264,10 +349,11 @@ VALIDATE (paste all of it):
   rg -n 'no Rust crates' justfile                             → 0             (C-14)
   cargo fmt --all --check && cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::pedantic && cargo test --workspace → exit 0 (C-15)
   test -f Cargo.lock && rg -n '^target/$' .gitignore          → both          (C-21)
+  rg -n '^channel = "1.94.1"' rust-toolchain.toml && rg -n '^rust-version = "1.94"' runner/Cargo.toml && rg -n '^edition = "2021"' runner/Cargo.toml → three hits (C-25)
   Demonstrate one red: temporarily add `"extra": 1` to a copy of
   graphs/avril.json under /tmp and show `check /tmp/<dir>` exit 1 naming the
   key. Do not commit the copy.
-Stack line in the PR body: merges first; R2 follows; no tag.
+Stack line in the PR body: after R0; R2 follows; no tag.
 ```
 
 ---
@@ -307,7 +393,7 @@ FILES (the whole list):
   progress.md, features.json one row each
 
 SEMANTICS (decision 3 / 4 — implement exactly, test each line):
-  - start = graph.nodes[0].id
+  - start = graph.start (the R0 key; never nodes[0])
   - sink = node with no out-edges
   - step: out-edges of `node` whose `when` matches the event — `Next`
     matches an unlabeled edge, `Verdict` matches "BLESS"/"REJECT" labels,
@@ -372,7 +458,7 @@ three doc lines that say what the runner is (decision 10).
 FILES (the whole list):
   runner/src/step.rs         descent: walk takes a `Resolve` (graph name →
                              &Graph) so it stays pure; a `role: graph` node
-                             descends to the subgraph's nodes[0]; the subgraph's
+                             descends to the subgraph's `start`; the subgraph's
                              sink returns to the parent node; the next event
                              selects the parent's out-edge. Depth in each Step.
                              `flat: bool` keeps R2 behaviour.
@@ -400,14 +486,33 @@ FILES (the whole list):
                              missing-evidence, generate unsatisfiable-claim with
                              both architect verdicts, AVRIL rejects at po/qa/cto,
                              brick gates. Name each file for the story it tells.
+  scripts/verify-graphs      decision 6: when ROOT/runner/Cargo.toml exists,
+                             run `cargo run -q -p graph-runner -- cover graphs`
+                             (subprocess, cwd ROOT). cargo missing from PATH →
+                             fail naming `cargo` and `rust-toolchain.toml`.
+                             Non-zero exit or a count above zero → fail with the
+                             runner's uncovered lines. Pure `parse_cover(stdout)
+                             -> int | None` reads the `uncovered edges: <u>`
+                             line; the subprocess call is the only action.
+                             Add the cover line to the --html report checks.
+  test/test_verify_graphs_cover.py
+                             pure tests for parse_cover: count found, count
+                             missing, non-zero count reported. No cargo call
+                             in tests.
   graphs/GRAPH.md            replace "No Rhai. No OpenCode-native executor. No
                              interpreter in v0." with a `## Runner` section:
-                             replays, never runs; start = nodes[0]; sink = no
-                             out-edges; `next`; BLESS/REJECT on adversaries;
-                             descent; walks dir; `just graphs-check`,
-                             `just graphs-cover`; "SKILL.md wins over the graph;
-                             the graph wins over the runner." Keep the No Rhai
-                             sentence.
+                             replays, never runs; start = the `start` key; sink
+                             = no out-edges; `next`; BLESS/REJECT on
+                             adversaries; descent; walks dir; `just
+                             graphs-verify` (now includes cover), `just
+                             graphs-check`, `just graphs-cover`; "SKILL.md wins
+                             over the graph; the graph wins over the runner."
+                             Keep the No Rhai sentence.
+  book/src/pipeline/overview.md
+                             one sentence after "Topology (not law): …": the
+                             `graph-runner` in crossr-loops replays a walk
+                             against that topology and never runs one. Nothing
+                             else in book/.
   README.md                  Graphs (topology) paragraph: one sentence naming
                              the runner as a replayer; keep "No Rhai."
   AGENTS.md                  "Graphs (topology, not a runtime)" → "(topology;
@@ -426,13 +531,17 @@ partial coverage.
 TRACKING: progress.md `### R3 (COMPLETED)` with the walk count and the
 cover line pasted; features.json commit row { id "gr-r3", title
 "graph-runner: descent, cover, full edge coverage, docs", status completed,
-features ["descent", "cover", "walk-coverage", "graph-docs"] }; phase
-"graph-runner" status → completed.
+features ["descent", "cover", "walk-coverage", "verify-graphs-cover",
+"graph-docs", "book-sentence"] }; phase "graph-runner" status → completed.
 
 VALIDATE (paste all of it):
   cargo run -q -p graph-runner -- walk graphs/flagship.json graphs/walks/flagship.happy.walk → exit 0; depth-1 lines for avril / axel, depth-2 for code-gan (C-09)
   cargo run -q -p graph-runner -- cover graphs                 → uncovered edges: 0, exit 0 (C-10)
   cargo test -p graph-runner committed_walks                   → pass, and paste `ls graphs/walks | wc -l` (C-11)
+  ./scripts/verify-graphs                                      → PASS and the line `uncovered edges: 0` (C-26)
+  PATH=/usr/bin:/bin ./scripts/verify-graphs; echo $?          → 1, names cargo and rust-toolchain.toml (C-26)
+  python3 -m unittest discover -s test -k cover                → parse_cover tests pass (C-27)
+  sed -n '/Topology (not law)/,+2p' book/src/pipeline/overview.md → the one sentence (C-28)
   rg -in 'rhai' graphs/GRAPH.md README.md AGENTS.md runner/ | rg -v -i 'no rhai' → 0 lines (C-16)
   sed -n '/^## Runner/,/^## /p' graphs/GRAPH.md               → the five statements in C-17
   rg -n 'process::Command|rhai|reqwest|SKILL\.md|std::net' runner/src → 0 (C-05)
@@ -479,19 +588,19 @@ VALIDATE (paste):
 
 ## Review gauntlet (what I will check when each PR comes back)
 
-- **R1**: `Role` enum test actually reads `schema.json` (not a hand-copied list); `deny_unknown_fields` on every struct; `LoadError` variants name graph + node/edge; no `unwrap` outside tests (`rg '\.unwrap\(' runner/src` → 0); both justfile fallbacks gone; `Cargo.lock` committed; `target/` ignored; the red demo pasted; deps exactly three.
+- **R0**: five one-line graph diffs, nothing else in those files; `required` carries `start`; both red demos pasted; `index.html` regenerated, second run clean; the new test exercises `validate` with fixtures, not the live tree only.
+- **R1**: `rust-toolchain.toml` and `rust-version` present and agreeing; `Role` enum test actually reads `schema.json` (not a hand-copied list); `deny_unknown_fields` on every struct; `LoadError` variants name graph + node/edge; no `unwrap` outside tests (`rg '\.unwrap\(' runner/src` → 0); both justfile fallbacks gone; `Cargo.lock` committed; `target/` ignored; the red demo pasted; deps exactly three.
 - **R2**: `step` and `walk` take references and return typed errors — no I/O in `step.rs`; `NoEdge.accepted` lists `next` for an unlabeled edge; the adversary rule tested against a fixture, not only the live graphs; three walk files start with a `#` story line; exit codes 0/1/2 demonstrated; trace lines match the grammar in the brief.
-- **R3**: `cover` counts edges by `(graph, index)`, so two identical-looking edges in different graphs are distinct; the flagship walk really descends two levels (paste the trace); every uncovered-edge line names `from --when--> to`; the deleted-walk red demo pasted; GRAPH.md `## Runner` carries all five statements; `No Rhai` survives in GRAPH.md and README; phase status `completed`; `test_features_phase.py` green.
+- **R3**: `verify-graphs` really shells out (paste the run), fails loud without cargo (paste that too), and `parse_cover` has pure tests; the book sentence is one sentence; `cover` counts edges by `(graph, index)`, so two identical-looking edges in different graphs are distinct; the flagship walk really descends two levels (paste the trace); every uncovered-edge line names `from --when--> to`; the deleted-walk red demo pasted; GRAPH.md `## Runner` carries all five statements; `No Rhai` survives in GRAPH.md and README; phase status `completed`; `test_features_phase.py` green.
 - **R4**: three files only; notes carry PR numbers and SHA ranges; board regenerated (stamp changes); the roadmap refresh handed to the human, not skipped silently.
-- **Throughout**: `graphs/*.json`, `schema.json`, `.agents/`, `lockfile.toml` byte-identical; harness remote untouched; no tag; pedantic clippy clean without blanket `#[allow]`; every VALIDATE line pasted, not summarized.
+- **Throughout**: `graphs/*.json` and `schema.json` byte-identical after R0; `.agents/`, `lockfile.toml` byte-identical always; harness remote untouched; no tag; pedantic clippy clean without blanket `#[allow]`; every VALIDATE line pasted, not summarized.
 
 ---
 
 ## Unresolved questions
 
-1. **Dependency approval.** `serde` + `serde_json` (and `thiserror`) break the stdlib-first rule. Approve them, or say so and R1–R3 port 1:1 to a Python `scripts/graph-runner` (stdlib `json`, `unittest`) with the same CLI, walk files, and claims.
-2. **Start node.** Decision 3 uses `nodes[0]`. An explicit `start` key in `schema.json` would be clearer but touches the schema and every graph — parked; say if you want it in this chain instead.
-3. **Edition / toolchain.** Edition 2021, no `rust-toolchain.toml`. Pin one if consumers will build the crate.
-4. **Book.** `book/src/pipeline/overview.md` says "Topology (not law)". Leave it, or add one sentence naming the replayer?
-5. **Cover in the Python gate.** `graphs-cover` is a sibling `just` target. Should `verify-graphs` also shell out to `cargo` when a crate exists, or stay pure Python?
-6. **Ledger flip now.** This prompt set's own PR moves `graph-runner` from `parked` to `todo`. Confirm, or keep it parked until R1 opens.
+Questions 1–6 of the first cut were answered 2026-09-09 and folded into the
+decisions table (serde approved; explicit `start`; toolchain pinned; book
+sentence; `verify-graphs` shells out; ledger unparked).
+
+1. **Toolchain bumps.** `rust-toolchain.toml` pins `1.94.1`. Who moves it, and does it follow the pin rule (its own commit, never inside a feature PR)? The guardrail assumes yes.
