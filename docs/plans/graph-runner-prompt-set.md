@@ -125,12 +125,12 @@ appends its own `progress.md` row and `features.json` commit row under the
 - C-10: mechanical · AC-05 · `cargo run -q -p graph-runner -- cover graphs` → `uncovered edges: 0`, exit 0
 - C-11: mechanical · AC-05 · `cargo test -p graph-runner committed_walks` → every `graphs/walks/*.walk` replays to a sink and `cover` reports zero uncovered edges
 - C-12: mechanical · AC-06 · `git diff --stat origin/main..HEAD -- graphs/*.json graphs/schema.json .agents lockfile.toml` → empty on R1, R2, and R3 (and `-- .agents lockfile.toml` empty on R0)
-- C-13: mechanical · AC-06 · `./scripts/verify-graphs && ./scripts/verify-protocol && python3 -m unittest discover -s test && CROSSR_SKILLS_PATH=<v1-packets checkout> ./scripts/verify-skill-refs` → PASS, PASS, OK (71 tests), PASS
+- C-13: mechanical · AC-06 · `./scripts/verify-graphs && ./scripts/verify-protocol && python3 -m unittest discover -s test && CROSSR_SKILLS_PATH=<v1-packets checkout> ./scripts/verify-skill-refs` → PASS, PASS, OK (≥ 71 tests; the 71 on 9e5b3f1 plus those this chain adds), PASS
 - C-14: mechanical · AC-07 · `rg -n 'no Rust crates' justfile` → 0 hits
 - C-15: mechanical · AC-07 · `cargo fmt --all --check && cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::pedantic && cargo test --workspace` → exit 0
 - C-16: mechanical · AC-08 · `rg -in 'rhai' graphs/GRAPH.md README.md AGENTS.md runner/ | rg -v -i 'no rhai'` → 0 lines
 - C-17: observable · AC-08 · `graphs/GRAPH.md` states: start is the `start` key, a sink has no out-edges, `next` is the unlabeled-edge event, `SKILL.md` wins, the runner replays and never runs
-- C-18: mechanical · AC-08 · in `work`: `python3 -m unittest discover -s test && python3 scripts/work-board --markdown` → OK and `graph-runner` absent from Startable / Held / In flight
+- C-18: mechanical · AC-08 · in `work`: `python3 -m unittest discover -s test && python3 scripts/work-board --markdown` → OK and `graph-runner` absent from Startable now / In progress / Held / Waiting on something, and the `done` column of the counts row is one higher than on `origin/main`
 - C-19: judgment · AC-02 · the trace vocabulary is the graphs' own labels and nothing a conductor could mistake for a verdict or an instruction
 - C-20: judgment · AC-08 · GRAPH.md and README stay honest about "map, not executor" once a stepper exists
 - C-21: mechanical · AC-01 · `test -f Cargo.lock && rg -n '^target/$' .gitignore` → both present
@@ -145,7 +145,7 @@ appends its own `progress.md` row and `features.json` commit row under the
 ## Preserve
 
 - PV-01 → C-12: every `graphs/*.json` and `graphs/schema.json` byte-identical across R1–R3; every `SKILL.md` and persona byte-identical across R0–R3
-- PV-02 → C-13: the three Python gates and the 71 loops unittest cases keep passing
+- PV-02 → C-13: the three Python gates and the 71 loops unittest cases on `9e5b3f1` keep passing alongside the ones R0 and R3 add
 - PV-03 → C-16: the split-09 promise — no Rhai, no OpenCode-native executor, no interpreter
 - PV-04 → C-22: bootstrap, HARNESS-SPEC, and every consumer pin untouched; no tag cut
 
@@ -176,7 +176,9 @@ GUARDRAILS (crossr v2 review standard — violations get the PR rejected):
 - Data / Calculations / Actions: graph types are data; step / walk / cover are
   pure functions with unit tests; file reads, argv, and stdout live in main.rs
   only. Never write generated output by hand (graphs/index.html only via
-  ./scripts/verify-graphs --html, and it does not change here).
+  ./scripts/verify-graphs --html; it changes only in R0 and R3, in the
+  same commit as the verify-graphs change, and a second --html run must
+  be clean).
 - Loop gates on every commit: ./scripts/verify-graphs, ./scripts/verify-protocol,
   python3 -m unittest discover -s test, and
   CROSSR_SKILLS_PATH=<checkout of tag v1-packets> ./scripts/verify-skill-refs.
@@ -293,7 +295,8 @@ DOMAIN TYPES (encode the schema, do not re-invent it):
   - Edge { from: NodeId, to: NodeId, when: Option<Label> }.
   - Graph { #[serde(rename = "apiVersion")] api_version (const
     "crossr-loops/v0" checked after parse), kind, name, start: NodeId,
-    title, description, conductor: Option<String>, nodes, edges, requires }.
+    title: Option<String>, description: Option<String>,
+    conductor: Option<String>, nodes, edges, requires }.
     `requires` is Option<Requires { skills: Option<Vec<String>>,
     book: Option<bool> }>.
   - NodeId and Label are newtypes over String (Display, Eq, Hash, Ord).
@@ -499,6 +502,7 @@ FILES (the whole list):
                              pure tests for parse_cover: count found, count
                              missing, non-zero count reported. No cargo call
                              in tests.
+  graphs/index.html          regenerate with ./scripts/verify-graphs --html only.
   graphs/GRAPH.md            replace "No Rhai. No OpenCode-native executor. No
                              interpreter in v0." with a `## Runner` section:
                              replays, never runs; start = the `start` key; sink
@@ -540,6 +544,7 @@ VALIDATE (paste all of it):
   cargo test -p graph-runner committed_walks                   → pass, and paste `ls graphs/walks | wc -l` (C-11)
   ./scripts/verify-graphs                                      → PASS and the line `uncovered edges: 0` (C-26)
   PATH=/usr/bin:/bin ./scripts/verify-graphs; echo $?          → 1, names cargo and rust-toolchain.toml (C-26)
+  ./scripts/verify-graphs --html; git status --short graphs/index.html → regenerated once, second run clean
   python3 -m unittest discover -s test -k cover                → parse_cover tests pass (C-27)
   sed -n '/Topology (not law)/,+2p' book/src/pipeline/overview.md → the one sentence (C-28)
   rg -in 'rhai' graphs/GRAPH.md README.md AGENTS.md runner/ | rg -v -i 'no rhai' → 0 lines (C-16)
@@ -580,7 +585,7 @@ FILES: work.json, docs/board.html (generated), progress.md.
 
 VALIDATE (paste):
   python3 -m unittest discover -s test -v                     → OK (C-18)
-  python3 scripts/work-board --markdown                       → graph-runner absent from Startable / Held / In flight; done count +1 (C-18)
+  python3 scripts/work-board --markdown                       → graph-runner absent from Startable now / In progress / Held / Waiting on something; done count +1 vs origin/main (C-18)
   git diff --stat                                             → exactly the three files
 ```
 
