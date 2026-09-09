@@ -956,5 +956,19 @@
         ]
       }
     ]
+  },
+  "graph-runner-prompt-set": {
+    "status": "completed",
+    "commits": [
+      {
+        "id": "gr-00",
+        "title": "graph-runner prompt set (work#14): plan-audited briefs R1-R4",
+        "status": "completed",
+        "features": [
+          "graph-runner-prompt-set",
+          "prompt-set-plan-audit-test"
+        ]
+      }
+    ]
   }
 }
