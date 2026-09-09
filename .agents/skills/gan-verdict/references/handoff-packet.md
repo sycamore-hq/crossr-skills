@@ -13,7 +13,7 @@ outside the fence.
 
 Shape:
 
-- heading: `# Packet: <phase-id>`
+- heading: exactly one H1, `# Packet: <phase-id>` (no other `# ` heading is legal)
 - `- k of n: <k> of <n>`
 - `- gate: <gate-name>`
 - `## Files` — `- <path>` (≥ 1)
@@ -49,5 +49,5 @@ Example:
 ## Envelope
 - findings shape: one-liners
 - max length: 40 lines
-- citations: file:line
+- file:line citations: yes
 ````
