@@ -176,6 +176,8 @@ def audit_brief(text: str, max_lines: int | None = None) -> list[str]:
 
     for lineno, line in walked.grammar:
         if PACKET_RE.match(line):
+            if has_packet:
+                fails.append(f"line {lineno}: second `# Packet:` heading")
             has_packet = True
             continue
         if line.startswith("# ") and not line.startswith("## "):
