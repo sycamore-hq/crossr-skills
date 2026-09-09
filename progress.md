@@ -862,7 +862,7 @@ The `gan-layer-separation` phase closes. Work#12. Decisions 10, 13.
   hand-edits.
 - Plan + HTML: PR 6 marked landed (skills#125, loops#11, harness#10; no tag;
   retired by 7a/7b). PR 7 marked landed (skills#126, loops#12, harness#11,
-  this PR; tags `v1-packets` / `v1-packets-consumers`). Header leading word
+  [#127](https://github.com/sycamore-hq/crossr-skills/pull/127); tags `v1-packets` / `v1-packets-consumers`). Header leading word
   is `complete`. §7 row 7 is the measured statement (7 tests). §6 per-item
   BLESS keeps the line and names gan-verdict item 9 + verify-protocol.
   §8 decision 13 points at the prompt-set settlement.
