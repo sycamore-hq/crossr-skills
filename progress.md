@@ -905,3 +905,31 @@ Compact visual skill for PRs, plans, and architecture plans. Adapted from HumanL
 - Optional xrefs: `architecture` Response contract (missing visual is not a REJECT); `github-pr-review` Report (shape visual next to the table, do not restate the GitHub diff).
 - Skill GAN (`skill-evaluator-agent` → `skill-remediator-agent` → `skill-reviewer-agent`): evaluator 82/100 → remediator smallest diff (failure recovery, Verification, Specialization; drop duplicate open-command sentence) → reviewer **PASS at 98/100**. Report: `docs/skill-remediation/show-me-01-remediation-report.html`.
 - Outside PR 5 and PR 6. Sister change for Berea is separate.
+
+## graph-runner — prompt set (COMPLETED)
+
+Prompt set for [work#14](https://github.com/sycamore-hq/work/issues/14):
+[`docs/plans/graph-runner-prompt-set.md`](docs/plans/graph-runner-prompt-set.md).
+Parked at split-09 as "not this chain"; this file is the chain. No HTML twin.
+
+- Written in the plan-artifact shape: `# Plan: graph-runner`, Phases R1–R4,
+  8 AC, 22 claims (2 judgment), Preserve, Unresolved questions.
+  `just plan-audit docs/plans/graph-runner-prompt-set.md` passes, with and
+  without `--loc-threshold 600`.
+- Four briefs: R1 loops crate scaffold + typed model + `check`; R2 stepper +
+  `walk` + happy walks; R3 descent + `cover` + every edge walked + docs; R4
+  work ledger close. Every brief pastes the guardrails and ends in VALIDATE
+  with the claim ids it discharges.
+- Settled: Rust stepper/replayer over `graphs/*.json`; start = `nodes[0]`;
+  sink = no out-edges; `next` reserved; adversaries take BLESS/REJECT only;
+  no Rhai, no executor, no tag, no pin move; schema + graphs + SKILL.md
+  byte-identical across the chain.
+- `test/test_graph_runner_prompt_set.py` keeps the file a plan artifact:
+  audit green, one brief per phase, guardrails + VALIDATE per brief, no
+  placeholders, Rhai only named as absent.
+- Open: serde/serde_json approval (stdlib-first rule) is Unresolved 1.
+
+## Verification Status
+- `./scripts/audit-plan docs/plans/graph-runner-prompt-set.md`: PASS
+- `python3 -m unittest discover -s test`: OK
+- `./scripts/verify-docs`, `sync-claude-skills --check --soft`, `extract-rules --check`: clean
