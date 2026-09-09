@@ -948,3 +948,14 @@ bumps the toolchain pin.
 ## Verification Status
 - `./scripts/audit-plan docs/plans/graph-runner-prompt-set.md` (plain and `--loc-threshold 600`): PASS
 - `python3 -m unittest discover -s test`: OK
+
+## graph-runner — prompt set v3 (COMPLETED)
+
+Answer 7 is in decision 1 of
+[`docs/plans/graph-runner-prompt-set.md`](docs/plans/graph-runner-prompt-set.md):
+toolchain bumps follow the pin rule (own commit that says why, never inside
+a feature PR). Unresolved questions: none open.
+
+## Verification Status
+- `./scripts/audit-plan docs/plans/graph-runner-prompt-set.md` (plain and `--loc-threshold 600`): PASS
+- `python3 -m unittest discover -s test`: OK

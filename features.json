@@ -976,6 +976,14 @@
         "features": [
           "prompt-set-answers-folded"
         ]
+      },
+      {
+        "id": "gr-02",
+        "title": "graph-runner prompt set v3: answer 7 in decision 1; no questions remain",
+        "status": "completed",
+        "features": [
+          "prompt-set-answer-7"
+        ]
       }
     ]
   }

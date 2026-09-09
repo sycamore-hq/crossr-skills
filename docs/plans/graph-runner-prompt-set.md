@@ -135,7 +135,7 @@ appends its own `progress.md` row and `features.json` commit row under the
 - C-20: judgment · AC-08 · GRAPH.md and README stay honest about "map, not executor" once a stepper exists
 - C-21: mechanical · AC-01 · `test -f Cargo.lock && rg -n '^target/$' .gitignore` → both present
 - C-22: mechanical · AC-06 · `git -C ../crossr-harness diff --stat origin/main..HEAD` → empty (the harness remote is untouched by this chain)
-- C-23: mechanical · AC-09 · on R0: `git diff origin/main..HEAD -- graphs/*.json | rg '^[+-]\s' | rg -v '"start"'` → 0 lines, and `rg -c '"start":' graphs/*.json` → 1 per graph (5 files)
+- C-23: mechanical · AC-09 · on R0: `git diff origin/main..HEAD -- 'graphs/*.json' ':!graphs/schema.json' | rg '^[+-]\s' | rg -v '"start"'` → 0 lines, and `rg -c '"start":' graphs/avril.json graphs/axel.json graphs/brick.json graphs/code-gan.json graphs/flagship.json` → 1 per graph (5 files)
 - C-24: mechanical · AC-09 · on R0: `python3 -c 'import json;print("start" in json.load(open("graphs/schema.json"))["required"])'` → `True`; `./scripts/verify-graphs` → PASS; a `/tmp` copy of `avril.json` with `start` deleted, and one with `start: "nope"`, each → FAIL naming `start`
 - C-25: mechanical · AC-07 · `rg -n '^channel = "1.94.1"' rust-toolchain.toml && rg -n '^rust-version = "1.94"' runner/Cargo.toml && rg -n '^edition = "2021"' runner/Cargo.toml` → three hits
 - C-26: mechanical · AC-05 · on R3: `./scripts/verify-graphs` → output contains `uncovered edges: 0`; `PATH=/usr/bin:/bin ./scripts/verify-graphs` (no cargo) → exit 1 naming `cargo` and `rust-toolchain.toml`
@@ -235,8 +235,8 @@ FILES (the whole list):
                          "verify-graphs-start"]).
 
 VALIDATE (paste all of it):
-  git diff origin/main..HEAD -- graphs/*.json | rg '^[+-]\s' | rg -v '"start"' → 0 lines (C-23)
-  rg -c '"start":' graphs/*.json                              → 1 per file, 5 files (C-23)
+  git diff origin/main..HEAD -- 'graphs/*.json' ':!graphs/schema.json' | rg '^[+-]\s' | rg -v '"start"' → 0 lines (C-23)
+  rg -c '"start":' graphs/avril.json graphs/axel.json graphs/brick.json graphs/code-gan.json graphs/flagship.json → 1 per file, 5 files (C-23)
   python3 -c 'import json;print("start" in json.load(open("graphs/schema.json"))["required"])' → True (C-24)
   ./scripts/verify-graphs                                     → PASS, 5 graphs, each line names its start (C-24)
   cp graphs/avril.json /tmp/g/avril.json (dir with schema.json) and delete
@@ -291,9 +291,9 @@ DOMAIN TYPES (encode the schema, do not re-invent it):
     batch: Option<bool>, uses: Option<Uses> }; Uses { skill, persona, graph }
     all Option<String>. deny_unknown_fields on every struct.
   - Edge { from: NodeId, to: NodeId, when: Option<Label> }.
-  - Graph { api_version (const "crossr-loops/v0" checked after parse),
-    kind, name, start: NodeId, title, description, conductor, nodes, edges,
-    requires }.
+  - Graph { #[serde(rename = "apiVersion")] api_version (const
+    "crossr-loops/v0" checked after parse), kind, name, start: NodeId,
+    title, description, conductor: Option<String>, nodes, edges, requires }.
     `requires` is Option<Requires { skills: Option<Vec<String>>,
     book: Option<bool> }>.
   - NodeId and Label are newtypes over String (Display, Eq, Hash, Ord).
