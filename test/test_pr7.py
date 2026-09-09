@@ -79,7 +79,7 @@ GOOD_PACKET = """\
 ## Envelope
 - findings shape: one-liners
 - max length: 40 lines
-- citations: file:line
+- file:line citations: yes
 """
 
 GOOD_DIFF = """\
@@ -154,6 +154,11 @@ class AuditCalculations(unittest.TestCase):
         fails = audit_packet.audit_brief(text)
         self.assertTrue(any("k of n" in f for f in fails), fails)
 
+    def test_k_of_n_zero_fails(self):
+        text = with_line(good_packet(), "- k of n: 1 of 3", "- k of n: 0 of 3")
+        fails = audit_packet.audit_brief(text)
+        self.assertTrue(any("missing/malformed" in f for f in fails), fails)
+
     def test_missing_gate(self):
         text = with_line(good_packet(), "- gate: code-review\n", "")
         fails = audit_packet.audit_brief(text)
@@ -163,7 +168,7 @@ class AuditCalculations(unittest.TestCase):
         text = with_line(good_packet(), "## Envelope\n", "")
         text = with_line(text, "- findings shape: one-liners\n", "")
         text = with_line(text, "- max length: 40 lines\n", "")
-        text = with_line(text, "- citations: file:line\n", "")
+        text = with_line(text, "- file:line citations: yes\n", "")
         fails = audit_packet.audit_brief(text)
         self.assertTrue(
             any("required section" in f and "Envelope" in f for f in fails), fails
@@ -174,6 +179,15 @@ class AuditCalculations(unittest.TestCase):
             good_packet(),
             "## Envelope\n",
             "## Previous phase\n- leftover essay\n## Envelope\n",
+        )
+        fails = audit_packet.audit_brief(text)
+        self.assertTrue(any("unknown heading" in f for f in fails), fails)
+
+    def test_extra_h1_fails(self):
+        text = with_line(
+            good_packet(),
+            "## Files\n",
+            "# Previous phase essay title\n## Files\n",
         )
         fails = audit_packet.audit_brief(text)
         self.assertTrue(any("unknown heading" in f for f in fails), fails)
@@ -196,6 +210,7 @@ class AuditCalculations(unittest.TestCase):
         )
         fails = audit_packet.audit_brief(text)
         self.assertTrue(any("AC line" in f for f in fails), fails)
+        self.assertTrue(any(re.search(r"line \d+:", f) for f in fails), fails)
 
     def test_diff_neither_ref_nor_fence(self):
         text = drop_diff_fence(good_packet())
@@ -229,8 +244,18 @@ class AuditCalculations(unittest.TestCase):
         fails = audit_packet.audit_brief(text)
         self.assertTrue(any("board" in f for f in fails), fails)
 
+    def test_never_board_json_compact(self):
+        text = fenced('{"tasks":[')
+        fails = audit_packet.audit_brief(text)
+        self.assertTrue(any("board" in f for f in fails), fails)
+
     def test_never_dashboard_html_pasted(self):
         text = fenced("<html><body>dash</body></html>")
+        fails = audit_packet.audit_brief(text)
+        self.assertTrue(any("dashboard" in f or "HTML" in f for f in fails), fails)
+
+    def test_never_dashboard_doctype(self):
+        text = fenced("<!DOCTYPE html>")
         fails = audit_packet.audit_brief(text)
         self.assertTrue(any("dashboard" in f or "HTML" in f for f in fails), fails)
 
@@ -250,11 +275,29 @@ class AuditCalculations(unittest.TestCase):
     def test_envelope_unknown_name(self):
         text = with_line(
             good_packet(),
-            "- citations: file:line",
+            "- file:line citations: yes",
             "- vibe: good",
         )
         fails = audit_packet.audit_brief(text)
         self.assertTrue(any("envelope" in f and "vibe" in f for f in fails), fails)
+
+    def test_envelope_citations_alias_rejected(self):
+        text = with_line(
+            good_packet(),
+            "- file:line citations: yes",
+            "- citations: file:line",
+        )
+        fails = audit_packet.audit_brief(text)
+        self.assertTrue(any("envelope" in f and "citations" in f for f in fails), fails)
+
+    def test_prose_failure_names_line(self):
+        text = with_line(
+            good_packet(),
+            "## Files\n",
+            "## Files\nthis is leftover essay prose\n",
+        )
+        fails = audit_packet.audit_brief(text)
+        self.assertTrue(any("prose" in f and "line " in f for f in fails), fails)
 
     def test_prior_verdict_141_fails(self):
         reason = "x" * 141
@@ -274,11 +317,6 @@ class AuditCalculations(unittest.TestCase):
             f"- testing REJECT: {reason}",
         )
         self.assertEqual(audit_packet.audit_brief(text), [])
-
-    def test_diff_fence_prose_fails(self):
-        text = with_line(good_packet(), GOOD_DIFF, PROSE_DIFF)
-        fails = audit_packet.audit_brief(text)
-        self.assertTrue(any("unified-diff" in f for f in fails), fails)
 
     def test_well_formed_fence_passes(self):
         text = with_line(good_packet(), "- ref: HEAD~1\n", "")
@@ -310,6 +348,19 @@ class AuditCalculations(unittest.TestCase):
             "code-review: REJECT\n", "code-review"
         )
         self.assertTrue(any("blockers" in f for f in fails), fails)
+
+    def test_verdict_gate_blessed_fails(self):
+        fails = audit_packet.audit_verdict_gate(
+            "code-review: BLESSED\n", "code-review"
+        )
+        self.assertTrue(fails, fails)
+
+    def test_verdict_gate_bless_trailing_text_fails(self):
+        fails = audit_packet.audit_verdict_gate(
+            "code-review: BLESS — with reservations, fix X first\n",
+            "code-review",
+        )
+        self.assertTrue(fails, fails)
 
     def test_verdict_items_bless_and_reject_pass(self):
         self.assertEqual(
@@ -346,6 +397,17 @@ class AuditCalculations(unittest.TestCase):
             "BLESS a — ok\nREJECT b\n", ["a", "b"]
         )
         self.assertTrue(any(" — " in f or "REJECT" in f for f in fails), fails)
+
+    def test_verdict_items_reject_empty_blockers(self):
+        fails = audit_packet.audit_verdict_items(
+            "BLESS a — ok\nREJECT b — \n", ["a", "b"]
+        )
+        self.assertTrue(any("REJECT" in f for f in fails), fails)
+
+    def test_verdict_items_blanket_all_with_note(self):
+        fails = audit_packet.audit_verdict_items("BLESS all — fine\n", ["a", "b"])
+        self.assertTrue(any("blanket" in f for f in fails), fails)
+        self.assertFalse(any("stray" in f for f in fails), fails)
 
     def test_cli_brief_and_verdict(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -11,7 +11,7 @@ code-review: BLESS
 
 Set (AVRIL): exactly one line per id.
 
-- `BLESS <id> — …`
+- `BLESS <id>` (an optional ` — …` note is allowed)
 - `REJECT <id> — …` (the ` — ` blockers are required)
 
 A bare BLESS over a set is not a verdict.

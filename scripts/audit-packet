@@ -29,7 +29,6 @@ REQUIRED_SECTIONS = (
 LEGAL_SECTIONS = REQUIRED_SECTIONS + ("Claims",)
 
 # gan-verdict item 5 names, lower-case, spaces allowed.
-# `citations` is the example spelling of `file:line citations`.
 ENVELOPE_NAMES = frozenset(
     {
         "phase id",
@@ -38,12 +37,11 @@ ENVELOPE_NAMES = frozenset(
         "findings shape",
         "max length",
         "file:line citations",
-        "citations",
     }
 )
 
 PACKET_RE = re.compile(r"^# Packet:\s+\S")
-K_OF_N_RE = re.compile(r"^- k of n: (\d+) of (\d+)$")
+K_OF_N_RE = re.compile(r"^- k of n: ([1-9]\d*) of ([1-9]\d*)$")
 K_OF_N_PREFIX = re.compile(r"^- k of n:")
 GATE_RE = re.compile(r"^- gate: \S")
 GATE_PREFIX = re.compile(r"^- gate:")
@@ -51,12 +49,14 @@ SECTION_RE = re.compile(r"^## (.+)$")
 AC_RE = re.compile(r"^- AC-\d+: .+$")
 REF_RE = re.compile(r"^- ref: \S")
 LIST_RE = re.compile(r"^- (.+)$")
-ENVELOPE_RE = re.compile(r"^- ([^:]+): (.+)$")
+ENVELOPE_RE = re.compile(r"^- (.+): (.+)$")
 PRIOR_RE = re.compile(r"^- \S+ BLESS$|^- \S+ REJECT: .{1,140}$")
 FENCE_RE = re.compile(r"^(`{3,})(.*)$")
 FRONTMATTER_RULE = re.compile(r"^---\s*$")
 FRONTMATTER_NAME = re.compile(r"^name:\s+\S")
-BLANKET_ITEMS_RE = re.compile(r"^(BLESS|REJECT)( all| everything)?\s*$")
+BLANKET_ITEMS_RE = re.compile(
+    r"^(BLESS|REJECT)(?:\s+(all|everything|\*))?(?:\s*$|\s+—)"
+)
 BLANKET_GATE_BARE_RE = re.compile(r"^(BLESS|REJECT)$")
 BLANKET_GATE_ALL_RE = re.compile(r"^(BLESS|REJECT) (all|everything)")
 ITEM_LINE_RE = re.compile(r"^(BLESS|REJECT) (\S+)(.*)$")
@@ -89,7 +89,7 @@ class FenceWalk:
     """One pass over a document: grammar lines, diff body, raw text."""
 
     grammar: list[tuple[int, str]] = field(default_factory=list)
-    diff_lines: list[str] = field(default_factory=list)
+    diff_lines: list[tuple[int, str]] = field(default_factory=list)
     has_diff_fence: bool = False
     non_diff_count: int = 0
 
@@ -126,7 +126,7 @@ def walk(text: str) -> FenceWalk:
             continue
         if in_fence:
             if fence_lang == "diff":
-                out.diff_lines.append(raw)
+                out.diff_lines.append((i, raw))
             else:
                 out.non_diff_count += 1
             continue
@@ -143,9 +143,9 @@ def forbidden_hits(text: str) -> list[str]:
         FRONTMATTER_NAME.match(ln) for ln in lines
     ):
         fails.append("forbidden sibling SKILL.md frontmatter")
-    if '"tasks": [' in text:
+    if re.search(r'"tasks"\s*:\s*\[', text):
         fails.append("forbidden board dump")
-    if "<html" in text:
+    if re.search(r"<html|<!doctype", text, re.IGNORECASE):
         fails.append("forbidden dashboard HTML")
     return fails
 
@@ -165,24 +165,27 @@ def audit_brief(text: str, max_lines: int | None = None) -> list[str]:
         )
 
     has_packet = False
-    k_of_n_lines: list[str] = []
-    gate_lines: list[str] = []
+    k_of_n_lines: list[tuple[int, str]] = []
+    gate_lines: list[tuple[int, str]] = []
     sections: list[str] = []
-    unknown: list[str] = []
-    by_section: dict[str, list[str]] = {name: [] for name in LEGAL_SECTIONS}
+    unknown: list[tuple[int, str]] = []
+    by_section: dict[str, list[tuple[int, str]]] = {
+        name: [] for name in LEGAL_SECTIONS
+    }
     current = ""
 
-    for _, line in walked.grammar:
+    for lineno, line in walked.grammar:
         if PACKET_RE.match(line):
             has_packet = True
             continue
         if line.startswith("# ") and not line.startswith("## "):
+            fails.append(f"line {lineno}: unknown heading {line}")
             continue
         sec = SECTION_RE.match(line)
         if sec:
             name = sec.group(1).strip()
             if name not in LEGAL_SECTIONS:
-                unknown.append(name)
+                unknown.append((lineno, name))
             else:
                 sections.append(name)
                 current = name
@@ -190,16 +193,16 @@ def audit_brief(text: str, max_lines: int | None = None) -> list[str]:
         if not line.strip():
             continue
         if K_OF_N_PREFIX.match(line):
-            k_of_n_lines.append(line)
+            k_of_n_lines.append((lineno, line))
         if GATE_PREFIX.match(line):
-            gate_lines.append(line)
+            gate_lines.append((lineno, line))
         item = LIST_RE.match(line)
         if item and current in by_section:
-            by_section[current].append(line)
+            by_section[current].append((lineno, line))
             continue
         if item:
             continue
-        fails.append("prose outside list items")
+        fails.append(f"line {lineno}: prose outside list items")
 
     if not has_packet:
         fails.append("missing `# Packet:` heading")
@@ -208,28 +211,28 @@ def audit_brief(text: str, max_lines: int | None = None) -> list[str]:
     if not k_of_n_lines:
         fails.append("missing/malformed `- k of n:`")
     else:
-        for raw in k_of_n_lines:
+        for lineno, raw in k_of_n_lines:
             parsed = K_OF_N_RE.match(raw)
             if not parsed:
-                fails.append("missing/malformed `- k of n:`")
+                fails.append(f"line {lineno}: missing/malformed `- k of n:`")
                 continue
             k, n = int(parsed.group(1)), int(parsed.group(2))
             if k > n:
-                fails.append("missing/malformed `- k of n:`")
+                fails.append(f"line {lineno}: missing/malformed `- k of n:`")
             else:
                 ok_k = True
-        if not ok_k and "missing/malformed `- k of n:`" not in fails:
+        if not ok_k and not any("k of n" in f for f in fails):
             fails.append("missing/malformed `- k of n:`")
 
-    if not any(GATE_RE.match(raw) for raw in gate_lines):
+    if not any(GATE_RE.match(raw) for _, raw in gate_lines):
         fails.append("missing `- gate:`")
 
     have = set(sections)
     for name in REQUIRED_SECTIONS:
         if name not in have:
             fails.append(f"missing required section ## {name}")
-    for name in unknown:
-        fails.append(f"unknown heading ## {name}")
+    for lineno, name in unknown:
+        fails.append(f"line {lineno}: unknown heading ## {name}")
 
     files = by_section["Files"]
     if "Files" in have and not files:
@@ -239,31 +242,34 @@ def audit_brief(text: str, max_lines: int | None = None) -> list[str]:
     if "AC" in have:
         if not acs:
             fails.append("AC empty")
-        for raw in acs:
+        for lineno, raw in acs:
             if not AC_RE.match(raw):
-                fails.append("AC line not matching `^- AC-\\d+: .+$`")
+                fails.append(
+                    f"line {lineno}: AC line not matching `^- AC-\\d+: .+$`"
+                )
 
-    refs = [raw for raw in by_section["Diff"] if REF_RE.match(raw)]
+    refs = [raw for _, raw in by_section["Diff"] if REF_RE.match(raw)]
     if not refs and not walked.has_diff_fence:
         fails.append("Diff satisfied by neither `- ref:` nor a fence")
-    for raw in walked.diff_lines:
+    for lineno, raw in walked.diff_lines:
         if not is_unified_diff_line(raw):
-            fails.append("fence line outside unified-diff grammar")
+            fails.append(f"line {lineno}: fence line outside unified-diff grammar")
             break
 
-    for raw in by_section["Prior verdicts"]:
+    for lineno, raw in by_section["Prior verdicts"]:
         if not PRIOR_RE.match(raw):
-            fails.append("prior-verdict line not matching decision 5")
+            fails.append(f"line {lineno}: prior-verdict line not matching decision 5")
 
-    for raw in by_section["Envelope"]:
+    for lineno, raw in by_section["Envelope"]:
         env = ENVELOPE_RE.match(raw)
         if not env:
-            fails.append("envelope item is not `- <name>: <value>`")
+            fails.append(f"line {lineno}: envelope item is not `- <name>: <value>`")
             continue
         name = norm_envelope_name(env.group(1))
         if name not in ENVELOPE_NAMES:
             fails.append(
-                f"envelope name '{env.group(1).strip()}' is not a gan-verdict item 5 name"
+                f"line {lineno}: envelope name '{env.group(1).strip()}' "
+                "is not a gan-verdict item 5 name"
             )
     return fails
 
@@ -276,7 +282,7 @@ def verdict_lines(text: str) -> list[str]:
 def audit_verdict_gate(text: str, gate: str) -> list[str]:
     fails: list[str] = []
     lines = verdict_lines(text)
-    token = re.compile(rf"^{re.escape(gate)}: (BLESS|REJECT)(.*)$")
+    token = re.compile(rf"^{re.escape(gate)}: (BLESS|REJECT)(?=$|\s|:)(.*)$")
     matches = [line for line in lines if token.match(line)]
     if len(matches) != 1:
         fails.append(
@@ -285,8 +291,10 @@ def audit_verdict_gate(text: str, gate: str) -> list[str]:
     for line in matches:
         m = token.match(line)
         assert m is not None
+        rest = m.group(2)
+        if m.group(1) == "BLESS" and rest.strip():
+            fails.append(f"`{gate}: BLESS` with trailing text")
         if m.group(1) == "REJECT":
-            rest = m.group(2)
             if rest.startswith(" — "):
                 blockers = rest[3:]
             elif rest.startswith(": "):
@@ -318,7 +326,9 @@ def audit_verdict_items(text: str, items: list[str]) -> list[str]:
             fails.append(f"stray id {vid}")
             continue
         seen[vid] += 1
-        if token == "REJECT" and not rest.startswith(" — "):
+        if token == "REJECT" and not (
+            rest.startswith(" — ") and rest[3:].strip()
+        ):
             fails.append(f"`REJECT {vid}` without ` — `")
     for vid, n in seen.items():
         if n == 0:
