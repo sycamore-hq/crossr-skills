@@ -23,6 +23,10 @@ fmt:
 plan-audit FILE:
     @./scripts/audit-plan {{FILE}}
 
+# Mechanical packet/verdict audit (no LLM)
+packet-audit MODE FILE:
+    @./scripts/audit-packet {{MODE}} {{FILE}}
+
 # Language-book Rules projection
 rules-sync:
     @./scripts/extract-rules

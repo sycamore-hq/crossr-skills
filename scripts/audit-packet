@@ -1,0 +1,426 @@
+#!/usr/bin/env python3
+"""Mechanical handoff-packet and batch-verdict audit. No LLM.
+
+The script never resolves the scratch path; it takes a file argument.
+Location is the conductor's business. Grammar is this script's.
+
+Usage:
+  ./scripts/audit-packet brief [--max-lines N] <packet.md>
+  ./scripts/audit-packet verdict (--gate <name> | --items id1,id2,...) <verdict.md>
+
+Exit 0 on pass, 1 on fail, 2 on usage error.
+Calculations are pure; loading the file is the action.
+"""
+
+from __future__ import annotations
+
+import re
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+
+REQUIRED_SECTIONS = (
+    "Files",
+    "Diff",
+    "AC",
+    "Prior verdicts",
+    "Envelope",
+)
+LEGAL_SECTIONS = REQUIRED_SECTIONS + ("Claims",)
+
+# gan-verdict item 5 names, lower-case, spaces allowed.
+# `citations` is the example spelling of `file:line citations`.
+ENVELOPE_NAMES = frozenset(
+    {
+        "phase id",
+        "k of n",
+        "ac ids claimed",
+        "findings shape",
+        "max length",
+        "file:line citations",
+        "citations",
+    }
+)
+
+PACKET_RE = re.compile(r"^# Packet:\s+\S")
+K_OF_N_RE = re.compile(r"^- k of n: (\d+) of (\d+)$")
+K_OF_N_PREFIX = re.compile(r"^- k of n:")
+GATE_RE = re.compile(r"^- gate: \S")
+GATE_PREFIX = re.compile(r"^- gate:")
+SECTION_RE = re.compile(r"^## (.+)$")
+AC_RE = re.compile(r"^- AC-\d+: .+$")
+REF_RE = re.compile(r"^- ref: \S")
+LIST_RE = re.compile(r"^- (.+)$")
+ENVELOPE_RE = re.compile(r"^- ([^:]+): (.+)$")
+PRIOR_RE = re.compile(r"^- \S+ BLESS$|^- \S+ REJECT: .{1,140}$")
+FENCE_RE = re.compile(r"^(`{3,})(.*)$")
+FRONTMATTER_RULE = re.compile(r"^---\s*$")
+FRONTMATTER_NAME = re.compile(r"^name:\s+\S")
+BLANKET_ITEMS_RE = re.compile(r"^(BLESS|REJECT)( all| everything)?\s*$")
+BLANKET_GATE_BARE_RE = re.compile(r"^(BLESS|REJECT)$")
+BLANKET_GATE_ALL_RE = re.compile(r"^(BLESS|REJECT) (all|everything)")
+ITEM_LINE_RE = re.compile(r"^(BLESS|REJECT) (\S+)(.*)$")
+DIFF_PREFIXES = (
+    "diff --git ",
+    "index ",
+    "new file mode ",
+    "deleted file mode ",
+    "old mode ",
+    "new mode ",
+    "similarity index ",
+    "rename from ",
+    "rename to ",
+    "copy from ",
+    "copy to ",
+    "Binary files ",
+    "GIT binary ",
+    "---",
+    "+++",
+    "@@",
+    "\\",
+    "+",
+    "-",
+    " ",
+)
+
+
+@dataclass
+class FenceWalk:
+    """One pass over a document: grammar lines, diff body, raw text."""
+
+    grammar: list[tuple[int, str]] = field(default_factory=list)
+    diff_lines: list[str] = field(default_factory=list)
+    has_diff_fence: bool = False
+    non_diff_count: int = 0
+
+
+def is_unified_diff_line(line: str) -> bool:
+    if line == "":
+        return True
+    return line.startswith(DIFF_PREFIXES)
+
+
+def walk(text: str) -> FenceWalk:
+    """Split grammar from fences. Non-diff fences are skipped for grammar."""
+    out = FenceWalk()
+    in_fence = False
+    fence_ticks = ""
+    fence_lang = ""
+    for i, raw in enumerate(text.splitlines(), 1):
+        opened = FENCE_RE.match(raw)
+        if opened and not in_fence:
+            fence_ticks = opened.group(1)
+            fence_lang = opened.group(2).strip().split()[0] if opened.group(2).strip() else ""
+            in_fence = True
+            if fence_lang == "diff":
+                out.has_diff_fence = True
+            else:
+                out.non_diff_count += 1
+            continue
+        if in_fence and opened and raw.startswith(fence_ticks):
+            if fence_lang != "diff":
+                out.non_diff_count += 1
+            in_fence = False
+            fence_ticks = ""
+            fence_lang = ""
+            continue
+        if in_fence:
+            if fence_lang == "diff":
+                out.diff_lines.append(raw)
+            else:
+                out.non_diff_count += 1
+            continue
+        out.non_diff_count += 1
+        out.grammar.append((i, raw))
+    return out
+
+
+def forbidden_hits(text: str) -> list[str]:
+    """Scan the whole document, including fences."""
+    fails: list[str] = []
+    lines = text.splitlines()
+    if any(FRONTMATTER_RULE.match(ln) for ln in lines) and any(
+        FRONTMATTER_NAME.match(ln) for ln in lines
+    ):
+        fails.append("forbidden sibling SKILL.md frontmatter")
+    if '"tasks": [' in text:
+        fails.append("forbidden board dump")
+    if "<html" in text:
+        fails.append("forbidden dashboard HTML")
+    return fails
+
+
+def norm_envelope_name(raw: str) -> str:
+    return raw.strip().lower().strip('`"\'')
+
+
+def audit_brief(text: str, max_lines: int | None = None) -> list[str]:
+    """Return human-readable failure lines. Empty means pass."""
+    fails: list[str] = []
+    walked = walk(text)
+    fails.extend(forbidden_hits(text))
+    if max_lines is not None and walked.non_diff_count > max_lines:
+        fails.append(
+            f"non-diff line count {walked.non_diff_count} exceeds --max-lines {max_lines}"
+        )
+
+    has_packet = False
+    k_of_n_lines: list[str] = []
+    gate_lines: list[str] = []
+    sections: list[str] = []
+    unknown: list[str] = []
+    by_section: dict[str, list[str]] = {name: [] for name in LEGAL_SECTIONS}
+    current = ""
+
+    for _, line in walked.grammar:
+        if PACKET_RE.match(line):
+            has_packet = True
+            continue
+        if line.startswith("# ") and not line.startswith("## "):
+            continue
+        sec = SECTION_RE.match(line)
+        if sec:
+            name = sec.group(1).strip()
+            if name not in LEGAL_SECTIONS:
+                unknown.append(name)
+            else:
+                sections.append(name)
+                current = name
+            continue
+        if not line.strip():
+            continue
+        if K_OF_N_PREFIX.match(line):
+            k_of_n_lines.append(line)
+        if GATE_PREFIX.match(line):
+            gate_lines.append(line)
+        item = LIST_RE.match(line)
+        if item and current in by_section:
+            by_section[current].append(line)
+            continue
+        if item:
+            continue
+        fails.append("prose outside list items")
+
+    if not has_packet:
+        fails.append("missing `# Packet:` heading")
+
+    ok_k = False
+    if not k_of_n_lines:
+        fails.append("missing/malformed `- k of n:`")
+    else:
+        for raw in k_of_n_lines:
+            parsed = K_OF_N_RE.match(raw)
+            if not parsed:
+                fails.append("missing/malformed `- k of n:`")
+                continue
+            k, n = int(parsed.group(1)), int(parsed.group(2))
+            if k > n:
+                fails.append("missing/malformed `- k of n:`")
+            else:
+                ok_k = True
+        if not ok_k and "missing/malformed `- k of n:`" not in fails:
+            fails.append("missing/malformed `- k of n:`")
+
+    if not any(GATE_RE.match(raw) for raw in gate_lines):
+        fails.append("missing `- gate:`")
+
+    have = set(sections)
+    for name in REQUIRED_SECTIONS:
+        if name not in have:
+            fails.append(f"missing required section ## {name}")
+    for name in unknown:
+        fails.append(f"unknown heading ## {name}")
+
+    files = by_section["Files"]
+    if "Files" in have and not files:
+        fails.append("Files empty")
+
+    acs = by_section["AC"]
+    if "AC" in have:
+        if not acs:
+            fails.append("AC empty")
+        for raw in acs:
+            if not AC_RE.match(raw):
+                fails.append("AC line not matching `^- AC-\\d+: .+$`")
+
+    refs = [raw for raw in by_section["Diff"] if REF_RE.match(raw)]
+    if not refs and not walked.has_diff_fence:
+        fails.append("Diff satisfied by neither `- ref:` nor a fence")
+    for raw in walked.diff_lines:
+        if not is_unified_diff_line(raw):
+            fails.append("fence line outside unified-diff grammar")
+            break
+
+    for raw in by_section["Prior verdicts"]:
+        if not PRIOR_RE.match(raw):
+            fails.append("prior-verdict line not matching decision 5")
+
+    for raw in by_section["Envelope"]:
+        env = ENVELOPE_RE.match(raw)
+        if not env:
+            fails.append("envelope item is not `- <name>: <value>`")
+            continue
+        name = norm_envelope_name(env.group(1))
+        if name not in ENVELOPE_NAMES:
+            fails.append(
+                f"envelope name '{env.group(1).strip()}' is not a gan-verdict item 5 name"
+            )
+    return fails
+
+
+def verdict_lines(text: str) -> list[str]:
+    """Non-blank grammar lines of a verdict file."""
+    return [line for _, line in walk(text).grammar if line.strip()]
+
+
+def audit_verdict_gate(text: str, gate: str) -> list[str]:
+    fails: list[str] = []
+    lines = verdict_lines(text)
+    token = re.compile(rf"^{re.escape(gate)}: (BLESS|REJECT)(.*)$")
+    matches = [line for line in lines if token.match(line)]
+    if len(matches) != 1:
+        fails.append(
+            f"expected exactly one `{gate}: BLESS|REJECT` line, found {len(matches)}"
+        )
+    for line in matches:
+        m = token.match(line)
+        assert m is not None
+        if m.group(1) == "REJECT":
+            rest = m.group(2)
+            if rest.startswith(" — "):
+                blockers = rest[3:]
+            elif rest.startswith(": "):
+                blockers = rest[2:]
+            else:
+                blockers = ""
+            if not blockers.strip():
+                fails.append(f"`{gate}: REJECT` without `— ` or `: ` blockers")
+    for line in lines:
+        if BLANKET_GATE_BARE_RE.match(line) or BLANKET_GATE_ALL_RE.match(line):
+            fails.append("blanket")
+    return fails
+
+
+def audit_verdict_items(text: str, items: list[str]) -> list[str]:
+    fails: list[str] = []
+    lines = verdict_lines(text)
+    wanted = list(items)
+    seen: dict[str, int] = {i: 0 for i in wanted}
+    for line in lines:
+        if BLANKET_ITEMS_RE.match(line):
+            fails.append("blanket")
+            continue
+        parsed = ITEM_LINE_RE.match(line)
+        if not parsed:
+            continue
+        token, vid, rest = parsed.group(1), parsed.group(2), parsed.group(3)
+        if vid not in seen:
+            fails.append(f"stray id {vid}")
+            continue
+        seen[vid] += 1
+        if token == "REJECT" and not rest.startswith(" — "):
+            fails.append(f"`REJECT {vid}` without ` — `")
+    for vid, n in seen.items():
+        if n == 0:
+            fails.append(f"silence: no verdict line for {vid}")
+        elif n >= 2:
+            fails.append(f"id {vid} has {n} lines")
+    return fails
+
+
+def parse_argv(args: list[str]) -> tuple[str, dict] | None:
+    """Return (mode, opts) or None on usage error."""
+    if not args:
+        return None
+    mode = args[0]
+    rest = args[1:]
+    if mode == "brief":
+        max_lines: int | None = None
+        path: str | None = None
+        i = 0
+        while i < len(rest):
+            arg = rest[i]
+            if arg == "--max-lines":
+                if max_lines is not None or i + 1 >= len(rest):
+                    return None
+                try:
+                    max_lines = int(rest[i + 1])
+                except ValueError:
+                    return None
+                i += 2
+                continue
+            if arg.startswith("-") or path is not None:
+                return None
+            path = arg
+            i += 1
+        if path is None:
+            return None
+        return mode, {"path": path, "max_lines": max_lines}
+    if mode == "verdict":
+        gate: str | None = None
+        items: list[str] | None = None
+        path = None
+        i = 0
+        while i < len(rest):
+            arg = rest[i]
+            if arg == "--gate":
+                if gate is not None or items is not None or i + 1 >= len(rest):
+                    return None
+                gate = rest[i + 1]
+                i += 2
+                continue
+            if arg == "--items":
+                if items is not None or gate is not None or i + 1 >= len(rest):
+                    return None
+                raw = rest[i + 1]
+                items = [part.strip() for part in raw.split(",") if part.strip()]
+                if not items:
+                    return None
+                i += 2
+                continue
+            if arg.startswith("-") or path is not None:
+                return None
+            path = arg
+            i += 1
+        if path is None or (gate is None and items is None):
+            return None
+        return mode, {"path": path, "gate": gate, "items": items}
+    return None
+
+
+def main(argv: list[str]) -> int:
+    parsed = parse_argv(argv[1:])
+    if parsed is None:
+        print(
+            "usage: audit-packet brief [--max-lines N] <packet.md>\n"
+            "       audit-packet verdict (--gate <name> | --items id1,id2,...) "
+            "<verdict.md>",
+            file=sys.stderr,
+        )
+        return 2
+    mode, opts = parsed
+    path = Path(opts["path"])
+    if not path.is_file():
+        print(f"✗ {path} is not a file", file=sys.stderr)
+        return 1
+    text = path.read_text()
+    if mode == "brief":
+        fails = audit_brief(text, max_lines=opts["max_lines"])
+        label = "packet"
+    elif opts["gate"] is not None:
+        fails = audit_verdict_gate(text, opts["gate"])
+        label = "verdict"
+    else:
+        fails = audit_verdict_items(text, opts["items"])
+        label = "verdict"
+    if fails:
+        print(f"✗ {path}: {len(fails)} {label}-audit failure(s)")
+        for line in fails:
+            print(f"  - {line}")
+        return 1
+    print(f"✓ {path}: {label} audit pass")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))
