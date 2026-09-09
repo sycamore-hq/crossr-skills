@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """PR 5f acceptance: one loops pin, dead names gone, plan twins close the stack.
 
-Brief VALIDATE: four pin loci read v1-packets-consumers; .opencode/agent/
+Brief VALIDATE: four pin loci read v1-one-law-consumers; .opencode/agent/
 dying-name grep is zero; just harness-validate (this file is in that path);
 plan twins agree; §7 row 5 says drift-detectable; tracker rows exist.
 
@@ -17,7 +17,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-PIN = "v1-packets-consumers"
 DYING = (
     "rust-code-writer",
     "rust-errors",
@@ -173,14 +172,15 @@ class LiveTree(unittest.TestCase):
         cls.agents_on_disk = {
             p.name: p.read_text() for p in agent_dir.glob("*.md")
         }
+        cls.pin = lockfile_loops(cls.lockfile)
 
-    def test_lockfile_loops_is_the_one_law_consumers_tag(self):
-        self.assertEqual(lockfile_loops(self.lockfile), PIN)
+    def test_lockfile_loops_is_present(self):
+        self.assertTrue(self.pin, "lockfile.toml has no loops assignment")
 
     def test_three_doc_loci_match_the_lockfile(self):
         loci = doc_pin_loci(self.agents, self.readme)
-        stale = {k: v for k, v in loci.items() if v != PIN}
-        self.assertEqual(stale, {}, f"pin loci still off {PIN}: {stale}")
+        stale = {k: v for k, v in loci.items() if v != self.pin}
+        self.assertEqual(stale, {}, f"pin loci still off {self.pin}: {stale}")
 
     def test_opencode_agents_name_none_of_the_dying_skills(self):
         hits = dying_hits_in_dir(self.agents_on_disk)
@@ -203,7 +203,7 @@ class LiveTree(unittest.TestCase):
             self.plan,
             self.plan_html,
             (
-                PIN,
+                self.pin,
                 "507c509",
                 "requires.book",
                 "metadata.book",

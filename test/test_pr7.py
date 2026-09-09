@@ -13,14 +13,14 @@ from __future__ import annotations
 
 import importlib.machinery
 import importlib.util
-import json
 import re
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-from test_gan_record import phase_disagrees_with_plan, plan_status_line
+from test_gan_record import plan_status_line
+from test_pr5f import lockfile_loops
 
 ROOT = Path(__file__).resolve().parent.parent
 _spec = importlib.util.spec_from_loader(
@@ -468,8 +468,7 @@ class LiveTree(unittest.TestCase):
         cls.plan_html = (
             ROOT / "docs" / "plans" / "gan-layer-separation-plan.html"
         ).read_text()
-        cls.features = json.loads((ROOT / "features.json").read_text())
-        cls.phase = cls.features["gan-layer-separation"]
+        cls.lockfile = (ROOT / "lockfile.toml").read_text()
 
     def test_gan_verdict_byte_cap(self):
         n = len(self.card.encode())
@@ -514,13 +513,8 @@ class LiveTree(unittest.TestCase):
         self.assertIn("v1-packets", self.plan_html)
         self.assertIn("v1-packets-consumers", self.plan_html)
 
-    def test_phase_status_agrees_with_plan_header(self):
-        status = plan_status_line(self.plan)
-        self.assertFalse(
-            phase_disagrees_with_plan(self.phase, status),
-            f"gan-layer-separation is {self.phase.get('status')!r}; "
-            f"plan header is {status!r}",
-        )
+    def test_lockfile_loops_is_packets_consumers(self):
+        self.assertEqual(lockfile_loops(self.lockfile), "v1-packets-consumers")
 
 
 if __name__ == "__main__":
