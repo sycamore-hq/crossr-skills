@@ -44,7 +44,7 @@ nothing reads the runner).
 
 | # | Decision |
 |---|---|
-| 1 | Rust crate `runner/` in `crossr-loops` (workspace root `Cargo.toml`, binary `graph-runner`). Dependencies: `serde` + `serde_json` for the JSON (approved 2026-09-09), `thiserror` for typed errors. Nothing else — argv is hand-parsed. Edition `2021` and `rust-version = "1.94"` in `runner/Cargo.toml`; `rust-toolchain.toml` at the workspace root pins `channel = "1.94.1"` (the toolchain measured on the authoring container). A bump is a commit that says why, never a side effect. |
+| 1 | Rust crate `runner/` in `crossr-loops` (workspace root `Cargo.toml`, binary `graph-runner`). Dependencies: `serde` + `serde_json` for the JSON (approved 2026-09-09), `thiserror` for typed errors. Nothing else — argv is hand-parsed. Edition `2021` and `rust-version = "1.94"` in `runner/Cargo.toml`; `rust-toolchain.toml` at the workspace root pins `channel = "1.94.1"` (the toolchain measured on the authoring container). Toolchain bumps follow the pin rule (answer 7, 2026-09-09): a bump is its own commit that says why, never inside a feature PR, never a side effect. |
 | 2 | Stepper, not executor. No `std::process::Command`, no network crate, no interpreter. Events come from the caller. The runner never decides a verdict. |
 | 3 | Semantics. Start node = the graph's required top-level `start` key, which must name a node (R0 adds it to `schema.json`, every graph, and `verify-graphs`; document order and in-degree are not the rule — `avril` and `code-gan` have no in-degree-0 node). Sink = a node with no out-edges (`code-gan/commit` is a `gate` sink; `role: terminal` is a sink by construction). An unlabeled edge fires on the reserved event `next`; a graph whose edge carries `when: "next"` fails to load. An adversary node accepts `BLESS` / `REJECT` and nothing else. Two out-edges of one node with the same label (or both unlabeled) fail to load as ambiguous. An event with no matching out-edge fails loud, naming the node and its accepted labels. |
 | 4 | Completion. A walk is complete iff it stands on a sink at depth 0 with the event list exhausted. Events left over after a sink → `trailing events`. Events exhausted before a sink → `incomplete at <graph>:<node>`. Exit 0 / 1 / 2 (usage). |
@@ -599,8 +599,7 @@ VALIDATE (paste):
 
 ## Unresolved questions
 
-Questions 1–6 of the first cut were answered 2026-09-09 and folded into the
-decisions table (serde approved; explicit `start`; toolchain pinned; book
-sentence; `verify-graphs` shells out; ledger unparked).
-
-1. **Toolchain bumps.** `rust-toolchain.toml` pins `1.94.1`. Who moves it, and does it follow the pin rule (its own commit, never inside a feature PR)? The guardrail assumes yes.
+Questions 1–7 were answered 2026-09-09 and folded into the decisions table
+(serde approved; explicit `start`; toolchain pinned; book sentence;
+`verify-graphs` shells out; ledger unparked; toolchain bumps follow the pin
+rule). None open. A new question goes here, never into a brief.
