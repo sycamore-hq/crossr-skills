@@ -362,6 +362,21 @@ class AuditCalculations(unittest.TestCase):
         )
         self.assertTrue(fails, fails)
 
+    def test_verdict_gate_fenced_bless_passes(self):
+        self.assertEqual(
+            audit_packet.audit_verdict_gate(
+                "```\ncode-review: BLESS\n```\n", "code-review"
+            ),
+            [],
+        )
+
+    def test_verdict_gate_fenced_reject_is_visible(self):
+        fails = audit_packet.audit_verdict_gate(
+            "code-review: BLESS\n```\ncode-review: REJECT — hidden\n```\n",
+            "code-review",
+        )
+        self.assertTrue(any("exactly one" in f for f in fails), fails)
+
     def test_verdict_items_bless_and_reject_pass(self):
         self.assertEqual(
             audit_packet.audit_verdict_items(
@@ -408,6 +423,14 @@ class AuditCalculations(unittest.TestCase):
         fails = audit_packet.audit_verdict_items("BLESS all — fine\n", ["a", "b"])
         self.assertTrue(any("blanket" in f for f in fails), fails)
         self.assertFalse(any("stray" in f for f in fails), fails)
+
+    def test_verdict_items_fenced_lines_count(self):
+        self.assertEqual(
+            audit_packet.audit_verdict_items(
+                "```\nBLESS a — ok\nREJECT b — why\n```\n", ["a", "b"]
+            ),
+            [],
+        )
 
     def test_cli_brief_and_verdict(self):
         with tempfile.TemporaryDirectory() as tmp:
