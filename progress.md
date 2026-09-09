@@ -822,6 +822,31 @@ becomes claims; preserve-vs-grow is plan law.
 - Catalog: `plan-writer` on the allowlist + README. `just plan-audit FILE`.
 - Plan twins: §3.7 rule 5 (must survive).
 
+### gan-layer-separation — PR 7a (COMPLETED)
+
+Handoff packet fields and per-item verdicts become mechanically
+rejectable. Per
+[`docs/plans/gan-layer-separation-plan.md`](docs/plans/gan-layer-separation-plan.md)
+§3.8 / §4 PR 7. Work#12. Decisions 1, 2, 3, 5, 6, 7, 12.
+
+- `gan-verdict` items 8–10: packet field list, set-review line, field-add rule.
+- `references/handoff-packet.md`: packet grammar. Scratch path, never the tree.
+- `references/batch-verdict.md`: per-item `BLESS`/`REJECT`. Silence and blanket fail.
+- `scripts/audit-packet`: `brief` and `verdict` modes. Runs before any adversary or conductor reads.
+- `just packet-audit MODE FILE`.
+
+**Verification Status**
+
+- `wc -c .agents/skills/gan-verdict/SKILL.md` → ≤ 2048
+- `grep -c 'A bare BLESS over a set is not a verdict\.'` → 1
+- `git diff main -- gan-verdict/SKILL.md` removes nothing
+- `audit-packet brief` on the reference example → 0
+- three red demos (SKILL.md frontmatter, `"tasks": [`, `<html`) → exit 1
+- `audit-packet verdict --items T-1,T-2` on a bare `BLESS` → 1 blanket
+- `python3 -m unittest discover -s test -v` → OK
+- `just harness-validate` → PASS
+- `grep -rnE '\b(rust|ocaml)\b' .agents/skills/gan-verdict/` → 0
+
 ### github-pr-skills — gh-pr-01 (COMPLETED)
 
 Installed two GitHub review-loop skills into the catalog, verbatim from their source.

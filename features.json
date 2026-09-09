@@ -901,6 +901,16 @@
           "reviewer-conformance-risk",
           "tester-ac-regressions"
         ]
+      },
+      {
+        "id": "pr7a",
+        "title": "handoff packet fields + per-item verdict + audit-packet",
+        "status": "completed",
+        "features": [
+          "gan-verdict-packet-fields",
+          "per-item-verdict",
+          "audit-packet-script"
+        ]
       }
     ]
   },

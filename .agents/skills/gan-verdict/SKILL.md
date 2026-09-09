@@ -20,3 +20,6 @@ description: |
    - `file:line` citations
 6. The envelope goes **last** in the delegation prompt, after persona + gate card — persona and ruleset are the stable cacheable prefix; the envelope varies per delegation, and splicing it above the ruleset destroys prefix stability.
 7. Adding an envelope field means changing this file — never a conductor card.
+8. Handoff packet — inbound field schema (conductor fills; adversary receives nothing else): phase id · "k of n" · gate · file list · diff (fenced, or a ref) · AC subset claimed · claim ids covered · prior verdicts as one-liners · envelope (item 5). Never: a sibling SKILL.md, a previous-phase essay, a whole-board dump, dashboard HTML. Grammar: `references/handoff-packet.md`. Gate: `audit-packet brief`. Lives at the disclosed packet scratch path, never in the tree.
+9. Set review — one verdict line per id: `BLESS <id>` | `REJECT <id> — <blockers>`. A bare BLESS over a set is not a verdict. Gate: `audit-packet verdict --items`.
+10. Adding a packet field means changing this file — never a conductor card (same rule as item 7).

@@ -38,6 +38,7 @@ Always use the `justfile` for canonical commands:
 - `just regen-agents` — Refresh loop persona copies from the `loops` pin, regenerate marked `.opencode/agent/` files, strip the GONE-listed overlay
 - `just claude-skills-sync` — Regenerate the Claude compatibility copies in `~/.claude/skills` from `.agents/skills/`
 - `just docs-verify` — Allowlist vs README vs `SKILL.md`
+- `just packet-audit MODE FILE` — Mechanical packet/verdict audit (`brief` or `verdict`)
 
 `./scripts/harness-bootstrap` and `./scripts/sync-skills` are shims: they print `deprecated: use sycamore-hq/crossr-harness` and exit 1. Status dashboard and OpenCode `/avril` `/axel` `/status` live in harness + loops.
 
