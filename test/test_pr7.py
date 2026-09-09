@@ -510,7 +510,7 @@ class LiveTree(unittest.TestCase):
         self.assertRegex(self.plan, r"(?m)^### PR 7 —.+\u2705")
 
     def test_html_twin_names_both_packet_tags(self):
-        self.assertIn("v1-packets", self.plan_html)
+        self.assertRegex(self.plan_html, r"\bv1-packets\b(?!-)")
         self.assertIn("v1-packets-consumers", self.plan_html)
 
     def test_lockfile_loops_is_packets_consumers(self):
