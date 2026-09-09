@@ -144,6 +144,11 @@ class AuditCalculations(unittest.TestCase):
         fails = audit_packet.audit_brief(text)
         self.assertTrue(any("Packet:" in f for f in fails), fails)
 
+    def test_second_packet_heading_fails(self):
+        text = good_packet() + "# Packet: T-2\n"
+        fails = audit_packet.audit_brief(text)
+        self.assertTrue(any("second" in f and "Packet:" in f for f in fails), fails)
+
     def test_missing_k_of_n(self):
         text = with_line(good_packet(), "- k of n: 1 of 3\n", "")
         fails = audit_packet.audit_brief(text)
