@@ -13,11 +13,14 @@ from __future__ import annotations
 
 import importlib.machinery
 import importlib.util
+import json
 import re
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+from test_gan_record import phase_disagrees_with_plan, plan_status_line
 
 ROOT = Path(__file__).resolve().parent.parent
 _spec = importlib.util.spec_from_loader(
@@ -461,6 +464,12 @@ class LiveTree(unittest.TestCase):
     def setUpClass(cls):
         cls.card = GAN_VERDICT.read_text() if GAN_VERDICT.is_file() else ""
         cls.handoff = HANDOFF_REF.read_text() if HANDOFF_REF.is_file() else ""
+        cls.plan = (ROOT / "docs" / "plans" / "gan-layer-separation-plan.md").read_text()
+        cls.plan_html = (
+            ROOT / "docs" / "plans" / "gan-layer-separation-plan.html"
+        ).read_text()
+        cls.features = json.loads((ROOT / "features.json").read_text())
+        cls.phase = cls.features["gan-layer-separation"]
 
     def test_gan_verdict_byte_cap(self):
         n = len(self.card.encode())
@@ -488,6 +497,29 @@ class LiveTree(unittest.TestCase):
         self.assertRegex(
             self.handoff,
             r"\$\{TMPDIR:-/tmp\}/",
+        )
+
+    def test_plan_header_is_complete(self):
+        status = plan_status_line(self.plan)
+        self.assertTrue(status.startswith("**Status:** complete"), status)
+        self.assertIn("PR 6 landed", status)
+        self.assertIn("PR 7 landed", status)
+        self.assertIn("condition 1 undemonstrated", status)
+
+    def test_pr6_and_pr7_headings_carry_landed_mark(self):
+        self.assertRegex(self.plan, r"(?m)^### PR 6 —.+\u2705")
+        self.assertRegex(self.plan, r"(?m)^### PR 7 —.+\u2705")
+
+    def test_html_twin_names_both_packet_tags(self):
+        self.assertIn("v1-packets", self.plan_html)
+        self.assertIn("v1-packets-consumers", self.plan_html)
+
+    def test_phase_status_agrees_with_plan_header(self):
+        status = plan_status_line(self.plan)
+        self.assertFalse(
+            phase_disagrees_with_plan(self.phase, status),
+            f"gan-layer-separation is {self.phase.get('status')!r}; "
+            f"plan header is {status!r}",
         )
 
 

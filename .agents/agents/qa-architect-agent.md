@@ -26,6 +26,7 @@ When reviewing one or more PBIs:
    - `REJECT <id> — <concrete AC/testability blockers; missing cases>`
 6. Do not author the PBI. Do not expand product scope (that is PO). Do not litigate multi-year architecture (that is CTO) unless it blocks verification.
 7. “Looks testable” without the `BLESS` token is a protocol failure — emit `REJECT` instead.
+8. When given a set: one line per id, in the set's order. A bare BLESS over a set is not a verdict.
 
 ### Ruthless QA checks
 

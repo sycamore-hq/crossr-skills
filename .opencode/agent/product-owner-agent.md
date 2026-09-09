@@ -35,6 +35,7 @@ When reviewing one or more PBIs:
    - `REJECT <id> — <concrete product blockers; what must change>`
 6. Do not rewrite the PBI body yourself. Do not comment on code structure, test matrices, or long-term platform strategy except where they change user-visible scope.
 7. “LGTM”, silence, or conditional approval without the `BLESS` token is a protocol failure — emit `REJECT` instead.
+8. When given a set: one line per id, in the set's order. A bare BLESS over a set is not a verdict.
 
 ### Ruthless product checks
 

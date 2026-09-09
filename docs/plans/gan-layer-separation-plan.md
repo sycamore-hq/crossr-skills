@@ -1,6 +1,6 @@
 # Plan: crossr v2 — Layer Separation, Shared Ruleset, Plan-First GAN
 
-**Status:** in progress · PR 0 merged (#105) · PR 1 landed · PR 2 landed · PR 3 landed · PR 4 landed (loops [#7](https://github.com/sycamore-hq/crossr-loops/pull/7), skills [#110](https://github.com/sycamore-hq/crossr-skills/pull/110)) · PR 5a landed ([#117](https://github.com/sycamore-hq/crossr-skills/pull/117)) · PR 5b landed ([#118](https://github.com/sycamore-hq/crossr-skills/pull/118)) · PR 5 landed (skills [#117](https://github.com/sycamore-hq/crossr-skills/pull/117) / [#118](https://github.com/sycamore-hq/crossr-skills/pull/118) / [#120](https://github.com/sycamore-hq/crossr-skills/pull/120) / [#124](https://github.com/sycamore-hq/crossr-skills/pull/124), loops [#9](https://github.com/sycamore-hq/crossr-loops/pull/9), harness [#8](https://github.com/sycamore-hq/crossr-harness/pull/8), landing [#10](https://github.com/sycamore-hq/crossr-web-landing/pull/10); tags `v1-one-law` / `v1-one-law-consumers`)
+**Status:** complete · PR 0 merged (#105) · PR 1 landed · PR 2 landed · PR 3 landed · PR 4 landed (loops [#7](https://github.com/sycamore-hq/crossr-loops/pull/7), skills [#110](https://github.com/sycamore-hq/crossr-skills/pull/110)) · PR 5a landed ([#117](https://github.com/sycamore-hq/crossr-skills/pull/117)) · PR 5b landed ([#118](https://github.com/sycamore-hq/crossr-skills/pull/118)) · PR 5 landed (skills [#117](https://github.com/sycamore-hq/crossr-skills/pull/117) / [#118](https://github.com/sycamore-hq/crossr-skills/pull/118) / [#120](https://github.com/sycamore-hq/crossr-skills/pull/120) / [#124](https://github.com/sycamore-hq/crossr-skills/pull/124), loops [#9](https://github.com/sycamore-hq/crossr-loops/pull/9), harness [#8](https://github.com/sycamore-hq/crossr-harness/pull/8), landing [#10](https://github.com/sycamore-hq/crossr-web-landing/pull/10); tags `v1-one-law` / `v1-one-law-consumers`) · PR 6 landed (skills [#125](https://github.com/sycamore-hq/crossr-skills/pull/125), loops [#11](https://github.com/sycamore-hq/crossr-loops/pull/11), harness [#10](https://github.com/sycamore-hq/crossr-harness/pull/10); no tag cut; retired by 7a/7b) · PR 7 landed (skills [#126](https://github.com/sycamore-hq/crossr-skills/pull/126), loops [#12](https://github.com/sycamore-hq/crossr-loops/pull/12), harness [#11](https://github.com/sycamore-hq/crossr-harness/pull/11), this PR; tags v1-packets / v1-packets-consumers) · acceptance condition 1 undemonstrated (no Elm/Melange run yet); condition 2 is a running measure
 **Scope:** `crossr-skills`, `crossr-loops`, `crossr-harness`
 **Origin:** token-burn critique of the crossr-* agent infrastructure, verified against the trees 2026-08-30.
 
@@ -810,7 +810,9 @@ Parked from PR 3a / 3b review — **discharged:**
 - `graphs/code-gan.json` named `rust-code-writer` / `rust-code-reviewer` / `rust-code-tester`. 5d retargeted to `code-writer` / `code-review` / `testing` and added `requires.book: true`. No intermediate `rust-review` / `rust-testing` skills (shape B).
 - `HARNESS-SPEC.md` §6 gates 2–3 named `rust-code-reviewer` / `rust-code-tester`. 5e retargeted them. Featured-set harness half is 5e; landing half is 5g (merged).
 
-### PR 6 — The v2 chain
+### PR 6 — The v2 chain ✅ landed
+
+**PR 6 landed** as skills [#125](https://github.com/sycamore-hq/crossr-skills/pull/125), loops [#11](https://github.com/sycamore-hq/crossr-loops/pull/11), harness [#10](https://github.com/sycamore-hq/crossr-harness/pull/10). No tag cut; retired by 7a/7b.
 
 **Files:** `axel/SKILL.md`, both entrypoints, `graphs/axel.json`, `graphs/code-gan.json`
 (renamed from `rust-team-lead.json` in PR 3), the architect / reviewer / tester personas;
@@ -855,7 +857,9 @@ the restart rule nearly writes itself:
 | Architect (escalated, code time) | full chain — rare by construction |
 | Scope change | back to AVRIL — not a GAN restart |
 
-### PR 7 — Handoff packets, envelopes, AVRIL batching
+### PR 7 — Handoff packets, envelopes, AVRIL batching ✅ landed
+
+**PR 7 landed** as skills [#126](https://github.com/sycamore-hq/crossr-skills/pull/126) (7a), loops [#12](https://github.com/sycamore-hq/crossr-loops/pull/12) (7b), harness [#11](https://github.com/sycamore-hq/crossr-harness/pull/11) (7c), this PR (7d). Tags `v1-packets` (`7536be9`) / `v1-packets-consumers` (`9e5b3f16`).
 
 Per-conductor envelope specs (§3.3), packet format in (§3.4), and AVRIL batch review: PO
 reviews the set, QA reviews the set, CTO reviews the set; `REJECT` loops the item, not the
@@ -895,7 +899,7 @@ per-item tokens you bank the savings and lose the gate.
 - **"Conductor writes no code."** That is the load-set constraint in PR 2, not decoration.
 - **SKILL.md as law, graphs as maps.** Do not invent a second law document to save tokens.
 - **The LLM Tester** (PR 6 starves its input, does not delete it).
-- **Per-item BLESS** when AVRIL batches (PR 7).
+- **Per-item BLESS** when AVRIL batches (PR 7) (landed: gan-verdict item 9 + verify-protocol batch rule).
 - **The reviewer's unanticipated-risk pass.** Conformance-only review misses defects that neither
   the plan nor the AC anticipated. Cap it at three findings; do not delete it.
 - **The judgment-claim quota.** Without it, "mechanically verifiable" degrades into a plan of
@@ -937,7 +941,7 @@ Per-PR success criteria:
 | 4 | `axel` **5,989** (irreducible gates **5,443**: Intake 899 + Method 2,998 + Strict 969 + Checklist 480 + frontmatter 97). `avril` **4,984** (irreducible 4,097). Floor is the always-loaded law, not a wish — ≤3KB could only be met by exiling AC evidence / board→done. Second restatement (14KB → PR 4 in 3c; 3KB → ≤6KB here); this one is sound because it is the sum of gates the card still must load. `references/` carries Verification and Specialization |
 | 5 | One universal writer skill (`code-writer`) plus one book per language. Zero `<lang>-code-writer` skills remain — `rust-code-writer`, `rust-errors` and `ocaml-code-writer` absorbed. Rules projections generated per book and drift-detectable, gated by review discipline (decision 8); gate cards ≤2 KB and book-agnostic; the `code-gan` graph names no language. Measured on the 5f tree: rust **52** rules (`RULES.md` 5,142 B), ocaml **75** rules (`RULES.md` 13,442 B); `code-review` **1,454** B / `testing` **1,734** B (both ≤2 KB). Reviewer load set is the gate card + `RULES.md` (rust 1,454 + 5,142 = **6,596** B) against the pre-PR reviewer skill at 5,059 B. |
 | 6 | `plan-writer` exists and `code-writer` is absent from the plan-time window; architect rejections occur at plan time, not after implementation; zero LLM tokens spent on a mechanically-red phase or an audit-red plan; bidirectional AC↔claim coverage passes by script; plan commit precedes first implementation commit |
-| 7 | Adversary windows carry no sibling SKILL.md, no board dump, no prior-phase prose |
+| 7 | audit-packet brief rejects a pasted SKILL.md, a board dump, dashboard HTML, and any non-grammar heading (7 tests); axel card mandates the audit before every delegation; verify-protocol enforces per-item verdicts on the three batch adversaries; bootstrap installs the gate. |
 
 Two acceptance conditions for the whole plan:
 
@@ -972,6 +976,7 @@ a plan that says "decide before PR 1" and then doesn't is not a plan.
 | 10 | Plan artifact location | `docs/plans/pbi/<id>.plan.md`, committed before implementation, immutable once blessed (§3.7). |
 | 11 | Plan authorship | **`plan-writer` is a skill, not a persona.** The plan and the diff are different artifacts needing different law, so the Generator loads a different card per phase (§3.2). It is not a second *role*: (a) §3.5's saving depends on the plan being the implementer's own cheap draft — a separate author makes it spec-handoff; (b) §3.6's "cannot satisfy claim N" tripwire and §7 acceptance condition 2 ("escalations trend to near zero") stop being measurable once the planner lacks the implementer's codebase knowledge, since unsatisfiable claims become routine; (c) the self-serving-plan hazard is already caught mechanically (underspecification REJECT, 30% quota, bidirectional coverage `comm`) — an LLM-layer fix for a scripted check violates *mechanical before LLM*; (d) a second persona at the plan gate multiplies iterations on the chain's most-iterated loop, the same cost argument that keeps the reviewer and test verifier out (§3.5). **Revisit when:** code-time architect escalations trend to near zero *while* architect plan-REJECTs are dominated by satisfiable-but-self-serving plans that the quota and coverage script passed. |
 | 12 | Restating a landed measurable | **Landed §7 rows are frozen.** A row freezes when its PR merges: from then on it is the contract that PR was blessed against — a historical fact, not a current target. A restatement is a **new line naming the row it supersedes**; never an in-place overwrite. Rows for unlanded PRs are drafts and may be edited freely — **the rule starts at merge, not at first draft**, or §7 becomes a scratch pad. *This is not §3.7 rule 2 applied to the plan itself*: claim ids are append-only because they are **citations**; §7 rows are **criteria**, and they freeze because a landed criterion is a fact. No file split, no script, and **no retrofit** of rows already landed — 4b's PR 4 row already carries the 14 KB → ≤3 KB → ≤6 KB chain in prose, and rewriting settled rows to demonstrate a convention serves no reader. Rebase immediately before merge stays process, not tooling. *Why:* #111 vs 4b — a stale-base amendment still carried `≤3KB` while `main` carried the 5,989 / 5,443 derivation. A resolver who does not know which side is the contract can silently revert a landed number; append-shaped hunks do not prevent that resolve, this decision is what makes it illegal. |
+| 13 | PR 7 settlement | Decisions 1–13 in [`pr7-handoff-packets-prompt-set.md`](pr7-handoff-packets-prompt-set.md) are the settlement (same treatment the PR 5 decisions received). Status leading word is `complete`; the phase closes with this PR. Acceptance condition 1 stays undemonstrated; condition 2 is a running measure. |
 
 Still open, none blocking PR 1:
 

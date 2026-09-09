@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """PR 5f acceptance: one loops pin, dead names gone, plan twins close the stack.
 
-Brief VALIDATE: four pin loci read v1-one-law-consumers; .opencode/agent/
+Brief VALIDATE: four pin loci read v1-packets-consumers; .opencode/agent/
 dying-name grep is zero; just harness-validate (this file is in that path);
 plan twins agree; §7 row 5 says drift-detectable; tracker rows exist.
 
@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-PIN = "v1-one-law-consumers"
+PIN = "v1-packets-consumers"
 DYING = (
     "rust-code-writer",
     "rust-errors",
