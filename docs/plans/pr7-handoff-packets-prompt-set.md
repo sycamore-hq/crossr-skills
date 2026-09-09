@@ -2,7 +2,7 @@
 
 Plan: `docs/plans/gan-layer-separation-plan.md` §3.3 / §3.8 / §4 PR 7 / §6 / §7
 row 7. Work#12. 7a and 7b recorded that this file was not on `main`; 7d lands
-the settlement table and the measured status. No HTML twin (Unresolved 1).
+the settlement table and the measured status. No HTML twin.
 
 Decisions 1–13 below are the PR 7 settlement (plan §8 decision 13). They are
 the facts the four briefs were blessed against, reconstructed from the landed
