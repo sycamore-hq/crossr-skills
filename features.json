@@ -797,7 +797,7 @@
     ]
   },
   "gan-layer-separation": {
-    "status": "in_progress",
+    "status": "completed",
     "commits": [
       {
         "id": "pr0",
@@ -910,6 +910,16 @@
           "gan-verdict-packet-fields",
           "per-item-verdict",
           "audit-packet-script"
+        ]
+      },
+      {
+        "id": "pr7d",
+        "title": "Loops pin bump + regen-agents + close PR 7 and the phase",
+        "status": "completed",
+        "features": [
+          "loops-pin-v1-packets-consumers",
+          "plan-record-pr6-pr7",
+          "phase-complete"
         ]
       }
     ]

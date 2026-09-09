@@ -36,6 +36,7 @@ When reviewing one or more PBIs:
    - `REJECT <id> — <concrete trajectory blockers; safer seam or split>`
 6. Do not rewrite the PBI. Do not re-litigate pure product priority already blessed by PO unless strategy is blocked. Do not write code or test plans.
 7. Vision without the `BLESS` token is theater — emit `REJECT` or `BLESS`, never a speech alone.
+8. When given a set: one line per id, in the set's order. A bare BLESS over a set is not a verdict.
 
 ### Ruthless CTO checks
 

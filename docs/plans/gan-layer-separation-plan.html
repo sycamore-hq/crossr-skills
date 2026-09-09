@@ -97,7 +97,7 @@
 
 <div class="bar"><div class="bar-in">
   <span class="bar-name">gan layer separation</span>
-  <span class="pill">crossr v2 · PR 0 merged · PR 1 landed · PR 2 landed · PR 3 landed · PR 4 landed · PR 5a landed · PR 5b landed · PR 5 landed · 2 to go</span>
+  <span class="pill">crossr v2 · complete · PR 6 landed · PR 7 landed · tags v1-packets / v1-packets-consumers</span>
 </div></div>
 
 <main>
@@ -487,7 +487,8 @@ RE-02  Cross-layer propagation uses #[from]; never inline .map_err at a call sit
     </div></div>
 
     <div class="pr"><div class="pr-id">PR 6</div><div class="pr-body">
-      <h3>The v2 chain</h3>
+      <h3>The v2 chain <span class="good" style="font-family:var(--mono);font-size:.72rem">✓ landed · skills #125 · loops #11 · harness #10 · no tag; retired by 7a/7b</span></h3>
+      <p><strong>PR 6 landed</strong> as skills <a href="https://github.com/sycamore-hq/crossr-skills/pull/125">#125</a>, loops <a href="https://github.com/sycamore-hq/crossr-loops/pull/11">#11</a>, harness <a href="https://github.com/sycamore-hq/crossr-harness/pull/10">#10</a>. No tag cut; retired by 7a/7b.</p>
       <ul>
         <li><strong>New catalog skill <code>plan-writer</code></strong> (language-neutral, card-shaped) is the plan-time Generator card: claim taxonomy, plan artifact format and its four rules, bidirectional AC&harr;claim mapping, append-only ids, and phase decomposition moved out of the conductor. A <strong>skill, not a persona</strong>. <code>code-writer</code> is absent from the plan window &mdash; loading diff law to write a specification is the category error PR 2 fixed on the conductor.</li>
         <li>Generator emits an implementation plan with a typed claim list <em>before</em> writing code.</li>
@@ -517,7 +518,8 @@ RE-02  Cross-layer propagation uses #[from]; never inline .map_err at a call sit
     </div></div>
 
     <div class="pr"><div class="pr-id">PR 7</div><div class="pr-body">
-      <h3>Handoff packets, envelopes, AVRIL batching</h3>
+      <h3>Handoff packets, envelopes, AVRIL batching <span class="good" style="font-family:var(--mono);font-size:.72rem">✓ landed · four PRs · v1-packets · v1-packets-consumers</span></h3>
+      <p><strong>PR 7 landed</strong> as skills <a href="https://github.com/sycamore-hq/crossr-skills/pull/126">#126</a> (7a), loops <a href="https://github.com/sycamore-hq/crossr-loops/pull/12">#12</a> (7b), harness <a href="https://github.com/sycamore-hq/crossr-harness/pull/11">#11</a> (7c), this PR (7d). Tags <code>v1-packets</code> / <code>v1-packets-consumers</code>.</p>
       <p>Per-conductor envelope specs, packet format in — phase id and &ldquo;k of n&rdquo;, file list + diff, the AC subset claimed, prior verdicts as one-liners. Never sibling SKILL.md files, prior-phase essays, whole-board JSON, or dashboard HTML pasted back in. AVRIL then reviews in batches: PO the set, QA the set, CTO the set; <code>REJECT</code> loops the item, not the siblings.</p>
       <p><strong>Required guard:</strong> per-item <code>BLESS</code> tokens inside the batch verdict, never one blanket <code>BLESS</code> over a set. Batching is exactly when a reviewer starts blessing by skim.</p>
     </div></div>
@@ -533,7 +535,7 @@ RE-02  Cross-layer propagation uses #[from]; never inline .map_err at a call sit
     <div><b>&ldquo;Conductor writes no code&rdquo;</b><span>That is the load-set constraint in PR 2, not decoration.</span></div>
     <div><b>SKILL.md as law, graphs as maps</b><span>Do not invent a second law document to save tokens.</span></div>
     <div><b>The LLM Tester</b><span>PR 6 starves its input. It does not delete the gate.</span></div>
-    <div><b>Per-item BLESS when AVRIL batches</b><span>Otherwise you bank the savings and lose the gate.</span></div>
+    <div><b>Per-item BLESS when AVRIL batches (PR 7)</b><span>Otherwise you bank the savings and lose the gate. (landed: gan-verdict item 9 + verify-protocol batch rule)</span></div>
     <div><b>Architect routing on seams</b><span>Route on touched paths <em>or</em> size — never size alone. A 12-line trait-boundary change is the architect&rsquo;s case.</span></div>
     <div><b>The reviewer&rsquo;s unanticipated-risk pass</b><span>Conformance-only review misses defects neither the plan nor the AC anticipated. Cap it at three findings; do not delete it.</span></div>
     <div><b>The judgment-claim quota</b><span>Without it, &ldquo;mechanically verifiable&rdquo; degrades into a plan of unfalsifiable prose and the architect gate becomes theatre.</span></div>
@@ -560,7 +562,7 @@ RE-02  Cross-layer propagation uses #[from]; never inline .map_err at a call sit
       <tr><td class="mono">4</td><td><code>axel</code> <strong>5,989</strong> (irreducible gates <strong>5,443</strong>: Intake 899 + Method 2,998 + Strict 969 + Checklist 480 + frontmatter 97). <code>avril</code> <strong>4,984</strong> (irreducible 4,097). Floor is the always-loaded law, not a wish &mdash; &le;3 KB could only be met by exiling AC evidence / board&rarr;done. Second restatement (14 KB &rarr; PR 4 in 3c; 3 KB &rarr; &le;6 KB here); this one is sound because it is the sum of gates the card still must load. <code>references/</code> carries Verification and Specialization</td></tr>
       <tr><td class="mono">5</td><td>One universal writer skill (<code>code-writer</code>) plus one book per language. Zero <code>&lt;lang&gt;-code-writer</code> skills remain &mdash; <code>rust-code-writer</code>, <code>rust-errors</code> and <code>ocaml-code-writer</code> absorbed. Rules projections generated per book and <strong>drift-detectable</strong>, gated by review discipline (decision 8); gate cards &le;2 KB and book-agnostic; the <code>code-gan</code> graph names no language. Measured: rust <strong>52</strong> rules (5,142 B), ocaml <strong>75</strong> rules (13,442 B); <code>code-review</code> 1,454 B / <code>testing</code> 1,734 B. Reviewer load set is the gate card + <code>RULES.md</code> (rust 6,596 B) against the pre-PR reviewer skill at 5,059 B.</td></tr>
       <tr><td class="mono">6</td><td><code>plan-writer</code> exists and <code>code-writer</code> is absent from the plan-time window; architect rejections occur at plan time, never after implementation; zero LLM tokens on a mechanically-red phase or an audit-red plan; bidirectional AC&harr;claim coverage passes by script; plan commit precedes first implementation commit</td></tr>
-      <tr><td class="mono">7</td><td>Adversary windows carry no sibling SKILL.md, no board dump, no prior-phase prose</td></tr>
+      <tr><td class="mono">7</td><td>audit-packet brief rejects a pasted SKILL.md, a board dump, dashboard HTML, and any non-grammar heading (7 tests); axel card mandates the audit before every delegation; verify-protocol enforces per-item verdicts on the three batch adversaries; bootstrap installs the gate.</td></tr>
     </tbody>
   </table></div>
   <div class="callout">
@@ -585,6 +587,7 @@ RE-02  Cross-layer propagation uses #[from]; never inline .map_err at a call sit
       <tr><td>Plan artifact location</td><td class="good"><code>docs/plans/pbi/&lt;id&gt;.plan.md</code>, committed before implementation, immutable once blessed.</td></tr>
       <tr><td>Plan authorship</td><td class="good"><code>plan-writer</code> is a <strong>skill, not a persona</strong>. Different artifact, different card (&sect;3.2) &mdash; but not a second <em>role</em>: (a) the chain&rsquo;s saving depends on the plan being the implementer&rsquo;s own cheap draft, so a separate author makes it spec-handoff; (b) the &ldquo;cannot satisfy claim N&rdquo; tripwire and acceptance condition 2 stop being measurable once the planner lacks the implementer&rsquo;s codebase knowledge, since unsatisfiable claims become routine; (c) the self-serving-plan hazard is already caught mechanically (underspecification REJECT, 30% quota, bidirectional coverage) &mdash; an LLM-layer fix for a scripted check violates <em>mechanical before LLM</em>; (d) a second persona at the plan gate multiplies iterations on the chain&rsquo;s most-iterated loop, the same cost argument that keeps the reviewer and test verifier out. <strong>Revisit when</strong> code-time escalations trend to near zero <em>while</em> plan-REJECTs are dominated by satisfiable-but-self-serving plans the quota and coverage script passed.</td></tr>
       <tr><td>Restating a landed measurable</td><td class="good"><strong>Landed &sect;7 rows are frozen.</strong> A row freezes when its PR merges: it is then the contract that PR was blessed against &mdash; a historical fact, not a current target. A restatement is a <strong>new line naming the row it supersedes</strong>, never an in-place overwrite. Rows for unlanded PRs are drafts and may be edited freely &mdash; <strong>the rule starts at merge, not at first draft</strong>, or &sect;7 becomes a scratch pad. <em>Not &sect;3.7 rule 2 applied to the plan itself</em>: claim ids are append-only because they are <strong>citations</strong>; &sect;7 rows are <strong>criteria</strong>, and they freeze because a landed criterion is a fact. No file split, no script, and <strong>no retrofit</strong> of rows already landed &mdash; 4b&rsquo;s PR 4 row already carries the 14 KB &rarr; &le;3 KB &rarr; &le;6 KB chain in prose, and rewriting settled rows to demonstrate a convention serves no reader. Rebase immediately before merge stays process, not tooling. <em>Why:</em> #111 vs 4b &mdash; a stale-base amendment still carried <code>&le;3KB</code> while <code>main</code> carried the 5,989 / 5,443 derivation. A resolver who does not know which side is the contract can silently revert a landed number; append-shaped hunks do not prevent that resolve, this decision is what makes it illegal.</td></tr>
+      <tr><td>PR 7 settlement</td><td class="good">Decisions 1&ndash;13 in <a href="pr7-handoff-packets-prompt-set.md"><code>pr7-handoff-packets-prompt-set.md</code></a> are the settlement (same treatment the PR 5 decisions received). Status leading word is <code>complete</code>; the phase closes with this PR. Acceptance condition 1 stays undemonstrated; condition 2 is a running measure.</td></tr>
     </tbody>
   </table></div>
   <div class="prose"><p>Still open, none blocking PR 1:</p></div>
@@ -601,7 +604,7 @@ RE-02  Cross-layer propagation uses #[from]; never inline .map_err at a call sit
   <span>·</span>
   <span>measured against the tree 2026-08-30</span>
   <span>·</span>
-  <span>status: in progress · PR 0 merged (#105) · PR 1 landed · PR 2 landed · PR 3 landed · PR 4 landed (loops #7 · skills #110) · PR 5a landed (#117) · PR 5b landed (#118) · PR 5 landed (skills #117 / #118 / #120 / #124 · loops #9 · harness #8 · landing #10 · tags v1-one-law / v1-one-law-consumers)</span>
+  <span>status: complete · PR 0 merged (#105) · PR 1 landed · PR 2 landed · PR 3 landed · PR 4 landed (loops #7 · skills #110) · PR 5a landed (#117) · PR 5b landed (#118) · PR 5 landed (skills #117 / #118 / #120 / #124 · loops #9 · harness #8 · landing #10 · tags v1-one-law / v1-one-law-consumers) · PR 6 landed (skills #125 · loops #11 · harness #10; no tag cut; retired by 7a/7b) · PR 7 landed (skills #126 · loops #12 · harness #11 · this PR; tags v1-packets / v1-packets-consumers) · acceptance condition 1 undemonstrated (no Elm/Melange run yet); condition 2 is a running measure</span>
 </footer>
 
 </main>

@@ -847,6 +847,32 @@ rejectable. Per
 - `just harness-validate` → PASS
 - `grep -rnE '\b(rust|ocaml)\b' .agents/skills/gan-verdict/` → 0
 
+### gan-layer-separation — PR 7d (COMPLETED)
+
+Catalog consumes `v1-packets-consumers`. Plan record stops lying about PR 6.
+The `gan-layer-separation` phase closes. Work#12. Decisions 10, 13.
+
+- Pin: `loops = "v1-packets-consumers"` at every locus `test_pr5f.py` reads
+  (lockfile, README Current pins + topo, AGENTS Consumer pins + "are in the
+  `<tag>` pin"). Skills pin stays `v1-gan-layers`.
+- `just regen-agents` twice, git status clean. Copies take the 7b per-item
+  lines on PO/QA/CTO and the conductor step edits. They also take the 6b
+  plan-first edits on architect / reviewer / tester — PR 6 cut no consumer
+  tag, so this pin jump is the first catalog consume of that stack. No
+  hand-edits.
+- Plan + HTML: PR 6 marked landed (skills#125, loops#11, harness#10; no tag;
+  retired by 7a/7b). PR 7 marked landed (skills#126, loops#12, harness#11,
+  this PR; tags `v1-packets` / `v1-packets-consumers`). Header leading word
+  is `complete`. §7 row 7 is the measured statement (7 tests). §6 per-item
+  BLESS keeps the line and names gan-verdict item 9 + verify-protocol.
+  §8 decision 13 points at the prompt-set settlement.
+- Prompt set Status table (no HTML twin).
+- Phase status `completed`. Acceptance condition 1 is still undemonstrated
+  (no Elm/Melange run). Condition 2 is a running measure.
+
+**Phase close.** `gan-layer-separation` is done on disk. Condition 1 was
+never shown live. Next is the work ledger flip.
+
 ### github-pr-skills — gh-pr-01 (COMPLETED)
 
 Installed two GitHub review-loop skills into the catalog, verbatim from their source.

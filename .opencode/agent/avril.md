@@ -42,8 +42,8 @@ When asked to produce a blessed backlog from intent:
 2. Read `AGENTS.md`, `HARNESS-SPEC.md`, and the disclosed intent (PRD, conversation, prototype notes, ADRs). Run the harness session ritual.
 3. Activate `avril` + `gan-verdict`. Load no writer skill.
 4. Delegate the initial PBI set to `planning-architect-agent` (or equivalent) from the intent.
-5. For every item, every cycle, run adversaries in fixed order: `product-owner-agent` → `qa-architect-agent` → `visionary-cto-agent`. Require the exact token `BLESS` from each. Silence, hedge, or “LGTM” is incomplete. `REJECT` must cite concrete blockers.
-6. Any `REJECT` sends the minimal delta back to the Generator. Re-run the full three-adversary chain on the revised item (fresh blessings; prior BLESS does not carry after material change).
+5. Delegate the active set in fixed order: `product-owner-agent` → `qa-architect-agent` → `visionary-cto-agent`. One verdict line per id. Run `audit-packet verdict --items <ids>` before reading a reply; red → re-delegate. Write the cycle line to the blessing log.
+6. `REJECT <id>` loops that id alone; unchanged siblings keep their BLESS. Do not delegate QA or CTO until every id in the set has a current PO BLESS. After the Generator revises the rejected id, PO reviews it again; then QA and CTO review the full set. Re-run the three-adversary chain on the revised item (fresh blessings; prior BLESS does not carry after material change).
 7. Split any PBI that cannot be reviewed in one short pass, that mixes multiple shippable outcomes, or that implies a multi-thousand-line blob.
 8. Optional owl-sketch: when the human asks to “draw the owl”, the Generator may run a bounded planning spike (label `spike`) to discover seams, then massage findings into general PBIs. Owl-sketch output is not AXEL authorization; every real PBI still needs PO → QA → CTO `BLESS`.
 9. When every active PBI has three fresh `BLESS` marks, emit the Blessed Backlog Summary and **stop**. Do not implement or invoke code GAN skills. Execution is owned by `axel`.
