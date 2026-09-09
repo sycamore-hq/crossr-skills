@@ -933,3 +933,18 @@ Parked at split-09 as "not this chain"; this file is the chain. No HTML twin.
 - `./scripts/audit-plan docs/plans/graph-runner-prompt-set.md`: PASS
 - `python3 -m unittest discover -s test`: OK
 - `./scripts/verify-docs`, `sync-claude-skills --check --soft`, `extract-rules --check`: clean
+
+## graph-runner — prompt set v2 (COMPLETED)
+
+Answers 1–6 folded into
+[`docs/plans/graph-runner-prompt-set.md`](docs/plans/graph-runner-prompt-set.md):
+serde + serde_json approved; explicit `start` key is its own PR (R0: schema,
+five graphs, `verify-graphs`); `rust-toolchain.toml` pins `1.94.1` with
+`rust-version = "1.94"`, edition 2021; one sentence in the book overview (R3);
+`verify-graphs` shells out to `cargo … cover` from R3 and fails loud without
+cargo. Five phases, 9 AC, 28 claims (2 judgment). One question left: who
+bumps the toolchain pin.
+
+## Verification Status
+- `./scripts/audit-plan docs/plans/graph-runner-prompt-set.md` (plain and `--loc-threshold 600`): PASS
+- `python3 -m unittest discover -s test`: OK

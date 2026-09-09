@@ -968,6 +968,14 @@
           "graph-runner-prompt-set",
           "prompt-set-plan-audit-test"
         ]
+      },
+      {
+        "id": "gr-01",
+        "title": "graph-runner prompt set v2: answers 1-6 folded in (R0 start key, toolchain pin, cover in verify-graphs)",
+        "status": "completed",
+        "features": [
+          "prompt-set-answers-folded"
+        ]
       }
     ]
   }
