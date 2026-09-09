@@ -15,6 +15,7 @@ Set (AVRIL): exactly one line per id.
 - `REJECT <id> — …` (the ` — ` blockers are required)
 
 A bare BLESS over a set is not a verdict.
+Fences do not hide a token: `audit-packet verdict` reads raw lines.
 
 Failure classes:
 

@@ -275,8 +275,12 @@ def audit_brief(text: str, max_lines: int | None = None) -> list[str]:
 
 
 def verdict_lines(text: str) -> list[str]:
-    """Non-blank grammar lines of a verdict file."""
-    return [line for _, line in walk(text).grammar if line.strip()]
+    """Non-blank lines of a verdict file, including inside fences.
+
+    Brief mode peels fences so a packet can carry a diff body. A verdict
+    file has no Diff section; a fence must not hide a token.
+    """
+    return [line for line in text.splitlines() if line.strip()]
 
 
 def audit_verdict_gate(text: str, gate: str) -> list[str]:
