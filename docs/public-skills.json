@@ -110,6 +110,11 @@
       "name": "show-me",
       "category": "Writing",
       "purpose": "Compact visuals for PRs, plans, and architecture plans"
+    },
+    {
+      "name": "html-explainer",
+      "category": "Writing",
+      "purpose": "Self-contained explainer pages with diagrams and playable flows"
     }
   ],
   "out": [
