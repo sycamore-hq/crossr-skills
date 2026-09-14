@@ -8,8 +8,9 @@ description: |
   plan; when the user says show me, diagram, sketch, draw this, what
   changes, how does this flow; when a prose explanation is hiding
   ownership, order, or the shape of the diff.
-  Not for posting GitHub review threads (github-pr-review) or issuing a
-  BLESS/REJECT (architecture, gan-verdict).
+  Not for a full explainer page (html-explainer). Not for posting GitHub
+  review threads (github-pr-review) or issuing a BLESS/REJECT
+  (architecture, gan-verdict).
 ---
 
 # Show me
@@ -191,7 +192,7 @@ open a PR.
 
 ## Verification
 
-In a fresh activation the following six behaviors are directly
+In a fresh activation the following seven behaviors are directly
 observable and scorable:
 
 - The agent picks one form from When that matches the current
@@ -207,12 +208,15 @@ observable and scorable:
   a CDN stylesheet, no local assets), written next to the work
   or under the harness plan directory, using the harness palette
   when the artifact is for that harness.
+- A full explainer page (playable flow, architecture drawing,
+  screenshot QA) is handed to `html-explainer`, not written as
+  this form.
 - The agent does not post a GitHub review thread, issue a
   BLESS/REJECT, or open a PR.
 - On failure (form too large, preview unavailable) the agent
   drops to a smaller form or lets the text/Mermaid stand.
 
-Violations against any of these observable criteria during
+Violations against any of these seven observable criteria during
 fresh activation indicate the skill was not followed and must
 be corrected before the work can be considered complete.
 

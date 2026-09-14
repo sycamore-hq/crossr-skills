@@ -1,6 +1,9 @@
 # Diagrams and playable flows
 
-Draw the idea. If the page describes motion, let the reader play the motion.
+Every explainer has a diagram for the idea. When the page describes a
+process, also make that flow playable with Play / Pause / Step / Reset.
+Look at the running page at ~1280 and ~390 before sharing; screenshot
+only when a capture tool exists.
 
 ## What to reach for
 

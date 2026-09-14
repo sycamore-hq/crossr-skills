@@ -3,7 +3,7 @@ name: html-explainer
 description: |
   Write a single self-contained HTML page that explains an idea, plan, PR,
   system, or research result with diagrams and playable flows. Use when the
-  user asks for an HTML explainer, HTML artifact, explainer page, interactive
+  user asks for an HTML explainer, explainer page, interactive
   doc, plan-as-HTML, PR writeup page, concept explainer, or Thariq-style HTML
   documentation. Also use when markdown would bury a flow, architecture,
   sequence, or comparison that should be seen. Not for compact in-thread
@@ -57,13 +57,13 @@ explainer.
 
 ## Visual spine (required)
 
-Every explainer has at least one of these, usually two:
+Every explainer has a diagram for the idea. When the page describes a process, also make that flow playable:
 
 1. A diagram for the idea. Architecture, sequence, flowchart, comparison
    matrix, state machine, before/after. Draw it. ASCII in a `<pre>` is a
    failure of the format.
 2. A playable flow when the page describes a process. Step through it.
-   Play / pause / reset. Highlight the active node. Show what moves at each
+   Play / Pause / Step / Reset. Highlight the active node. Show what moves at each
    tick. A static numbered list is the fallback only when the flow is one
    sentence.
 
@@ -151,4 +151,4 @@ stay on `github-pr-review`, `architecture`, and `gan-verdict`.
 
 ## One-Sentence Mandate (Memorize This)
 
-> "Draw the idea, play the flow, look at a screenshot before you share."
+> "Draw the idea. If it moves, play it. Look at the page before you share."
