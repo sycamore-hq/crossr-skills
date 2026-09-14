@@ -161,6 +161,8 @@ Mermaid, write one focused, self-contained HTML file (inline styles
 or a CDN stylesheet, no local assets) — a diagram, an infographic, or
 a short slide deck. Match the product's colors, type, spacing, and
 components. Use real labels and data. Support desktop and mobile.
+A full explainer page (playable flow, architecture drawing,
+screenshot QA) is `html-explainer`.
 
 House palette when the artifact is for Sycamore / CrossR:
 
@@ -210,7 +212,7 @@ observable and scorable:
 - On failure (form too large, preview unavailable) the agent
   drops to a smaller form or lets the text/Mermaid stand.
 
-Violations against any of these six observable criteria during
+Violations against any of these observable criteria during
 fresh activation indicate the skill was not followed and must
 be corrected before the work can be considered complete.
 
