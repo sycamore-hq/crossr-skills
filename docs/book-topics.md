@@ -15,6 +15,7 @@ Humans allocate prefixes here. The extractor does **not** read this file as a cl
 | RA | api-surface | rust |
 | RC | tooling | rust |
 | RS | safety-performance-and-security | rust |
+| RY | tokio-runtime | rust |
 
 Later books append rows. Do not reuse a prefix for a different idea inside one book.
 
