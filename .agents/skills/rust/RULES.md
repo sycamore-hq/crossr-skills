@@ -104,6 +104,27 @@ rust/RT-07  `cargo test --workspace` is clean before the change is done.
             tag: test
             check: cargo test --workspace
 
+## tokio-runtime
+
+rust/RY-01  Work backward from a user-facing metric. A long poll is not a defect by itself.
+
+rust/RY-02  Yield between immediately-ready units when the goal is multi-tenant latency. Batch the same work when the goal is throughput.
+
+rust/RY-03  Batch filesystem and other blocking work into the largest sensible `spawn_blocking` segment. Do not sprinkle `tokio::fs` calls.
+            check: rg 'tokio::fs::' --glob '*.rs' → review each hit
+
+rust/RY-04  Do not spawn a task whose useful work is measured in microseconds.
+
+rust/RY-05  Treat the blocking pool and the global queue as contended globals. Do not flood them from outside a worker.
+
+rust/RY-06  Never hold a blocking mutex, `parking_lot` lock, or `RwLock` across I/O, flush, or `.await` on a Tokio worker. `tokio::sync::Mutex` only when the critical section lasts milliseconds.
+
+rust/RY-07  Bound task fan-out with a `Semaphore`. Unbounded spawn against a downstream is a defect.
+
+rust/RY-08  Pin Tokio workers off cores that run other processes or long non-yielding Rust threads.
+
+rust/RY-09  Do not block inside `join!` or `select!`. There is no work-stealing inside a task.
+
 ## tooling
 
 rust/RC-01  `cargo fmt` is clean before any change is complete.
