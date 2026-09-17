@@ -26,6 +26,7 @@ Anti-Pattern Severity / Fines live in `code-writer`. Do not photocopy them here.
 | `pub` items, docs, semver | `references/api-surface.md` |
 | fmt, clippy, crates, imports | `references/tooling.md` |
 | unsafe, overflow, secrets, input trust | `references/safety-performance-and-security.md` |
+| Tokio workers, `spawn_blocking`, schedule latency, locks that park a worker | `references/tokio-runtime.md` |
 
 Generator: this card + the reference for the situation (Rules + How).
 Adversaries: `RULES.md` only. Never `references/`.
@@ -35,7 +36,7 @@ Contract refs (not topics; extractor skips them): `references/specialization.md`
 
 ## Topic prefixes
 
-Registry: `docs/book-topics.md` (baseline, not a closed set). A later book may mint a prefix the registry does not list. The extractor accepts unknown prefixes.
+Registry: `docs/book-topics.md` (baseline, not a closed set). A later book may mint a prefix the registry does not list. The extractor accepts unknown prefixes. This book mints `RY` (tokio-runtime).
 
 ## One-Sentence Mandate (Memorize This)
 
