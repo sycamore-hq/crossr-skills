@@ -1,4 +1,12 @@
 # Pins consumed by harness-bootstrap / sync-skills.
 # Pins, not work state — the board remains the work log. No git submodules.
+#
+# `skills` here is a self-pin, and it is NOT dead weight: harness-bootstrap
+# exits 1 without both keys, and resolve_tree clones the pinned tag whenever
+# CROSSR_SKILLS_PATH is unset. Running plain `harness-bootstrap .` in this repo
+# would therefore copy the pinned catalog over the working tree. That is what
+# `scripts/regen-agents` exists to prevent: it forces CROSSR_SKILLS_PATH to this
+# checkout. Keep the key, keep it current, and reach for regen-agents rather
+# than bootstrap directly.
 skills = "v1-board"
 loops  = "v1-board-consumers"
