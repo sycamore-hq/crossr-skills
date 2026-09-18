@@ -34,7 +34,7 @@ Always use the `justfile` for canonical commands:
 - `just test`
 - `just clippy`
 - `just fmt`
-- `just harness-validate` — Catalog `docs-verify` + Claude skill drift check + `features.json` shape
+- `just harness-validate` — Catalog `docs-verify` + Claude skill drift check + catalog tests
 - `just regen-agents` — Refresh loop persona copies from the `loops` pin, regenerate marked `.opencode/agent/` files, strip the GONE-listed overlay
 - `just claude-skills-sync` — Regenerate the Claude compatibility copies in `~/.claude/skills` from `.agents/skills/`
 - `just docs-verify` — Allowlist vs README vs `SKILL.md`
@@ -53,7 +53,7 @@ Run the appropriate commands before declaring work complete.
 - `docs/public-skills.json` — Public catalog SSOT. README table must match. No `moved-to` after split-07.
 - `lockfile.toml` — Consumer pins: `skills = "v1-gan-layers"`, `loops = "v1-packets-consumers"`. Not a third tracker. Graphs live in `crossr-loops/graphs/` and are in the `v1-packets-consumers` pin. Topology only — if a graph and a conductor `SKILL.md` disagree, the skill wins.
 - `.opencode/agent/` — generated from `.agents/agents/` at bootstrap when a persona source exists (GENERATED marker; do not hand-edit). `avril.md` is generated from `avril-conductor-agent`. `status.md` is the only hand-written entrypoint.
-- `features.json` + `progress.md` — Machine + human tracking of work (phase → commits → features model).
+- **Tracking board** — Linear, team [Sycamore HQ (SYC)](https://linear.app/scull7/team/SYC/overview). The board is the source of truth for work state; this repo keeps no tracking file. See harness `HARNESS-SPEC.md` §3.2.
 - `scripts/sync-claude-skills` — Catalog compatibility copies. Canonical source is always `.agents/skills/<name>/` (the whole directory: `SKILL.md` plus `references/`).
 - `scripts/verify-docs` — Catalog gate.
 
@@ -108,7 +108,7 @@ Example filenames: `architecture-review.html`, `pr-summary.html`, `deploy-guide.
 4. Produce HTML for human review artifacts when applicable.
 5. Skill changes: run the skill GAN (`skill-evaluator-agent` → `skill-remediator-agent` → `skill-reviewer-agent`).
 6. Deliver work in small, stacked, reviewable PRs.
-7. Update `features.json` + `progress.md` as you go.
+7. Keep the board current as you go: move the item, and record on it what changed, what was verified, and which commit carries it. An agent arriving cold should be able to continue from the board alone.
 8. `just docs-verify` must PASS. README table == `docs/public-skills.json`.
 
 **All agents must follow these rules.** Violations will be called out during review.

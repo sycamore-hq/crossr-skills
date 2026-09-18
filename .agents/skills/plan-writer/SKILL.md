@@ -21,8 +21,8 @@ Judgment ≤ 30% of active claims. Ids `C-01` are append-only.
 
 ## Artifact
 
-`docs/plans/pbi/<id>.plan.md` or `<backlog>/plans/<id>.plan.md`.
-Never `.pinto/tasks/`. `references/artifact.md`.
+`docs/plans/pbi/<id>.plan.md`, or the disclosed plan path.
+Never inside the board's own store. `references/artifact.md`.
 
 Required: Phases (the decomposition; each states an estimated LOC when
 decomposition mode is disclosed), Acceptance Criteria, Claims

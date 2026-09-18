@@ -39,13 +39,6 @@ harness-validate:
     @just docs-verify
     @just claude-skills-check
     @just rules-check
-    @if command -v jq >/dev/null 2>&1; then \
-        jq -e 'if type == "object" then . else error("features.json must be an object") end' features.json > /dev/null && \
-        echo "features.json: basic structure OK" || \
-        (echo "features.json: invalid structure" && exit 1); \
-    else \
-        echo "jq not found — skipping features.json validation"; \
-    fi
     @python3 -m unittest discover -s test -v
 
 # Refresh loop persona copies from the loops pin, regenerate marked

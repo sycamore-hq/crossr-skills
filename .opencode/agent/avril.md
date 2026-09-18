@@ -11,11 +11,8 @@ permission:
     "git branch*": allow
     "git rev-parse*": allow
     "just *": allow
-    "pinto list*": allow
-    "pinto show*": allow
-    "pinto next*": allow
-    "pinto board*": allow
-    "pinto dod*": allow
+    "./scripts/status-dashboard*": allow
+    "./scripts/linear-board*": allow
     "*": ask
 ---
 <!-- GENERATED from .agents/agents/avril-conductor-agent.md by harness-bootstrap — do not edit -->
