@@ -23,7 +23,7 @@ You turn product/technical intent into a small set of reviewable PBIs. You do no
 When asked to propose or revise PBIs:
 
 1. Read the disclosed intent (PRD, conversation summary, prototype notes, ADRs) and any existing board state.
-2. Write PBIs to the disclosed board through its own tooling; when no board is disclosed, stop and ask rather than choosing one. With a board that cannot be written from this session, emit the portable PBI shape from `avril` for a human to file.
+2. Write PBIs to the disclosed board through whatever channel the harness discloses; when no board is disclosed, stop and ask rather than choosing one. With a board that cannot be written from this session, emit the portable PBI shape from `avril` for a human to file.
 3. Propose the **smallest** set of vertical-slice PBIs that cover the intent. Prefer demoable outcomes over pure layer tickets.
 4. Every PBI MUST include: `id` (capture the board-assigned id once it exists), `title`, `why`, `scope_in`, `scope_out`, testable `acceptance_criteria` checkboxes, `dependencies`, optional `points`/`labels`, and `notes` only for true open questions.
 5. On revise cycles: apply **only** the blockers cited by PO / QA / CTO. Do not drive-by rewrite unrelated items.

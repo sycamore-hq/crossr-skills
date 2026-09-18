@@ -513,8 +513,8 @@ class LiveTree(unittest.TestCase):
         self.assertRegex(self.plan_html, r"\bv1-packets\b(?!-)")
         self.assertIn("v1-packets-consumers", self.plan_html)
 
-    def test_lockfile_loops_is_packets_consumers(self):
-        self.assertEqual(lockfile_loops(self.lockfile), "v1-packets-consumers")
+    def test_lockfile_loops_is_board_consumers(self):
+        self.assertEqual(lockfile_loops(self.lockfile), "v1-board-consumers")
 
 
 if __name__ == "__main__":

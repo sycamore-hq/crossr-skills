@@ -197,11 +197,14 @@ class LiveTree(unittest.TestCase):
         self.assertTrue(says_drift_detectable(html_row), html_row)
 
     def test_plan_twins_share_the_close_facts(self):
+        # The facts are this campaign's, not today's. Reading the live pin here
+        # made the guard demand that an archived plan name a tag cut after it
+        # closed — which would be falsifying the record to satisfy a test.
         gaps = twin_gaps(
             self.plan,
             self.plan_html,
             (
-                self.pin,
+                "v1-packets-consumers",
                 "507c509",
                 "requires.book",
                 "metadata.book",
