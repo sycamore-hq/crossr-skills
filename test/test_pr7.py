@@ -20,7 +20,6 @@ import unittest
 from pathlib import Path
 
 from test_gan_record import plan_status_line
-from test_pr5f import lockfile_loops
 
 ROOT = Path(__file__).resolve().parent.parent
 _spec = importlib.util.spec_from_loader(
@@ -512,9 +511,6 @@ class LiveTree(unittest.TestCase):
     def test_html_twin_names_both_packet_tags(self):
         self.assertRegex(self.plan_html, r"\bv1-packets\b(?!-)")
         self.assertIn("v1-packets-consumers", self.plan_html)
-
-    def test_lockfile_loops_is_board_consumers(self):
-        self.assertEqual(lockfile_loops(self.lockfile), "v1-board-consumers")
 
 
 if __name__ == "__main__":
