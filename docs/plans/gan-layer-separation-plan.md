@@ -1,5 +1,12 @@
 # Plan: crossr v2 — Layer Separation, Shared Ruleset, Plan-First GAN
 
+> **Archived — historical record of a completed campaign.**
+> Nothing below is current practice. Work state now lives on the project's tracking
+> board (harness `HARNESS-SPEC.md` §3.2, `docs/board-contract.md`). The
+> `features.json` and `progress.md` trackers this document references were removed,
+> and so was the file-based board it names; the harness requires a board and names
+> no product. Read this for what was decided and why, never for how to work today.
+
 **Status:** complete · PR 0 merged (#105) · PR 1 landed · PR 2 landed · PR 3 landed · PR 4 landed (loops [#7](https://github.com/sycamore-hq/crossr-loops/pull/7), skills [#110](https://github.com/sycamore-hq/crossr-skills/pull/110)) · PR 5a landed ([#117](https://github.com/sycamore-hq/crossr-skills/pull/117)) · PR 5b landed ([#118](https://github.com/sycamore-hq/crossr-skills/pull/118)) · PR 5 landed (skills [#117](https://github.com/sycamore-hq/crossr-skills/pull/117) / [#118](https://github.com/sycamore-hq/crossr-skills/pull/118) / [#120](https://github.com/sycamore-hq/crossr-skills/pull/120) / [#124](https://github.com/sycamore-hq/crossr-skills/pull/124), loops [#9](https://github.com/sycamore-hq/crossr-loops/pull/9), harness [#8](https://github.com/sycamore-hq/crossr-harness/pull/8), landing [#10](https://github.com/sycamore-hq/crossr-web-landing/pull/10); tags `v1-one-law` / `v1-one-law-consumers`) · PR 6 landed (skills [#125](https://github.com/sycamore-hq/crossr-skills/pull/125), loops [#11](https://github.com/sycamore-hq/crossr-loops/pull/11), harness [#10](https://github.com/sycamore-hq/crossr-harness/pull/10); no tag cut; retired by 7a/7b) · PR 7 landed (skills [#126](https://github.com/sycamore-hq/crossr-skills/pull/126) / [#127](https://github.com/sycamore-hq/crossr-skills/pull/127), loops [#12](https://github.com/sycamore-hq/crossr-loops/pull/12), harness [#11](https://github.com/sycamore-hq/crossr-harness/pull/11); tags v1-packets / v1-packets-consumers) · acceptance condition 1 undemonstrated (no Elm/Melange run yet); condition 2 is a running measure
 **Scope:** `crossr-skills`, `crossr-loops`, `crossr-harness`
 **Origin:** token-burn critique of the crossr-* agent infrastructure, verified against the trees 2026-08-30.

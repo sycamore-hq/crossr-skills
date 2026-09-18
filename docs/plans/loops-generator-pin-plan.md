@@ -1,5 +1,12 @@
 # Plan: loops-generator-pin
 
+> **Archived — historical record of a completed campaign.**
+> Nothing below is current practice. Work state now lives on the project's tracking
+> board (harness `HARNESS-SPEC.md` §3.2, `docs/board-contract.md`). The
+> `features.json` and `progress.md` trackers this document references were removed,
+> and so was the file-based board it names; the harness requires a board and names
+> no product. Read this for what was decided and why, never for how to work today.
+
 Write-up only. This file plans the fix; it does not cut the tag, does not
 edit any `lockfile.toml`, and blesses nothing. Closes
 [crossr-loops#21](https://github.com/sycamore-hq/crossr-loops/issues/21).
