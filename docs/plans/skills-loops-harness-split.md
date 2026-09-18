@@ -1,5 +1,12 @@
 # Split CrossR into four sycamore-hq remotes
 
+> **Archived — historical record of a completed campaign.**
+> Nothing below is current practice. Work state now lives on the project's tracking
+> board (harness `HARNESS-SPEC.md` §3.2, `docs/board-contract.md`). The
+> `features.json` and `progress.md` trackers this document references were removed,
+> and so was the file-based board it names; the harness requires a board and names
+> no product. Read this for what was decided and why, never for how to work today.
+
 **Status:** complete after split-09. Four remotes live. Graphs are topology, not a runtime.
 **Human artifact:** [skills-loops-harness-split.html](skills-loops-harness-split.html)
 **Charter PR:** [sycamore-hq/crossr-skills#95](https://github.com/sycamore-hq/crossr-skills/pull/95) (merged)

@@ -1,5 +1,12 @@
 # Plan: graph-runner
 
+> **Archived — historical record of a completed campaign.**
+> Nothing below is current practice. Work state now lives on the project's tracking
+> board (harness `HARNESS-SPEC.md` §3.2, `docs/board-contract.md`). The
+> `features.json` and `progress.md` trackers this document references were removed,
+> and so was the file-based board it names; the harness requires a board and names
+> no product. Read this for what was decided and why, never for how to work today.
+
 Prompt set for [work#14](https://github.com/sycamore-hq/work/issues/14)
 (`graph-runner`, repo `crossr-loops`). Parked at split-09 as "not this chain"
 (`docs/plans/skills-loops-harness-split.md` "Not this chain"). This file is

@@ -1,5 +1,12 @@
 # PR 5 prompt set v2 — One ruleset per book, progressively disclosed
 
+> **Archived — historical record of a completed campaign.**
+> Nothing below is current practice. Work state now lives on the project's tracking
+> board (harness `HARNESS-SPEC.md` §3.2, `docs/board-contract.md`). The
+> `features.json` and `progress.md` trackers this document references were removed,
+> and so was the file-based board it names; the harness requires a board and names
+> no product. Read this for what was decided and why, never for how to work today.
+
 Plan: `crossr-skills/docs/plans/gan-layer-separation-plan.md` §4 PR 5 / §3.4, plus the parked
 items recorded under §4 PR 5 ("Parked here from PR 1a review" and "Parked here from PR 3a / 3b
 review"). Preconditions, measured on this tree:
