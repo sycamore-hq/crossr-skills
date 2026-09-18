@@ -57,7 +57,9 @@ Run the appropriate commands before declaring work complete.
 - `scripts/sync-claude-skills` — Catalog compatibility copies. Canonical source is always `.agents/skills/<name>/` (the whole directory: `SKILL.md` plus `references/`).
 - `scripts/verify-docs` — Catalog gate.
 
-**Do not add** orchestration skills here: `avril`, `axel`, `brick` conductor, `rust-team-lead`, `orchestrator-prompt`, `dashboard-prompt`, `chief-of-staff`. BRICK *stage* skills still land here.
+**Do not add** orchestration skills here: `avril`, `axel`, `brick` conductor, `rust-team-lead`, `orchestrator-prompt`, `dashboard-prompt`, `chief-of-staff`. BRICK *stage* skills still land here. Those names are the `GONE` list in `scripts/verify-docs`, which `regen-agents` strips from `.agents/skills/` after every bootstrap.
+
+**`crossr-review` is a deliberate exception — do not strip it on sight.** It is a conductor, and it arrives from the `loops` pin exactly like the others, so the reflex is to add it to `GONE`. Don't. The rule above exists because orchestrating *product work* does not belong in a catalog repo; `crossr-review` orchestrates *pull request review*, including this repo's own, so it earns its place here. It is intentionally absent from `GONE`, which is what keeps `regen-agents` from deleting it. It stays out of `docs/public-skills.json` and the README table: **usable here, not published.**
 
 ---
 

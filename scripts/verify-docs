@@ -40,6 +40,9 @@ fail() {
 PUBLIC_SKILLS_JSON="docs/public-skills.json"
 
 # Product source of these names lives in loops or harness. Must not return here.
+# crossr-review is a conductor from the loops pin and is deliberately NOT listed:
+# it reviews pull requests, including this repo's own. Usable here, unpublished.
+# See the orchestration-skills paragraph in AGENTS.md before adding it.
 GONE='["avril","axel","brick","rust-team-lead","orchestrator-prompt","dashboard-prompt","chief-of-staff"]'
 
 load_allowlist() {
