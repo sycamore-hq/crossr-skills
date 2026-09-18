@@ -26,6 +26,16 @@ DYING = (
 )
 
 LOCKFILE_LOOPS = re.compile(r'(?m)^loops\s*=\s*"([^"]+)"')
+
+# Loops pins we have deliberately moved off. Append when you retire one; never
+# remove. Asserting the *current* pin by literal made every legitimate bump edit
+# a test, which is the wrong direction to spend attention: moving forward is the
+# normal case, and regressing onto a superseded pin is the failure worth catching.
+RETIRED_LOOPS_PINS = {
+    "v1-cards",
+    "v1-one-law-consumers",
+    "v1-packets-consumers",
+}
 AGENTS_PINS = re.compile(r'Consumer pins:.*?loops = "([^"]+)"')
 AGENTS_TOPO = re.compile(r"are in the `([^`]+)` pin")
 README_PINS = re.compile(r'Current pins:.*?loops = "([^"]+)"')
@@ -174,6 +184,13 @@ class LiveTree(unittest.TestCase):
 
     def test_lockfile_loops_is_present(self):
         self.assertTrue(self.pin, "lockfile.toml has no loops assignment")
+
+    def test_lockfile_loops_is_not_a_retired_pin(self):
+        self.assertNotIn(
+            self.pin,
+            RETIRED_LOOPS_PINS,
+            f"loops pin {self.pin!r} was retired; a bump must go forward",
+        )
 
     def test_three_doc_loci_match_the_lockfile(self):
         loci = doc_pin_loci(self.agents, self.readme)
