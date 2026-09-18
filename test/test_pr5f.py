@@ -25,7 +25,7 @@ DYING = (
     "rust-code-tester",
 )
 
-LOCKFILE_LOOPS = re.compile(r'(?m)^loops\s*=\s*"([^"]+)"')
+LOCKFILE_PIN = r'(?m)^{key}\s*=\s*"([^"]+)"'
 
 # Loops pins we have deliberately moved off. Append when you retire one; never
 # remove. Asserting the *current* pin by literal made every legitimate bump edit
@@ -37,8 +37,10 @@ RETIRED_LOOPS_PINS = {
     "v1-packets-consumers",
 }
 AGENTS_PINS = re.compile(r'Consumer pins:.*?loops = "([^"]+)"')
+AGENTS_SKILLS = re.compile(r'Consumer pins:.*?skills = "([^"]+)"')
 AGENTS_TOPO = re.compile(r"are in the `([^`]+)` pin")
 README_PINS = re.compile(r'Current pins:.*?loops = "([^"]+)"')
+README_SKILLS = re.compile(r'Current pins:.*?skills = "([^"]+)"')
 README_TOPO = re.compile(r"is in the `([^`]+)` pin")
 ROW5_MD = re.compile(r"^\| 5 \| (.+) \|$", re.M)
 ROW5_HTML = re.compile(
@@ -47,22 +49,34 @@ ROW5_HTML = re.compile(
 )
 
 
-def lockfile_loops(text: str) -> str | None:
-    m = LOCKFILE_LOOPS.search(text)
+def lockfile_pin(text: str, key: str) -> str | None:
+    """The tag a lockfile assigns to `key` (skills or loops)."""
+    m = re.search(LOCKFILE_PIN.format(key=key), text)
     return m.group(1) if m else None
 
 
-def doc_pin_loci(agents: str, readme: str) -> dict[str, str | None]:
-    """The three documentation copies of the lockfile loops pin."""
-    agents_pins = AGENTS_PINS.search(agents)
-    agents_topo = AGENTS_TOPO.search(agents)
-    readme_pins = README_PINS.search(readme)
-    readme_topo = README_TOPO.search(readme)
+def lockfile_loops(text: str) -> str | None:
+    return lockfile_pin(text, "loops")
+
+
+def doc_pin_loci(agents: str, readme: str) -> dict[str, tuple[str, str | None]]:
+    """Every documentation copy of a lockfile pin, tagged with the key it copies.
+
+    The topo loci say which pin holds `graphs/`, which is a loops fact by
+    meaning — they stay keyed to loops even though they sit beside a skills
+    sentence.
+    """
+    found = {
+        "AGENTS.md skills": ("skills", AGENTS_SKILLS.search(agents)),
+        "AGENTS.md pins": ("loops", AGENTS_PINS.search(agents)),
+        "AGENTS.md topo": ("loops", AGENTS_TOPO.search(agents)),
+        "README.md skills": ("skills", README_SKILLS.search(readme)),
+        "README.md pins": ("loops", README_PINS.search(readme)),
+        "README.md topo": ("loops", README_TOPO.search(readme)),
+    }
     return {
-        "AGENTS.md pins": agents_pins.group(1) if agents_pins else None,
-        "AGENTS.md topo": agents_topo.group(1) if agents_topo else None,
-        "README.md pins": readme_pins.group(1) if readme_pins else None,
-        "README.md topo": readme_topo.group(1) if readme_topo else None,
+        name: (key, match.group(1) if match else None)
+        for name, (key, match) in found.items()
     }
 
 
@@ -123,9 +137,12 @@ def missing_stack_rows(ids: set[str], needed: tuple[str, ...] = ("pr5f",)) -> li
 
 
 class Calculations(unittest.TestCase):
-    def test_lockfile_reads_the_loops_assignment(self):
-        self.assertEqual(lockfile_loops('loops  = "v1-cards"\n'), "v1-cards")
-        self.assertIsNone(lockfile_loops('skills = "v1-gan-layers"\n'))
+    def test_lockfile_reads_either_assignment(self):
+        text = 'skills = "v1-board"\nloops  = "v1-cards"\n'
+        self.assertEqual(lockfile_pin(text, "loops"), "v1-cards")
+        self.assertEqual(lockfile_pin(text, "skills"), "v1-board")
+        self.assertIsNone(lockfile_pin('skills = "v1-board"\n', "loops"))
+        self.assertEqual(lockfile_loops(text), "v1-cards")
 
     def test_doc_loci_are_independent_sentences(self):
         agents = (
@@ -137,7 +154,17 @@ class Calculations(unittest.TestCase):
             "Topology lives in graphs/ and is in the `v1-cards` pin."
         )
         loci = doc_pin_loci(agents, readme)
-        self.assertEqual(set(loci.values()), {"v1-cards"})
+        self.assertEqual(
+            loci,
+            {
+                "AGENTS.md skills": ("skills", "v1-gan-layers"),
+                "AGENTS.md pins": ("loops", "v1-cards"),
+                "AGENTS.md topo": ("loops", "v1-cards"),
+                "README.md skills": ("skills", "v1-gan-layers"),
+                "README.md pins": ("loops", "v1-cards"),
+                "README.md topo": ("loops", "v1-cards"),
+            },
+        )
 
     def test_dying_hits_are_exact_names(self):
         self.assertEqual(dying_hits("Activate rust-code-reviewer."), ["rust-code-reviewer"])
@@ -192,10 +219,18 @@ class LiveTree(unittest.TestCase):
             f"loops pin {self.pin!r} was retired; a bump must go forward",
         )
 
-    def test_three_doc_loci_match_the_lockfile(self):
+    def test_doc_loci_match_the_lockfile(self):
+        pins = {
+            "skills": lockfile_pin(self.lockfile, "skills"),
+            "loops": self.pin,
+        }
         loci = doc_pin_loci(self.agents, self.readme)
-        stale = {k: v for k, v in loci.items() if v != self.pin}
-        self.assertEqual(stale, {}, f"pin loci still off {self.pin}: {stale}")
+        stale = {
+            name: f"{value!r} != {key} pin {pins[key]!r}"
+            for name, (key, value) in loci.items()
+            if value != pins[key]
+        }
+        self.assertEqual(stale, {}, f"doc pin loci are stale: {stale}")
 
     def test_opencode_agents_name_none_of_the_dying_skills(self):
         hits = dying_hits_in_dir(self.agents_on_disk)
