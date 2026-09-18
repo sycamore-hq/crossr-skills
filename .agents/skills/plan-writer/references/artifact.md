@@ -4,9 +4,14 @@
 
 | Harness | Path |
 |---|---|
-| Pinto disclosed | `docs/plans/pbi/<id>.plan.md` |
-| Portable fallback | `<disclosed-backlog-path>/plans/<id>.plan.md` |
-| Never | `.pinto/tasks/` |
+| Plan path disclosed | that path |
+| Otherwise | `docs/plans/pbi/<id>.plan.md` |
+| Never | the board's own item store, wherever it lives |
+
+`<id>` is the board's item id, so the plan, the commits and the item all
+carry the same name. The plan is a repository artifact under review; the
+board holds work state. Writing a plan into the tracker's store puts a
+reviewable document somewhere nothing reviews it.
 
 Blessed means committed, then immutable. The plan commit carries the PBI
 id and lands **before** the first implementation commit.

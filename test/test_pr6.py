@@ -383,8 +383,6 @@ class LiveTree(unittest.TestCase):
         cls.plan_html = (
             ROOT / "docs" / "plans" / "gan-layer-separation-plan.html"
         ).read_text()
-        cls.features = json.loads((ROOT / "features.json").read_text())
-        cls.progress = (ROOT / "progress.md").read_text()
         cls.architecture = (
             ROOT / ".agents" / "skills" / "architecture" / "SKILL.md"
         ).read_text()
@@ -523,22 +521,6 @@ class LiveTree(unittest.TestCase):
     def test_plan_twins_carry_rule_five(self):
         self.assertRegex(self.plan, r"(?i)must survive")
         self.assertRegex(self.plan_html, r"(?i)must survive")
-
-    def test_features_records_pr6a(self):
-        phase = self.features["gan-layer-separation"]
-        ids = {
-            c["id"]
-            for c in phase.get("commits") or []
-            if c.get("status") == "completed"
-        }
-        self.assertIn("pr6a", ids)
-
-    def test_progress_records_pr6a(self):
-        self.assertRegex(
-            self.progress,
-            r"(?m)^### gan-layer-separation — PR 6a \(COMPLETED\)",
-        )
-
 
 if __name__ == "__main__":
     unittest.main()

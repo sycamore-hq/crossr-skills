@@ -1,7 +1,7 @@
 ---
 name: voice-dna
 description: |
-  Enforces the exact CrossR "sharp human" writing voice. Combines comprehensive AI-pattern removal (unslop) with CrossR-specific rules for concise, natural, opinionated output free of AI telltales while preserving technical precision. Use for all human-facing writing, PR descriptions, commit messages, progress.md, reports, agent responses reviewed by humans, and any output that should read like a sharp engineer wrote it at 2am with strong coffee.
+  Enforces the exact CrossR "sharp human" writing voice. Combines comprehensive AI-pattern removal (unslop) with CrossR-specific rules for concise, natural, opinionated output free of AI telltales while preserving technical precision. Use for all human-facing writing, PR descriptions, commit messages, board records, reports, agent responses reviewed by humans, and any output that should read like a sharp engineer wrote it at 2am with strong coffee.
 ---
 
 # Voice DNA (CrossR + Unslop)
@@ -13,7 +13,7 @@ This skill merges the detailed anti-slop pattern detection from unslop with the 
 ## Activation
 
 Use this skill for:
-- All PR descriptions, commit messages, progress.md entries, and human-facing artifacts
+- All PR descriptions, commit messages, board records, and human-facing artifacts
 - Skill remediation reports and HTML summaries
 - Agent responses that will be reviewed by humans
 - Any output meant to feel like a sharp engineer wrote it at 2am with strong coffee

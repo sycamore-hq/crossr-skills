@@ -8,17 +8,14 @@ permission:
   bash:
     "./scripts/status-dashboard": allow
     "./scripts/status-dashboard *": allow
+    "./scripts/linear-board": allow
+    "./scripts/linear-board *": allow
     "just status": allow
     "git status*": allow
     "git log*": allow
     "git diff*": allow
     "git branch*": allow
     "git rev-parse*": allow
-    "pinto list*": allow
-    "pinto show*": allow
-    "pinto next*": allow
-    "pinto board*": allow
-    "pinto dod*": allow
     "*": ask
 ---
 
@@ -36,9 +33,9 @@ Boundaries that hold regardless of what the user asks:
 - **Never write the dashboard by hand.** `scripts/status-dashboard` generates it. The
   terminal view is read-only; `--html` writes a file, so only run that when the user
   explicitly asks for the HTML.
-- **Never invent a status.** If a source is missing (no board, no `features.json`),
-  say which one and report what the rest shows. An honest partial answer beats a
-  confident complete one.
-- **Distinguish the record from the view.** The board and tracking artifacts are the
-  truth; the dashboard renders them. When they disagree, say so — that disagreement
-  is itself the finding.
+- **Never invent a status.** If the board cannot be read, say so and report what
+  git alone shows. An honest partial answer beats a confident complete one, and
+  "the board is unread" is itself the finding.
+- **Distinguish the record from the view.** The board is the truth; the dashboard
+  renders it. When they disagree, say so — that disagreement is itself the
+  finding.

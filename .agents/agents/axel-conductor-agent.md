@@ -21,7 +21,7 @@ When asked to execute blessed backlog work:
 2. Read `AGENTS.md`, `HARNESS-SPEC.md`, git/progress/tracking state (session ritual).
 3. Activate `axel` + `gan-verdict`. Disclose the language stack to the Generator and adversary subagents you delegate to — never load that stack yourself. Record load-set bytes at session start (sum of activated SKILL.md sizes). Baseline: 73,031 for the pre-PR-2 naive AXEL conductor window.
 4. Enforce the **intake gate**: AVRIL Blessed Backlog Summary, blessed board marker, or explicit human PBI ids. Otherwise stop and demand `avril` or authorization.
-5. Select one ready PBI (deps complete; `pinto next` when available).
+5. Select one ready PBI — dependencies complete, per the board's own ordering links.
 6. Delegate the plan to the Generator with `plan-writer` (not this conductor). Run the mechanical audit. Stop if blocking questions remain.
 7. Delegate `architect-agent` on the plan. Three REJECTs → stop for the human. On BLESS, commit the plan, then board → in-progress. Phases live inside the plan.
 8. For each blessed phase: Generator → mechanical → `audit-packet brief` → `tester-agent` → `audit-packet verdict` → `audit-packet brief` → `reviewer-agent` → `audit-packet verdict`; require explicit `BLESS`. Write the handoff packet before Tester and Reviewer; run the verdict audit after each. Architect at code time only on an unsatisfiable claim. On reject, follow the card's matrix — do not restart a chain the reject did not invalidate.

@@ -52,7 +52,7 @@ Rate **1–5** (with short justification) on every item below.
 - Stratified / layered / flat-combinator design.
 - Zero technical debt, handover-clean.
 - Idiomatic, pedantic, self-verifying quality.
-- Aligns with repo harness (HARNESS-SPEC.md, features.json, stacked PRs, GAN reviews, etc.).
+- Aligns with repo harness (HARNESS-SPEC.md, the tracking board, stacked PRs, GAN reviews, etc.).
 
 ### Harness Relationship (Stratified)
 - **Harness Relationship (Stratified)** — Correct classification with progressive disclosure: generic/core skills have zero harness references or coupling; harness-layer and meta skills document necessary relationships via a clean "Harness Context (Stratified Disclosure)" block plus explicit "when the harness is present" contracts and activation statements. 5/5 requires minimal scoped references and perfect layering.

@@ -166,8 +166,6 @@ class LiveTree(unittest.TestCase):
         cls.readme = (ROOT / "README.md").read_text()
         cls.plan = (ROOT / "docs" / "plans" / "gan-layer-separation-plan.md").read_text()
         cls.plan_html = (ROOT / "docs" / "plans" / "gan-layer-separation-plan.html").read_text()
-        cls.progress = (ROOT / "progress.md").read_text()
-        cls.features = json.loads((ROOT / "features.json").read_text())
         agent_dir = ROOT / ".opencode" / "agent"
         cls.agents_on_disk = {
             p.name: p.read_text() for p in agent_dir.glob("*.md")
@@ -212,18 +210,6 @@ class LiveTree(unittest.TestCase):
             ),
         )
         self.assertEqual(gaps, [])
-
-    def test_features_records_pr5f_completed(self):
-        phase = self.features["gan-layer-separation"]
-        missing = missing_stack_rows(completed_ids(phase))
-        self.assertEqual(missing, [], f"gan-layer-separation missing {missing}")
-
-    def test_progress_records_5f_completed(self):
-        self.assertRegex(
-            self.progress,
-            r"(?m)^### gan-layer-separation — PR 5f \(COMPLETED\)",
-        )
-
 
 if __name__ == "__main__":
     unittest.main()

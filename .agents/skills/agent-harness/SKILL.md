@@ -44,8 +44,8 @@ A complete harness addresses the following concerns. The precise realization (fi
 
 - Canonical skills live in `.agents/skills/<name>/SKILL.md` following the official agentskills.io format exactly. Claude compatibility files (when the invoking harness uses them) are generated rather than hand-maintained.
 - Bootstrap entrypoints (init.sh, justfile, or equivalent) that reproduce the environment and the build/test/clippy matrices used by CI and the rules file.
-- Structured tracking for phases, commits, and granular features (features.json or equivalent machine-readable model with schema validation).
-- Human-readable progress log (progress.md or equivalent) that ends with a Verification Status block after each increment.
+- A **tracking board** holding work state: stable item ids, a status vocabulary that maps onto done / in progress / todo, containers for workstreams, machine-readable reads, and a URL per item. Which board is a parameter the invoking harness discloses; that there is one is not optional. Work state does not live in a file in the repository — two trackers means two truths.
+- A **record on each item**: what changed, the verification that ran, the adversary verdicts, and the commit carrying it, appended after each increment. An agent starting cold continues the work by reading the board.
 - Git hygiene combined with a documented session-start ritual that surfaces full current state before any work.
 - Root rules file (AGENTS.md / CLAUDE.md) that declares skill activations, the Plan Mode contract, and links to the harness spec.
 
