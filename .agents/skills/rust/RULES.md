@@ -59,6 +59,8 @@ rust/RL-03  Higher layers compose lower ones. The call graph must be obvious.
 
 rust/RL-04  An error type stays in its layer. Crossing a boundary is a `From` conversion, not a mix-in.
 
+rust/RL-05  A calculation about one type lives in `impl Type` when Self is monomorphic and the fn does not need late-bound lifetimes. Leave it free only when the impl would inherit unused generics or lifetimes, or a `for<'a> fn(...)` pointer is required.
+
 ## safety-performance-and-security
 
 rust/RS-01  Never use `unsafe` without documented safety invariants and a justification.

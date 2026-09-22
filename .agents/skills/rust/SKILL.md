@@ -1,8 +1,10 @@
 ---
 name: rust
 description: |
-  Rust language book. Card routes to situational references. Generator loads How + Rules for the situation; adversaries load the generated RULES.md only.
-  Fully portable across agentskills.io environments and models. Always activate together with `code-writer`.
+  Rust language book. Card routes to situational references.
+  Generator loads How + Rules for the situation; adversaries load the generated RULES.md only.
+  Fully portable across agentskills.io environments and models.
+  Always activate together with `code-writer`.
 metadata:
   book: "true"
 ---
@@ -21,6 +23,7 @@ Anti-Pattern Severity / Fines live in `code-writer`. Do not photocopy them here.
 | Wire → domain at the adapter edge | `references/input-parsing.md` |
 | Newtypes-as-data, Option, Default | `references/type-system.md` |
 | Layers, actions / calculations / data | `references/layering.md` |
+| Fn on a type vs module-level free fn | `references/layering.md` |
 | Combinators, nesting, exhaustive match | `references/control-flow.md` |
 | Tests, AAA, `cfg(test)` | `references/testing.md` |
 | `pub` items, docs, semver | `references/api-surface.md` |

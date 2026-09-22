@@ -27,3 +27,5 @@ Priority is strict:
 Arrow code, triple-nested loops, and `match` inside `if let` inside `for` fail this topic. Extract until the happy path reads left-to-right.
 
 If a chain needs a type conversion, put it in a `From` impl and use `?` — do not leave a `.map_err` at the call site (RE-02).
+
+A helper extracted under RF-01 is an inherent fn on the type it is about when RL-05 applies. Do not leave a cluster of private module-level fns that all take the same `&T`.

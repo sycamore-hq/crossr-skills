@@ -25,3 +25,5 @@ Calculations take data and return data. They do not touch the clock, the disk, o
 A pile of `parse_foo` / `render_foo` / `foo_from_bar` that all take `&Foo` is a navigation defect. Put them on `Foo` — method if they operate on an instance, associated fn if they construct or do not need `self`.
 
 That move is free for a monomorphic type: same FnAbi, same body, different symbol. Keep the function free when the only home is `impl<T> Foo<T>` and the fn does not use `T`, when the impl header would early-bind a lifetime the caller needs late-bound, or when the fn is a combinator over several types with no owner.
+
+Do not invent a dummy unit struct just to namespace helpers. Attach to the type that already exists.
