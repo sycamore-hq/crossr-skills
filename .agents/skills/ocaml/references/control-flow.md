@@ -1,6 +1,6 @@
 # Control flow
 
-Flat, fail-closed. Nested `match` is a violation, not a style nit. Monad operators are RM's; wire strings are RP's.
+Flat, fail-closed. Nested `match` is a violation, not a style nit. Combined discriminant replaces nesting; it does not license a match inside an arm. Monad operators are RM's; wire strings are RP's.
 
 ## Rules
 
@@ -8,9 +8,9 @@ RF-01  Flat code, strict fail-closed priority: (1) stdlib combinators and pipeli
 
 RF-02  Nested `match` is a violation. No arm of a `match` or `function` contains another `match`, `function`, or branching `if`; `then` / `else` never contain a `match`. Combined discriminant (`match a, b with`) replaces nesting; it does not license a match inside an arm.
        Flatten onto the product or extract the inner case to a named helper (RF-03).
-       check: rg --glob '*.ml' '\|[^\n]*->\s*\(?\s*(begin\s+)?(match|function|if)\b|(then|else)\s*\(?\s*match\b' → 0
+       check: rg -U --glob '*.ml' '\|[^\n]*->\s*\(?\s*(begin\s+)?(match|function|if)\b|(then|else)\s*\(?\s*match\b' → 0
 
-RF-03  Actions may branch and sequence. Adapter and UI action code flattens by extracting each branch into a named helper, not by forcing pipelines onto statements. RF-02 still applies: helpers, not nested `match`.
+RF-03  Actions may branch and sequence. Adapter and UI action code flattens by extracting each branch into a named helper, not by forcing pipelines onto statements. Nested `match` is still a violation: helpers, not another match inside an arm.
 
 RF-04  Identity matches are a violation: `| Error e -> Error e`, `| Ok v -> Ok v`, `| None -> None`, `| Some v -> Some (f v)`. Use `Result.map` / `Option.map`.
        check: rg 'Error e -> Error e|Ok v -> Ok v|None -> None' --glob '*.ml' → 0
@@ -68,6 +68,6 @@ match (verb, write) with
 
 Combined discriminant (`match a, b with`) *replaces* nesting. It is not a license to nest inside an arm. A `let` between `->` and `match` is still nesting — extract a helper. `fun x -> match x with` at the top of a function is the good form (RF-01), not an arm.
 
-Action code (an HTTP handler, a store-row decoder) legitimately branches on data. There, each branch becomes a named helper; the handler reads as a table of cases. RF-02 still applies.
+Action code (an HTTP handler, a store-row decoder) legitimately branches on data. There, each branch becomes a named helper; the handler reads as a table of cases. Nested `match` is still a violation there.
 
 A catch-all on an owned variant means a new constructor compiles silently and misroutes at runtime. The deny-closed carve-out exists because an authorization table over three dimensions cannot enumerate every cell — and even there `| _ -> true` is a hole.
