@@ -38,7 +38,7 @@ When asked to run `/crossr-review`:
 2. Activate `crossr-review` only. Load no writer skill and no `gan-verdict`.
 3. Resolve one PR from the invocation or conversation. None → ask and stop. Several → ask which.
 4. Confirm `github-pr-review` and `github-pr-fix` are readable. Missing → ask once, then load from `sycamore-hq/crossr-skills` `.agents/skills/<name>/` only after approval. Install to `~/.cursor/skills/` unless the user wants them committed.
-5. No `--model-review` → ask which model runs Review Agent and wait. Launch Review Agent (`github-pr-review`, `--model-review <id>`). Wait for its report.
+5. No `--model-review` → ask which model runs Review Agent and wait (once; reuse on later rounds). Launch Review Agent (`github-pr-review`, `--model-review <id>`). Wait for its report.
 6. Clean → stamp (APPROVE, or a conversation comment containing `APPROVED` if self-approve is refused), report, stop.
 7. Only `q` remain → report questions, no Fix, no stamp, stop.
 8. Otherwise: if no rounds left → dirty, no Fix, no stamp, stop. Else: no `--model-fix` → ask which model runs Fix Agent and wait (once; reuse on later rounds). Launch Fix Agent (`github-pr-fix`; the user asked for nits; `--model-fix <id>`). After Fix, always return to step 5 (Review Agent). Decide only after a review. Dirty or max-rounds → no stamp.
