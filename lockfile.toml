@@ -8,5 +8,5 @@
 # `scripts/regen-agents` exists to prevent: it forces CROSSR_SKILLS_PATH to this
 # checkout. Keep the key, keep it current, and reach for regen-agents rather
 # than bootstrap directly.
-skills = "v1-board"
-loops  = "v1-board-consumers"
+skills = "v1-model-ask"
+loops  = "v1-model-ask-consumers"
