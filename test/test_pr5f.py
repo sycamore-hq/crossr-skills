@@ -35,6 +35,7 @@ RETIRED_LOOPS_PINS = {
     "v1-cards",
     "v1-one-law-consumers",
     "v1-packets-consumers",
+    "v1-board-consumers",
 }
 AGENTS_PINS = re.compile(r'Consumer pins:.*?loops = "([^"]+)"')
 AGENTS_SKILLS = re.compile(r'Consumer pins:.*?skills = "([^"]+)"')
