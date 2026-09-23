@@ -19,16 +19,16 @@ ocaml/RA-06  Every public item is documented in the `.mli`, in odoc comments bel
 ocaml/RA-07  Interface comments are never copied into the `.ml`. Implementation comments explain algorithms and invariants only.
 
 ocaml/RA-08  `.mli` comments are documentation (`(** *)`) or explicitly ignored (`(*_ *)`), never leftover `(* *)`.
-            check: rg '^\(\*[^*_]' --glob '*.mli' → 0
+            check: rg '^\\(\\*[^*_]' --glob '*.mli' → 0
 
 ## control-flow
 
 ocaml/RF-01  Flat code, strict fail-closed priority: (1) stdlib combinators and pipelines (`|>`, `Option.map` / `bind` / `to_result`, `Result.map` / `bind` / `map_error`, `List.filter_map` / `map` / `iter` / `fold_left`); (2) early `match` / guard on a domain variant, `function`, or `if cond then Error e else Ok ()`; (3) a small private helper (`let rec` only for genuine recursion).
 
-ocaml/RF-02  Nested `match` is a violation. A success arm (`| Ok _`, `| Some _`, `else`) never contains another `match` or `if`. The only combined match is one simultaneous discriminant: `match a, b with`. Parenthesized `(match` under `| Ok` / `| Some` is always wrong.
-            check: rg '\(match\b' --glob '*.ml' → review each hit
+ocaml/RF-02  Nested `match` is a violation. No arm of a `match` or `function` contains another `match`, `function`, or branching `if`; `then` / `else` never contain a `match`. Combined discriminant (`match a, b with`) replaces nesting; it does not license a match inside an arm. Flatten onto the product or extract the inner case to a named helper (RF-03).
+            check: rg --glob '*.ml' '\|[^\n]*->\s*\(?\s*(begin\s+)?(match|function|if)\b|(then|else)\s*\(?\s*match\b' → 0
 
-ocaml/RF-03  Actions may branch and sequence. Adapter and UI action code flattens by extracting each branch into a named helper, not by forcing pipelines onto statements.
+ocaml/RF-03  Actions may branch and sequence. Adapter and UI action code flattens by extracting each branch into a named helper, not by forcing pipelines onto statements. RF-02 still applies: helpers, not nested `match`.
 
 ocaml/RF-04  Identity matches are a violation: `| Error e -> Error e`, `| Ok v -> Ok v`, `| None -> None`, `| Some v -> Some (f v)`. Use `Result.map` / `Option.map`.
             check: rg 'Error e -> Error e|Ok v -> Ok v|None -> None' --glob '*.ml' → 0
@@ -75,14 +75,14 @@ ocaml/RE-06  Resource cleanup goes through `Fun.protect ~finally` or a `with_*` 
 ocaml/RE-07  `find_*` returns `'a option` (may not exist); `get_*` returns a value that must exist. `_opt` / `_exn` pairs only when wrapping an exception-raising function.
 
 ocaml/RE-08  Never swallow an error with `|> ignore` or `| Error _ -> Ok ()` without a comment. Ignored expressions are type-annotated: `ignore (expr : t)` or `let (_ : t) = expr`.
-            check: rg '\|> ignore\b|Error _ -> Ok \(\)' --glob '*.ml' → review each hit
+            check: rg '\\|> ignore\\b|Error _ -> Ok \\(\\)' --glob '*.ml' → review each hit
 
 ocaml/RE-09  OCaml 5 effects are for suspension and control; exceptions are for errors. Handle effects at I/O sources, never inside parsers.
 
 ## input-parsing
 
 ocaml/RP-01  JSON, SQL, HTTP, CLI, and other wire strings become domain types (`Occurrence.kind`, `Id.Facility.t`, `attendance`) in the adapter. Interior code never matches on `"practice"` / `"away"` / `"home"`.
-            check: rg '\| *"[a-z_-]+" *->' --glob '*.ml' → every hit is in an adapter module
+            check: rg '\\| *"[a-z_-]+" *->' --glob '*.ml' → every hit is in an adapter module
 
 ocaml/RP-02  An invalid wire value is an `Error`, not a silent default. `| _ -> Home` at the parse edge is forbidden.
 
@@ -108,7 +108,7 @@ ocaml/RL-07  One compilation unit, one responsibility. File `user_profile.ml` is
 ## monads
 
 ocaml/RM-01  `let*` is always `Result.bind`; `let**` is always `Option.bind`. Neither symbol is bound to anything else in any file of the codebase.
-            check: rg 'let \( *let\*\*? *\) *=' --glob '*.ml' → every `let*` hit is `Result.bind`, every `let**` hit is `Option.bind`; rg 'open [A-Z][A-Za-z_.]*\.Syntax' --glob '*.ml' → every hit is `Result.Syntax`
+            check: rg 'let \\( *let\\*\\*? *\\) *=' --glob '*.ml' → every `let*` hit is `Result.bind`, every `let**` hit is `Option.bind`; rg 'open [A-Z][A-Za-z_.]*\\.Syntax' --glob '*.ml' → every hit is `Result.Syntax`
 
 ocaml/RM-02  Both operators are declared at the top of the module that needs them (OCaml < 5.4): `let (let*) = Result.bind` and `let (let**) = Option.bind`.
 
@@ -127,16 +127,16 @@ ocaml/RM-08  A combinator missing from the target stdlib falls back to the flat-
 ## safety-performance-and-security
 
 ocaml/RS-01  Never `Obj.magic`, `Marshal` of untrusted data, or an unchecked `Array.get` without a proven index.
-            check: rg 'Obj\.magic' --glob '*.ml' → 0; rg 'Marshal\.' --glob '*.ml' → review each hit; none on untrusted input
+            check: rg 'Obj\\.magic' --glob '*.ml' → 0; rg 'Marshal\\.' --glob '*.ml' → review each hit; none on untrusted input
 
 ocaml/RS-02  `List.hd` / `List.tl` / unchecked `Option.get` / `Result.get_ok` never on production results. Startup and tests only, where failure is a bug.
-            check: rg 'List\.hd|List\.tl|Option\.get\b|Result\.get_ok' --glob '*.ml' → review each hit; none outside tests / startup
+            check: rg 'List\\.hd|List\\.tl|Option\\.get\\b|Result\\.get_ok' --glob '*.ml' → review each hit; none outside tests / startup
 
 ocaml/RS-03  Never `try ... with _ ->` or `match ... with exception _ ->` as a catch-all. Match the specific exception. Keep handlers tight.
             check: rg 'with _ ->|exception _ ->' --glob '*.ml' → review each hit
 
 ocaml/RS-04  Never add `[@warning]` / `[@ocaml.warning]` suppressions. Fix the warning.
-            check: rg '\[@+(ocaml\.)?warning' --glob '*.ml*' → 0
+            check: rg '\\[@+(ocaml\\.)?warning' --glob '*.ml*' → 0
 
 ocaml/RS-05  Tail-recursive list and loop functions (`List.fold_left`, accumulators) for unbounded data. `[@tailcall]` where tail recursion is the invariant.
 
@@ -179,7 +179,7 @@ ocaml/RC-02  Zero warnings, warnings as errors. Fix the warning: exhaustive matc
 ocaml/RC-03  OCamlFormat is applied with `version` pinned in `.ocamlformat` when the project is formatted (`ocamlformat` installed and `.ocamlformat` present). When it is not, the gate is `dune build @check @runtest`, formatting is hand-consistent with the file's existing style, and the missing formatter is named in the completion report — never silently skipped, never installed without approval.
 
 ocaml/RC-04  No `print_endline` / `Printf` debugging leftovers and no commented-out code in production paths.
-            check: rg 'print_endline|Printf\.printf' --glob '*.ml' → review each hit
+            check: rg 'print_endline|Printf\\.printf' --glob '*.ml' → review each hit
 
 ocaml/RC-05  No `;;` in source files. It is for the toplevel only.
             check: rg ';;' --glob '*.ml' → 0

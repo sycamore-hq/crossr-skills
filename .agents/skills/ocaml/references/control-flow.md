@@ -6,10 +6,11 @@ Flat, fail-closed. Nested `match` is a violation, not a style nit. Monad operato
 
 RF-01  Flat code, strict fail-closed priority: (1) stdlib combinators and pipelines (`|>`, `Option.map` / `bind` / `to_result`, `Result.map` / `bind` / `map_error`, `List.filter_map` / `map` / `iter` / `fold_left`); (2) early `match` / guard on a domain variant, `function`, or `if cond then Error e else Ok ()`; (3) a small private helper (`let rec` only for genuine recursion).
 
-RF-02  Nested `match` is a violation. A success arm (`| Ok _`, `| Some _`, `else`) never contains another `match` or `if`. The only combined match is one simultaneous discriminant: `match a, b with`. Parenthesized `(match` under `| Ok` / `| Some` is always wrong.
-       check: rg '\(match\b' --glob '*.ml' → review each hit
+RF-02  Nested `match` is a violation. No arm of a `match` or `function` contains another `match`, `function`, or branching `if`; `then` / `else` never contain a `match`. Combined discriminant (`match a, b with`) replaces nesting; it does not license a match inside an arm.
+       Flatten onto the product or extract the inner case to a named helper (RF-03).
+       check: rg --glob '*.ml' '\|[^\n]*->\s*\(?\s*(begin\s+)?(match|function|if)\b|(then|else)\s*\(?\s*match\b' → 0
 
-RF-03  Actions may branch and sequence. Adapter and UI action code flattens by extracting each branch into a named helper, not by forcing pipelines onto statements.
+RF-03  Actions may branch and sequence. Adapter and UI action code flattens by extracting each branch into a named helper, not by forcing pipelines onto statements. RF-02 still applies: helpers, not nested `match`.
 
 RF-04  Identity matches are a violation: `| Error e -> Error e`, `| Ok v -> Ok v`, `| None -> None`, `| Some v -> Some (f v)`. Use `Result.map` / `Option.map`.
        check: rg 'Error e -> Error e|Ok v -> Ok v|None -> None' --glob '*.ml' → 0
@@ -49,17 +50,24 @@ let* () = if Team.is_open team then Ok () else Error Team_closed in
 Ok (Team.roster team)
 ```
 
-Bad — the same logic as arrow code:
+Bad — a `match` or `if` inside any arm, including a product match:
 
 ```ocaml
 match Store.find_team ~id with
 | None -> Error No_such_team
 | Some team ->
   if Team.is_open team then (match roster team with ...) else Error Team_closed
+
+match (verb, write) with
+| Plan, Plan_saved t -> saved t
+| Goals, _ -> (
+    match write with
+    | Plan_saved t -> active t
+    | _ -> no_plan)
 ```
 
-A `match` inside `| Some team ->` is the defect. `Option.to_result` plus `let*` removes it.
+Combined discriminant (`match a, b with`) *replaces* nesting. It is not a license to nest inside an arm. A `let` between `->` and `match` is still nesting — extract a helper. `fun x -> match x with` at the top of a function is the good form (RF-01), not an arm.
 
-Action code (an HTTP handler, a store-row decoder) legitimately branches on data. There, each branch becomes a named helper; the handler reads as a table of cases.
+Action code (an HTTP handler, a store-row decoder) legitimately branches on data. There, each branch becomes a named helper; the handler reads as a table of cases. RF-02 still applies.
 
 A catch-all on an owned variant means a new constructor compiles silently and misroutes at runtime. The deny-closed carve-out exists because an authorization table over three dimensions cannot enumerate every cell — and even there `| _ -> true` is a hole.
