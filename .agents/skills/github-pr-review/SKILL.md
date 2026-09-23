@@ -28,6 +28,15 @@ step except the post: the validated draft file is the deliverable, and the
 chat report says which event it *would* have carried and where the file is, so
 the user can post it later with one command.
 
+## Model
+
+No `--model-*` flag → ask which model should run this review and stop until
+the user answers. Do not choose a model and do not start the review.
+
+The id on a flag is a raw session slug. It must be this session's model. If
+it is not, stop and say so. Do not substitute another model. An answer in
+chat is the model for this run; the same rule applies.
+
 ## Workflow
 
 1. Parse `owner`, `repo`, and the number from the URL or `owner/repo#n`.

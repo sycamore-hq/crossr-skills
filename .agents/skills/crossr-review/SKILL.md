@@ -24,11 +24,11 @@ You will review the pull request using the "Review Agent" for the code review, t
 
   Name: Review Agent
   Skill: /github-pr-review
-  Model: Claude Fable 5.1
+  Model: ask, unless `--model-review` is set
   ---
   Name: Fix Agent:
   Skill: /github-pr-fix
-  Model: user default
+  Model: ask, unless `--model-fix` is set
 
 Launch Fix Agent with "the user asked for nits". `q` threads are not fixes.
 
@@ -38,23 +38,26 @@ Parse from the invocation. Unknown flags: stop and ask.
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--model-review <id>` | Fable 5.1 high | Review Agent model |
-| `--model-fix <id>` | user's default | Fix Agent model |
+| `--model-review <id>` | ask | Review Agent model |
+| `--model-fix <id>` | ask | Fix Agent model |
 | `--max-rounds <n>` | `8` | Review→Fix cycles before a dirty stop |
 
 A bare PR reference (URL, `owner/repo#N`, `pr 58`, `#91`) is the target, not a flag.
 
 ### Models
 
-`--model-review` and `--model-fix` are harness parameters. Defaults stay
-Fable 5.1 high and the user's default. How a short id maps to a session
-slug is a harness disclosure — not this card.
+`--model-review` and `--model-fix` are harness parameters. Neither has a
+default model. No flag → ask the user which model runs that agent, then
+wait. Ask once per agent, before its first launch, and reuse the answer
+on later rounds. Do not pick a model, and do not use the session default.
 
-When the harness is Cursor, load `references/cursor-models.md`. Other
-harnesses disclose their own map, or treat the token as a raw slug.
+A provided id is a raw session slug. There is no short-id map.
 
-If a requested model is not in this session's list: Review Agent — stop
-and ask; Fix Agent — use the user's default and say so once.
+If the slug is not in this session's list, stop and ask. Do not substitute
+another model.
+
+Pass the chosen slug on the sub-agent launch as `--model-review <id>` or
+`--model-fix <id>`.
 
 ## Resolve the PR
 
