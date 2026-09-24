@@ -8,8 +8,8 @@ RF-01  Flat code, strict fail-closed priority: (1) stdlib combinators and pipeli
 
 RF-02  Nested `match` is a violation. No arm of a `match` or `function` contains another `match`, `function`, or branching `if`. An `if` under `->` is extracted even in the RF-01 guard shape (`if cond then Error e else Ok ()`). `then` / `else` never contain a `match`, including `if cond then match` at the top of a function: write `match cond, x with`, or a guard that returns `Error` / `Ok`.
        `function` under `then` / `else` is legal at the top of a function and a violation inside an arm. Combined discriminant (`match a, b with`) replaces nesting. Flatten onto the product or extract the inner case to a named helper (RF-03).
-       A hit is a violation. Zero hits leaves these violations uncaught: `|`, `with`, or `function` on a different line from `->`; a `let`, a comment, or a `;` sequence between `->` and the keyword.
-       check: rg -U --glob '*.ml' '(?:\|[^\n]*->|\bwith[^\n|]*->|\bfunction[^\n|]*->)\s*\(?\s*(begin\s+)?(match|function|if)\b|(then|else)\s*\(?\s*(begin\s+)?match\b' → review each hit; every hit is a violation, and zero hits does not certify
+       A hit in code is a violation (excluding strings/comments). Zero hits leaves these violations uncaught: `|`, `with`, or `function` on a different line from `->`; a `let`, a comment, or a `;` sequence between `->`, `then`, or `else` and the keyword.
+       check: rg -U --glob '*.ml' '(?:\|[^\n]*->|\bwith[^\n|]*->|\bfunction[^\n|]*->)\s*\(?\s*(begin\s+)?(match|function|if)\b|(then|else)\s*\(?\s*(begin\s+)?match\b' → review each hit; every hit in code is a violation (excluding strings/comments), and zero hits does not certify
 
 RF-03  Actions may branch and sequence. Adapter and UI action code flattens by extracting each branch into a named helper, not by forcing pipelines onto statements. Nested `match` is still a violation: helpers, not another match inside an arm.
 
@@ -69,7 +69,7 @@ match (verb, write) with
 
 Combined discriminant (`match a, b with`) replaces nesting. A match inside an arm is still nesting. `if cond then match` at the top of a function is the same violation. The RF-01 guard (`if cond then Error e else Ok ()`) is legal as the function body, and under `->` it is extracted. `if cond then function` at the top of a function is legal. `function` inside an arm is nesting.
 
-`fun x -> match x with` at the top of a function is the good form (RF-01). The grep misses a `let`, a comment, or a `;` sequence between `->` and the keyword, and a pattern whose `|`, `with`, or `function` sits on a different line from `->`. Those are still violations.
+`fun x -> match x with` at the top of a function is the good form (RF-01). The grep misses a `let`, a comment, or a `;` sequence between `->`, `then`, or `else` and the keyword, and a pattern whose `|`, `with`, or `function` sits on a different line from `->`. Those are still violations. A hit inside a string or a comment is not one.
 
 Action code (an HTTP handler, a store-row decoder) legitimately branches on data. There, each branch becomes a named helper; the handler reads as a table of cases. Nested `match` is still a violation there.
 
