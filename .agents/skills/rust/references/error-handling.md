@@ -19,6 +19,9 @@ RE-05  Fallible operations return `Result<T, E>`. Propagate with `?`.
 
 RE-06  The public API boundary converts domain errors into the gateway type via `From`.
 
+RE-07  No string-payload errors: no `Result<_, String>`, no catch-all `Invalid(String)` / `Other(String)` variant filled with `format!`. One variant per failure; the data goes in fields, the wording in `#[error(...)]`.
+       check: rg 'Result<[^>]*, String>|Invalid\(format!|Invalid\(String\)' --glob '*.rs' → 0
+
 ## How
 
 One enum per layer. Conversions live on the type, once.

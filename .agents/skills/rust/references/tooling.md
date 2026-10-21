@@ -18,8 +18,8 @@ RC-05  Import order: `std` → approved external crates → local modules.
 
 RC-06  Prefer the standard library. A new third-party crate needs explicit user approval.
 
-RC-07  No `dbg!`, `println!`, or commented-out code in production paths.
-       check: rg 'dbg!|println!' src/ → 0
+RC-07  No `dbg!`, `println!`, or commented-out code in production paths. Diagnostics go through `tracing` (exported with `tracing-opentelemetry` where OpenTelemetry is in use), never `eprintln!`. User-facing CLI output (results, `--help`) is the only exception.
+       check: rg 'dbg!|println!|eprintln!' src/ → review each hit; only CLI output remains
 
 RC-08  `cargo build` and `cargo test` run with zero warnings.
 

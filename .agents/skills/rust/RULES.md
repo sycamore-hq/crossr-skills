@@ -24,6 +24,9 @@ rust/RF-05  Match exhaustively. A `_` arm that hides a real case is a defect.
 
 rust/RF-06  Single responsibility per function and type.
 
+rust/RF-07  A function that validates or compiles several things reads as a list of named steps (`check_*`, `compile_*`), one per concern. No inline run of `for … { if … { return Err(…) } }` blocks.
+            check: review any fn with more than two `return Err(` — each should be its own named step
+
 ## error-handling
 
 rust/RE-01  Every layer defines its own error enum via thiserror. Never `anyhow`.
@@ -40,6 +43,9 @@ rust/RE-04  `.expect()` only for documented invariants, with an explanatory comm
 rust/RE-05  Fallible operations return `Result<T, E>`. Propagate with `?`.
 
 rust/RE-06  The public API boundary converts domain errors into the gateway type via `From`.
+
+rust/RE-07  No string-payload errors: no `Result<_, String>`, no catch-all `Invalid(String)` / `Other(String)` variant filled with `format!`. One variant per failure; the data goes in fields, the wording in `#[error(...)]`.
+            check: rg 'Result<[^>]*, String>|Invalid\(format!|Invalid\(String\)' --glob '*.rs' → 0
 
 ## input-parsing
 
@@ -143,8 +149,8 @@ rust/RC-05  Import order: `std` → approved external crates → local modules.
 
 rust/RC-06  Prefer the standard library. A new third-party crate needs explicit user approval.
 
-rust/RC-07  No `dbg!`, `println!`, or commented-out code in production paths.
-            check: rg 'dbg!|println!' src/ → 0
+rust/RC-07  No `dbg!`, `println!`, or commented-out code in production paths. Diagnostics go through `tracing` (exported with `tracing-opentelemetry` where OpenTelemetry is in use), never `eprintln!`. User-facing CLI output (results, `--help`) is the only exception.
+            check: rg 'dbg!|println!|eprintln!' src/ → review each hit; only CLI output remains
 
 rust/RC-08  `cargo build` and `cargo test` run with zero warnings.
 
