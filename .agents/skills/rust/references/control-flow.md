@@ -19,6 +19,9 @@ RF-06  Single responsibility per function and type.
 RF-07  A function that validates or compiles several things reads as a list of named steps (`check_*`, `compile_*`), one per concern. No inline run of `for … { if … { return Err(…) } }` blocks.
        check: review any fn with more than two `return Err(` — each should be its own named step
 
+RF-08  If most of a function body sits inside one `if` / `if let`, invert the condition into a guard that returns early. The happy path stays at the left margin.
+       check: review any fn whose body is a single `if` block followed by a trailing return value
+
 ## How
 
 Priority is strict:
