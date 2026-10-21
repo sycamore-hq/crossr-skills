@@ -27,6 +27,9 @@ rust/RF-06  Single responsibility per function and type.
 rust/RF-07  A function that validates or compiles several things reads as a list of named steps (`check_*`, `compile_*`), one per concern. No inline run of `for … { if … { return Err(…) } }` blocks.
             check: review any fn with more than two `return Err(` — each should be its own named step
 
+rust/RF-08  If most of a function body sits inside one `if` / `if let`, invert the condition into a guard that returns early. The happy path stays at the left margin.
+            check: review any fn whose body is a single `if` block followed by a trailing return value
+
 ## error-handling
 
 rust/RE-01  Every layer defines its own error enum via thiserror. Never `anyhow`.
@@ -54,6 +57,9 @@ rust/RP-01  Parse wire values into domain newtypes at the adapter edge. Do not v
 rust/RP-02  Newtypes that wrap wire input are constructed at the edge, not deep in the core.
 
 rust/RP-03  Invalid input dies at the parse boundary. The core receives a domain value or nothing.
+
+rust/RP-04  A closed set of wire strings (method names, tool names, CLI flags, kinds, modes like `"off"`) is parsed into an enum with an `Unknown(String)` variant at the point of extraction — `#[serde(from = "String")]` or one `From<String>` / `FromStr`. String-literal `match` arms appear only inside that impl; handlers match on the enum.
+            check: rg '^\s*"[^"]*"\s*(\|\s*"[^"]*"\s*)*=>' --glob '*.rs' → every hit is inside a `From<String>` / `FromStr` impl
 
 ## layering
 
