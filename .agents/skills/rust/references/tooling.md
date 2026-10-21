@@ -23,6 +23,9 @@ RC-07  No `dbg!`, `println!`, or commented-out code in production paths. Diagnos
 
 RC-08  `cargo build` and `cargo test` run with zero warnings.
 
+RC-09  Encode the checkable rules as lints so `cargo clippy -- -D warnings` in CI enforces them, not the reviewer (`cargo build` and `cargo test` do not run clippy lints). Every crate denies `print_stderr` and `dbg_macro`, and also `print_stdout` in both libraries and binaries: either in its own `[lints.clippy]` table, or in a workspace root `[workspace.lints.clippy]` table that each member inherits with `[lints] workspace = true`. A CLI's one output function gets a scoped `#[expect(clippy::print_stdout, reason = "...")]`; tests, examples and benches that print get a scoped `#[expect]` too, which keeps RC-07's production-path intent. CI runs the RE-07 / RP-04 / RC-07 `check:` greps and fails on hits.
+       check: rg -A4 '^\[(workspace\.)?lints\.clippy\]' Cargo.toml → print_stderr, dbg_macro and print_stdout are deny; members without their own table have `[lints] workspace = true`
+
 ## How
 
 The checklist is the completion gate, not a suggestion. Pedantic clippy is on. `-D warnings` means a warning is a fail.
