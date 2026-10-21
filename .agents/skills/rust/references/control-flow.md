@@ -22,6 +22,9 @@ RF-07  A function that validates or compiles several things reads as a list of n
 RF-08  If most of a function body sits inside one `if` / `if let`, invert the condition into a guard that returns early. The happy path stays at the left margin.
        check: review any fn whose body is a single `if` block followed by a trailing return value
 
+RF-09  Parsing arguments and acting on them are separate steps. `main` (or the command entry point) parses argv/config into a typed command value (an enum or struct, failing with a typed error), then hands that value to a function that does the work. Action functions never read argv, env, or raw strings; parsing functions never do I/O beyond reading their input.
+       check: rg 'env::(args|args_os|var|var_os|vars|vars_os)\b|use std::env::|::(try_)?parse(_from)?\(|\.parse(::<[^>]+>)?\(' src/ → each hit sits in the entry point or a parsing function, not in an action function (best-effort grep; review covers aliased imports)
+
 ## How
 
 Priority is strict:

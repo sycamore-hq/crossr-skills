@@ -30,6 +30,9 @@ rust/RF-07  A function that validates or compiles several things reads as a list
 rust/RF-08  If most of a function body sits inside one `if` / `if let`, invert the condition into a guard that returns early. The happy path stays at the left margin.
             check: review any fn whose body is a single `if` block followed by a trailing return value
 
+rust/RF-09  Parsing arguments and acting on them are separate steps. `main` (or the command entry point) parses argv/config into a typed command value (an enum or struct, failing with a typed error), then hands that value to a function that does the work. Action functions never read argv, env, or raw strings; parsing functions never do I/O beyond reading their input.
+            check: rg 'env::(args|args_os|var|var_os|vars|vars_os)\b|use std::env::|::(try_)?parse(_from)?\(|\.parse(::<[^>]+>)?\(' src/ → each hit sits in the entry point or a parsing function, not in an action function (best-effort grep; review covers aliased imports)
+
 ## error-handling
 
 rust/RE-01  Every layer defines its own error enum via thiserror. Never `anyhow`.
@@ -159,6 +162,9 @@ rust/RC-07  No `dbg!`, `println!`, or commented-out code in production paths. Di
             check: rg 'dbg!|println!|eprintln!' src/ → review each hit; only CLI output remains
 
 rust/RC-08  `cargo build` and `cargo test` run with zero warnings.
+
+rust/RC-09  Encode the checkable rules as lints so the RC-02 clippy run in CI (`cargo clippy --all-targets -- -W clippy::pedantic -D warnings`) enforces them, not the reviewer (`cargo build` and `cargo test` do not run clippy lints). Every crate denies `print_stderr`, `dbg_macro` and `print_stdout` in both libraries and binaries: either in its own `[lints.clippy]` table, or in a workspace root `[workspace.lints.clippy]` table that each member inherits with `[lints] workspace = true`. A CLI's one output function gets a scoped `#[expect(clippy::print_stdout, reason = "...")]`; tests, examples and benches that print get a scoped `#[expect]` too, which keeps RC-07's production-path intent. CI also fails on any hit of RE-07's zero-hit `check:` grep; the RP-04 and RC-07 greps stay review checks because their allowed locations (parser impls, the one output function) always match.
+            check: the RC-02 clippy run passes; RE-07's grep has 0 hits; every Cargo.toml that defines a [package] (rg --files -g Cargo.toml) either lists print_stderr, dbg_macro and print_stdout as deny under its own [lints.clippy], or has `[lints] workspace = true` and the root [workspace.lints.clippy] lists all three as deny
 
 ## type-system
 
