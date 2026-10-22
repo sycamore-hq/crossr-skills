@@ -12,6 +12,7 @@ check:
 test:
     python3 -m unittest discover -s test -v
     cargo test --workspace 2>/dev/null || echo "(no tests yet)"
+    @just claude-skills-check
 
 clippy:
     cargo clippy --workspace -- -W clippy::pedantic -D warnings 2>/dev/null || echo "(no Rust crates)"
@@ -37,7 +38,7 @@ rules-check:
 # Catalog validation (process checks live in sycamore-hq/crossr-harness)
 harness-validate:
     @just docs-verify
-    @just claude-skills-check
+    @just claude-skills-verify
     @just rules-check
     @python3 -m unittest discover -s test -v
 
@@ -61,3 +62,7 @@ claude-skills-sync:
 # Non-fatal drift report; skips when no Claude skills directory exists
 claude-skills-check:
     @echo "" && echo "Checking Claude skill copies..." && ./scripts/sync-claude-skills --check --soft
+
+# Strict drift check (exit 1 on drift); used by harness-validate
+claude-skills-verify:
+    @echo "" && echo "Verifying Claude skill copies..." && ./scripts/sync-claude-skills --check
