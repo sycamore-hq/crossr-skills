@@ -11,7 +11,7 @@ RY-02  Yield between immediately-ready units when the goal is multi-tenant laten
 
 RY-03  Batch filesystem and other blocking work into the largest sensible `spawn_blocking` segment.
        Do not sprinkle `tokio::fs` calls.
-       check: rg 'tokio::fs::' --glob '*.rs' → review each hit
+       check: RC-09 lint `disallowed_methods` (clippy.toml lists the `tokio::fs` functions)
 
 RY-04  Do not spawn a task whose useful work is measured in microseconds.
 

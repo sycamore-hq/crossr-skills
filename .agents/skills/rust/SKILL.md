@@ -28,6 +28,7 @@ Anti-Pattern Severity / Fines live in `code-writer`. Do not photocopy them here.
 | Tests, AAA, `cfg(test)` | `references/testing.md` |
 | `pub` items, docs, semver | `references/api-surface.md` |
 | fmt, clippy, crates, imports | `references/tooling.md` |
+| Setting up or verifying clippy lints | `references/tooling.md` (How), `templates/`, `scripts/check-lint-setup` |
 | unsafe, overflow, secrets, input trust | `references/safety-performance-and-security.md` |
 | Tokio workers, `spawn_blocking`, schedule latency, locks that park a worker | `references/tokio-runtime.md` |
 

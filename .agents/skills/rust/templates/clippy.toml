@@ -1,0 +1,34 @@
+# clippy.toml holds configuration only. A [lints] table here is ignored.
+
+excessive-nesting-threshold = 4
+too-many-arguments-threshold = 5
+cognitive-complexity-threshold = 15   # chosen default, not clippy's
+too-many-lines-threshold = 60         # chosen default, not clippy's
+
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-print-in-tests = true
+allow-dbg-in-tests = true
+
+disallowed-types = [
+  { path = "anyhow::Error", reason = "RE-01: define a typed error enum with thiserror" },
+  { path = "anyhow::Result", reason = "RE-01: define a typed error enum with thiserror" },
+]
+
+disallowed-methods = [
+  { path = "std::env::args", reason = "RF-09: parse argv in the entry point only (scoped #[expect] there)" },
+  { path = "std::env::args_os", reason = "RF-09: parse argv in the entry point only (scoped #[expect] there)" },
+  { path = "std::env::var", reason = "RF-09: read config in the entry point only (scoped #[expect] there)" },
+  { path = "std::env::var_os", reason = "RF-09: read config in the entry point only (scoped #[expect] there)" },
+  { path = "tokio::fs::read", reason = "RY-03: batch blocking work in one spawn_blocking" },
+  { path = "tokio::fs::read_to_string", reason = "RY-03: batch blocking work in one spawn_blocking" },
+  { path = "tokio::fs::write", reason = "RY-03: batch blocking work in one spawn_blocking" },
+  { path = "tokio::fs::read_dir", reason = "RY-03: batch blocking work in one spawn_blocking" },
+  { path = "tokio::fs::metadata", reason = "RY-03: batch blocking work in one spawn_blocking" },
+  { path = "tokio::fs::create_dir_all", reason = "RY-03: batch blocking work in one spawn_blocking" },
+  { path = "tokio::fs::remove_file", reason = "RY-03: batch blocking work in one spawn_blocking" },
+  { path = "tokio::fs::rename", reason = "RY-03: batch blocking work in one spawn_blocking" },
+  { path = "tokio::fs::copy", reason = "RY-03: batch blocking work in one spawn_blocking" },
+  { path = "tokio::fs::File::open", reason = "RY-03: batch blocking work in one spawn_blocking" },
+  { path = "tokio::fs::File::create", reason = "RY-03: batch blocking work in one spawn_blocking" },
+]

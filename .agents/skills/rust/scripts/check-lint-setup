@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+"""check-lint-setup: prove a Rust repo's clippy setup matches rust/RC-09.
+
+Usage:
+    check-lint-setup [REPO_DIR]     # default: current directory
+
+Exits 0 when the setup is right, 1 with one line per problem otherwise.
+Needs Python 3.11+ (tomllib). Reads files only; never runs cargo.
+
+Checks:
+  * clippy.toml (or .clippy.toml) exists, has no [lints] table, and sets the
+    required thresholds and test allowances.
+  * the workspace root Cargo.toml has [workspace.lints.clippy] and
+    [workspace.lints.rust] with every required lint at the required level.
+  * every Cargo.toml that defines a [package] has `[lints] workspace = true`.
+"""
+
+from __future__ import annotations
+
+import sys
+import tomllib
+from pathlib import Path
+
+LEVEL_RANK = {"allow": 0, "expect": 0, "warn": 1, "deny": 2, "forbid": 3}
+
+REQUIRED_CLIPPY: dict[str, str] = {
+    **{name: "deny" for name in (
+        "print_stdout", "print_stderr", "dbg_macro", "use_debug",
+        "unwrap_used", "expect_used", "panic", "todo", "unimplemented",
+        "unwrap_in_result", "wildcard_enum_match_arm",
+        "undocumented_unsafe_blocks", "multiple_unsafe_ops_per_block",
+        "tests_outside_test_module", "allow_attributes",
+        "allow_attributes_without_reason", "map_err_ignore", "error_impl_error",
+        "rc_mutex", "mutex_atomic", "clone_on_ref_ptr", "cognitive_complexity",
+        "too_many_arguments", "too_many_lines", "excessive_nesting",
+        "disallowed_types", "disallowed_methods",
+    )},
+    **{name: "warn" for name in (
+        "pedantic", "redundant_clone", "needless_pass_by_ref_mut",
+        "option_if_let_else", "derive_partial_eq_without_eq",
+    )},
+}
+
+REQUIRED_RUST: dict[str, str] = {
+    "missing_docs": "deny",
+    "unreachable_pub": "deny",
+    "unsafe_code": "deny",
+}
+
+REQUIRED_CONFIG: dict[str, object] = {
+    "excessive-nesting-threshold": 4,
+    "too-many-arguments-threshold": 5,
+    "cognitive-complexity-threshold": 15,
+    "too-many-lines-threshold": 60,
+    "allow-unwrap-in-tests": True,
+    "allow-expect-in-tests": True,
+    "allow-print-in-tests": True,
+    "allow-dbg-in-tests": True,
+}
+
+REQUIRED_DISALLOWED_TYPES = ("anyhow::Error", "anyhow::Result")
+REQUIRED_DISALLOWED_METHODS = ("std::env::args", "std::env::var")
+
+
+def load_toml(path: Path) -> tuple[dict, str | None]:
+    try:
+        return tomllib.loads(path.read_text(encoding="utf-8")), None
+    except (OSError, tomllib.TOMLDecodeError) as err:
+        return {}, f"{path}: cannot read TOML ({err})"
+
+
+def lint_level(value: object) -> str:
+    if isinstance(value, dict):
+        return str(value.get("level", ""))
+    return str(value)
+
+
+def check_lint_table(table: dict, required: dict[str, str], where: str) -> list[str]:
+    problems = []
+    for name, want in required.items():
+        if name not in table:
+            problems.append(f"{where}: missing `{name}` (want {want} or stricter)")
+            continue
+        got = lint_level(table[name])
+        if LEVEL_RANK.get(got, -1) < LEVEL_RANK[want]:
+            problems.append(f"{where}: `{name}` is {got!r}, want {want} or stricter")
+    return problems
+
+
+def entry_path(entry: object) -> str:
+    if isinstance(entry, dict):
+        return str(entry.get("path", ""))
+    return str(entry)
+
+
+def check_config(repo: Path) -> list[str]:
+    path = next((p for p in (repo / "clippy.toml", repo / ".clippy.toml") if p.is_file()), None)
+    if path is None:
+        return [f"{repo}: no clippy.toml"]
+    data, err = load_toml(path)
+    if err:
+        return [err]
+    problems = []
+    if "lints" in data:
+        problems.append(f"{path}: has a [lints] table; clippy ignores it here, move lint levels to Cargo.toml")
+    for key, want in REQUIRED_CONFIG.items():
+        if data.get(key) != want:
+            problems.append(f"{path}: `{key}` must be {want!r}, found {data.get(key)!r}")
+    types = {entry_path(e) for e in data.get("disallowed-types", [])}
+    methods = {entry_path(e) for e in data.get("disallowed-methods", [])}
+    problems += [f"{path}: disallowed-types lacks `{t}`" for t in REQUIRED_DISALLOWED_TYPES if t not in types]
+    problems += [f"{path}: disallowed-methods lacks `{m}`" for m in REQUIRED_DISALLOWED_METHODS if m not in methods]
+    if not any(m.startswith("tokio::fs::") for m in methods):
+        problems.append(f"{path}: disallowed-methods lists no `tokio::fs::` function")
+    return problems
+
+
+def check_workspace(root_manifest: Path) -> list[str]:
+    data, err = load_toml(root_manifest)
+    if err:
+        return [err]
+    lints = data.get("workspace", {}).get("lints")
+    if lints is None:
+        return [f"{root_manifest}: no [workspace.lints] table"]
+    where = f"{root_manifest} [workspace.lints"
+    return (check_lint_table(lints.get("clippy", {}), REQUIRED_CLIPPY, where + ".clippy]")
+            + check_lint_table(lints.get("rust", {}), REQUIRED_RUST, where + ".rust]"))
+
+
+def check_members(repo: Path) -> list[str]:
+    problems = []
+    for manifest in sorted(repo.rglob("Cargo.toml")):
+        if "target" in manifest.relative_to(repo).parts:
+            continue
+        data, err = load_toml(manifest)
+        if err:
+            problems.append(err)
+            continue
+        if "package" not in data:
+            continue
+        if data.get("lints", {}).get("workspace") is not True:
+            problems.append(f"{manifest}: package lacks `[lints] workspace = true`")
+    return problems
+
+
+def check_repo(repo: Path) -> list[str]:
+    root_manifest = repo / "Cargo.toml"
+    if not root_manifest.is_file():
+        return [f"{repo}: no Cargo.toml at the repo root"]
+    return check_config(repo) + check_workspace(root_manifest) + check_members(repo)
+
+
+def main(argv: list[str]) -> int:
+    repo = Path(argv[1] if len(argv) > 1 else ".").resolve()
+    problems = check_repo(repo)
+    for line in problems:
+        print(line)
+    if problems:
+        return 1
+    print(f"lint setup ok: {repo}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

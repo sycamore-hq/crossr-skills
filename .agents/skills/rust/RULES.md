@@ -31,20 +31,21 @@ rust/RF-08  If most of a function body sits inside one `if` / `if let`, invert t
             check: review any fn whose body is a single `if` block followed by a trailing return value
 
 rust/RF-09  Parsing arguments and acting on them are separate steps. `main` (or the command entry point) parses argv/config into a typed command value (an enum or struct, failing with a typed error), then hands that value to a function that does the work. Action functions never read argv, env, or raw strings; parsing functions never do I/O beyond reading their input.
-            check: rg 'env::(args|args_os|var|var_os|vars|vars_os)\b|use std::env::|::(try_)?parse(_from)?\(|\.parse(::<[^>]+>)?\(' src/ → each hit sits in the entry point or a parsing function, not in an action function (best-effort grep; review covers aliased imports)
+            check: RC-09 lint `disallowed_methods` bans `std::env::args` / `args_os` / `var` / `var_os` outside the entry point's scoped `#[expect]`; rg '::(try_)?parse(_from)?\(|\.parse(::<[^>]+>)?\(' src/ → each hit sits in the entry point or a parsing function (best-effort grep)
 
 ## error-handling
 
 rust/RE-01  Every layer defines its own error enum via thiserror. Never `anyhow`.
-            check: rg 'anyhow' --glob '*.rs' → 0
+            check: RC-09 lint `disallowed_types` (clippy.toml bans `anyhow::Error` / `anyhow::Result`)
 
 rust/RE-02  Cross-layer propagation uses `#[from]` / `From`; never inline `.map_err` at a call site — a call-site `.map_err` means a `From` impl is missing, add the impl.
             check: rg '\.map_err\(' --glob '*.rs' → review each hit
 
 rust/RE-03  Never `.unwrap()` in production paths.
-            check: rg '\.unwrap\(' src/ --glob '!**/tests/**' → review each hit; none outside `#[cfg(test)]`
+            check: RC-09 lint `unwrap_used` (clippy.toml `allow-unwrap-in-tests = true`)
 
 rust/RE-04  `.expect()` only for documented invariants, with an explanatory comment.
+            check: RC-09 lint `expect_used`; each allowed use carries a scoped `#[expect(clippy::expect_used, reason = "...")]` naming the invariant
 
 rust/RE-05  Fallible operations return `Result<T, E>`. Propagate with `?`.
 
@@ -79,7 +80,7 @@ rust/RL-05  A calculation about one type lives in `impl Type` when Self has no t
 ## safety-performance-and-security
 
 rust/RS-01  Never use `unsafe` without documented safety invariants and a justification.
-            check: rg 'unsafe' --glob '*.rs' → review each hit
+            check: RC-09 lints `unsafe_code`, `undocumented_unsafe_blocks`, `multiple_unsafe_ops_per_block`; a crate that needs unsafe carries a scoped `#[expect(unsafe_code, reason = "...")]`
 
 rust/RS-02  Minimize allocations: prefer `&str` / `Cow<'_, str>` over `String` when either works.
 
@@ -128,7 +129,7 @@ rust/RY-01  Work backward from a user-facing metric. A long poll is not a defect
 rust/RY-02  Yield between immediately-ready units when the goal is multi-tenant latency. Batch the same work when the goal is throughput.
 
 rust/RY-03  Batch filesystem and other blocking work into the largest sensible `spawn_blocking` segment. Do not sprinkle `tokio::fs` calls.
-            check: rg 'tokio::fs::' --glob '*.rs' → review each hit
+            check: RC-09 lint `disallowed_methods` (clippy.toml lists the `tokio::fs` functions)
 
 rust/RY-04  Do not spawn a task whose useful work is measured in microseconds.
 
@@ -159,12 +160,12 @@ rust/RC-05  Import order: `std` → approved external crates → local modules.
 rust/RC-06  Prefer the standard library. A new third-party crate needs explicit user approval.
 
 rust/RC-07  No `dbg!`, `println!`, or commented-out code in production paths. Diagnostics go through `tracing` (exported with `tracing-opentelemetry` where OpenTelemetry is in use), never `eprintln!`. User-facing CLI output (results, `--help`) is the only exception.
-            check: rg 'dbg!|println!|eprintln!' src/ → review each hit; only CLI output remains
+            check: RC-09 lints `print_stdout`, `print_stderr`, `dbg_macro`, `use_debug`; commented-out code stays a review check
 
 rust/RC-08  `cargo build` and `cargo test` run with zero warnings.
 
-rust/RC-09  Encode the checkable rules as lints so the RC-02 clippy run in CI (`cargo clippy --all-targets -- -W clippy::pedantic -D warnings`) enforces them, not the reviewer (`cargo build` and `cargo test` do not run clippy lints). Every crate denies `print_stderr`, `dbg_macro` and `print_stdout` in both libraries and binaries: either in its own `[lints.clippy]` table, or in a workspace root `[workspace.lints.clippy]` table that each member inherits with `[lints] workspace = true`. A CLI's one output function gets a scoped `#[expect(clippy::print_stdout, reason = "...")]`; tests, examples and benches that print get a scoped `#[expect]` too, which keeps RC-07's production-path intent. CI also fails on any hit of RE-07's zero-hit `check:` grep; the RP-04 and RC-07 greps stay review checks because their allowed locations (parser impls, the one output function) always match.
-            check: the RC-02 clippy run passes; RE-07's grep has 0 hits; every Cargo.toml that defines a [package] (rg --files -g Cargo.toml) either lists print_stderr, dbg_macro and print_stdout as deny under its own [lints.clippy], or has `[lints] workspace = true` and the root [workspace.lints.clippy] lists all three as deny
+rust/RC-09  Encode the checkable rules as lints so the RC-02 clippy run in CI (`cargo clippy --all-targets -- -W clippy::pedantic -D warnings`) enforces them, not the reviewer (`cargo build` and `cargo test` do not run clippy lints). Lint levels live only in `Cargo.toml`: the workspace root has `[workspace.lints.rust]` and `[workspace.lints.clippy]` copied from `templates/Cargo.lints.toml`, and every package has `[lints] workspace = true` (a single-crate repo adds an empty `[workspace]` table). `clippy.toml` holds configuration only (`templates/clippy.toml`); a `[lints]` table there is silently ignored. Required at deny: rustc `missing_docs`, `unreachable_pub`, `unsafe_code`; clippy `print_stdout`, `print_stderr`, `dbg_macro`, `use_debug`, `unwrap_used`, `expect_used`, `panic`, `todo`, `unimplemented`, `unwrap_in_result`, `map_err_ignore`, `error_impl_error`, `disallowed_types`, `disallowed_methods`, `wildcard_enum_match_arm`, `undocumented_unsafe_blocks`, `multiple_unsafe_ops_per_block`, `tests_outside_test_module`, `allow_attributes`, `allow_attributes_without_reason`, `rc_mutex`, `mutex_atomic`, `clone_on_ref_ptr`, `cognitive_complexity`, `excessive_nesting`, `too_many_arguments`, `too_many_lines`. Required at warn (gated by `-D warnings`): `pedantic` and the nursery lints `redundant_clone`, `needless_pass_by_ref_mut`, `option_if_let_else`, `derive_partial_eq_without_eq`. An allowed exception is a scoped `#[expect(lint, reason = "...")]`, never `#[allow]`. CI also fails on any hit of RE-07's zero-hit `check:` grep; the RP-04 and RE-02 greps stay review checks.
+            check: python3 <rust skill>/scripts/check-lint-setup <repo> exits 0, then the RC-02 clippy run passes
 
 ## type-system
 
