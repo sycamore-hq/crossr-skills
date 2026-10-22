@@ -34,7 +34,7 @@ Always use the `justfile` for canonical commands:
 - `just test`
 - `just clippy`
 - `just fmt`
-- `just harness-validate` — Catalog `docs-verify` + Claude skill drift check + catalog tests
+- `just harness-validate` — Catalog `docs-verify` + strict Claude skill drift check (fails on drift) + catalog tests
 - `just regen-agents` — Refresh loop persona copies from the `loops` pin, regenerate marked `.opencode/agent/` files, strip the GONE-listed overlay
 - `just claude-skills-sync` — Regenerate the Claude compatibility copies in `~/.claude/skills` from `.agents/skills/`
 - `just docs-verify` — Allowlist vs README vs `SKILL.md`
@@ -100,7 +100,7 @@ Example filenames: `architecture-review.html`, `pr-summary.html`, `deploy-guide.
 - `just claude-skills-sync` regenerates them; `./scripts/sync-claude-skills --all` installs every repo skill, and named arguments add specific ones.
 - Skills in the target that this repo does not own (personal or project-local) are never deleted or modified — they are reported and left alone.
 - Replaced files are backed up to a timestamped `skills.backup-*` directory.
-- `just harness-validate` reports drift without failing; run the sync to clear it.
+- `just test` ends with a non-failing drift report; `just harness-validate` fails on drift (`just claude-skills-verify`). Run the sync to clear it.
 
 ## How to Work in This Repo
 
