@@ -5,15 +5,16 @@ SOLE OWNER of unwrap. Other topics do not restate it.
 ## Rules
 
 RE-01  Every layer defines its own error enum via thiserror. Never `anyhow`.
-       check: rg 'anyhow' --glob '*.rs' → 0
+       check: RC-09 lint `disallowed_types` (clippy.toml bans `anyhow::Error` / `anyhow::Result`)
 
 RE-02  Cross-layer propagation uses `#[from]` / `From`; never inline `.map_err` at a call site — a call-site `.map_err` means a `From` impl is missing, add the impl.
        check: rg '\.map_err\(' --glob '*.rs' → review each hit
 
 RE-03  Never `.unwrap()` in production paths.
-       check: rg '\.unwrap\(' src/ --glob '!**/tests/**' → review each hit; none outside `#[cfg(test)]`
+       check: RC-09 lint `unwrap_used` (clippy.toml `allow-unwrap-in-tests = true`)
 
 RE-04  `.expect()` only for documented invariants, with an explanatory comment.
+       check: RC-09 lint `expect_used`; each allowed use carries a scoped `#[expect(clippy::expect_used, reason = "...")]` naming the invariant
 
 RE-05  Fallible operations return `Result<T, E>`. Propagate with `?`.
 

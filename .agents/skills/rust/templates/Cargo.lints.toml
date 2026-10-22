@@ -1,0 +1,59 @@
+# Paste into the workspace root Cargo.toml (a single-crate repo adds an empty
+# [workspace] table and keeps its [package] in the same file).
+# Every package Cargo.toml then carries:
+#
+#   [lints]
+#   workspace = true
+#
+# Lint levels live here and only here. clippy.toml cannot set them.
+
+[workspace.lints.rust]
+missing_docs = "deny"
+unreachable_pub = "deny"
+unsafe_code = "deny"            # a crate that needs unsafe uses a scoped #[expect(unsafe_code, reason = "...")]
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+
+# complexity and shape (thresholds in clippy.toml)
+cognitive_complexity = "deny"
+excessive_nesting = "deny"
+too_many_arguments = "deny"
+too_many_lines = "deny"
+
+# no stray output; diagnostics go through tracing
+print_stdout = "deny"
+print_stderr = "deny"
+dbg_macro = "deny"
+use_debug = "deny"
+
+# errors: no panicking shortcuts, typed errors
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+unwrap_in_result = "deny"
+map_err_ignore = "deny"
+error_impl_error = "deny"
+disallowed_types = "deny"
+disallowed_methods = "deny"
+
+# matching, unsafe, tests, suppressions
+wildcard_enum_match_arm = "deny"
+undocumented_unsafe_blocks = "deny"
+multiple_unsafe_ops_per_block = "deny"
+tests_outside_test_module = "deny"
+allow_attributes = "deny"
+allow_attributes_without_reason = "deny"
+
+# shared state
+rc_mutex = "deny"
+mutex_atomic = "deny"
+clone_on_ref_ptr = "deny"
+
+# nursery: useful but can misfire; warn so -D warnings still gates them
+redundant_clone = "warn"
+needless_pass_by_ref_mut = "warn"
+option_if_let_else = "warn"
+derive_partial_eq_without_eq = "warn"

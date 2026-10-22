@@ -5,7 +5,7 @@ unsafe, overflow, input trust, secrets. Unwrap lives in error-handling. Do not r
 ## Rules
 
 RS-01  Never use `unsafe` without documented safety invariants and a justification.
-       check: rg 'unsafe' --glob '*.rs' → review each hit
+       check: RC-09 lints `unsafe_code`, `undocumented_unsafe_blocks`, `multiple_unsafe_ops_per_block`; a crate that needs unsafe carries a scoped `#[expect(unsafe_code, reason = "...")]`
 
 RS-02  Minimize allocations: prefer `&str` / `Cow<'_, str>` over `String` when either works.
 
