@@ -28,6 +28,12 @@ RC-09  Encode the checkable rules as lints so the RC-02 clippy run in CI (`cargo
 
 ## How
 
+The checklist is the completion gate, not a suggestion. Pedantic clippy is on. `-D warnings` means a warning is a fail.
+
+`#[allow(clippy::too_many_arguments)]` and `#[allow(clippy::too_many_lines)]` are the $100 / $100,000 shape without a dollar sign: the allow is the fine. Extract a config struct or a helper.
+
+A new crate is a dependency the next human has to trust. Ask first.
+
 ### Setting up clippy (RC-09)
 
 1. Copy `templates/Cargo.lints.toml` into the workspace root `Cargo.toml`. A single-crate repo adds an empty `[workspace]` table above its `[package]`.
@@ -35,10 +41,3 @@ RC-09  Encode the checkable rules as lints so the RC-02 clippy run in CI (`cargo
 3. Copy `templates/clippy.toml` to the repo root. Thresholds: nesting 4 (RF-02), arguments 5 (RF-03), cognitive complexity 15 and function length 60 lines. 15 and 60 are this book's chosen defaults, not clippy's; the template marks them so. Tests may unwrap, expect, print and `dbg!`.
 4. The only place that reads `std::env` is the entry point (RF-09), under one scoped `#[expect(clippy::disallowed_methods, reason = "entry point parses config")]`. The one CLI output function carries `#[expect(clippy::print_stdout, reason = "...")]`.
 5. Prove it: run `python3 <rust skill>/scripts/check-lint-setup .`, then `cargo clippy --all-targets -- -W clippy::pedantic -D warnings`. Do not edit the checker's required lists to make it pass.
-
-
-The checklist is the completion gate, not a suggestion. Pedantic clippy is on. `-D warnings` means a warning is a fail.
-
-`#[allow(clippy::too_many_arguments)]` and `#[allow(clippy::too_many_lines)]` are the $100 / $100,000 shape without a dollar sign: the allow is the fine. Extract a config struct or a helper.
-
-A new crate is a dependency the next human has to trust. Ask first.

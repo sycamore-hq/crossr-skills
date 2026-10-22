@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import importlib.machinery
 import importlib.util
+import re
 import shutil
 import subprocess
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -105,6 +107,46 @@ class DeliberateViolationsFail(unittest.TestCase):
     def test_no_workspace_lints(self):
         found = self.problems(root_manifest="[workspace]\n\n" + PACKAGE.format(name="d") + INHERIT)
         self.assertTrue(any("[workspace.lints]" in p for p in found), found)
+
+
+    def test_tokio_fs_not_disallowed(self):
+        config = "\n".join(l for l in CONFIG.splitlines() if "tokio::fs::" not in l)
+        found = self.problems(root_manifest=single_crate(), config=config)
+        self.assertTrue(any("tokio::fs::" in p for p in found), found)
+
+    def test_env_var_os_not_disallowed(self):
+        config = "\n".join(l for l in CONFIG.splitlines() if '"std::env::var_os"' not in l)
+        found = self.problems(root_manifest=single_crate(), config=config)
+        self.assertTrue(any("std::env::var_os" in p for p in found), found)
+
+    def test_rustc_lint_too_weak(self):
+        found = self.problems(root_manifest=single_crate().replace(
+            'unsafe_code = "deny"', 'unsafe_code = "warn"'))
+        self.assertTrue(any("`unsafe_code` is 'warn'" in p for p in found), found)
+
+    def test_threshold_wrong_type(self):
+        found = self.problems(root_manifest=single_crate(), config=CONFIG.replace(
+            "allow-unwrap-in-tests = true", "allow-unwrap-in-tests = 1"))
+        self.assertTrue(any("allow-unwrap-in-tests" in p for p in found), found)
+
+
+class Rc09TextMatchesChecker(unittest.TestCase):
+    def test_rc09_lint_list_matches_checker(self):
+        for path in (SKILL / "RULES.md", SKILL / "references" / "tooling.md"):
+            text = path.read_text(encoding="utf-8")
+            rc09 = next(l for l in text.splitlines() if "RC-09  " in l)
+            deny = rc09.split("Required at deny:")[1].split("Required at warn")[0]
+            warn = rc09.split("Required at warn")[1].split("An allowed exception")[0]
+            named = lambda part: set(re.findall(r"`([a-z_]+)`", part))
+            want_deny = {n for n, lvl in {**CHECK.REQUIRED_CLIPPY, **CHECK.REQUIRED_RUST}.items() if lvl == "deny"}
+            want_warn = {n for n, lvl in CHECK.REQUIRED_CLIPPY.items() if lvl == "warn"}
+            self.assertEqual(named(deny), want_deny, path)
+            self.assertEqual(named(warn), want_warn, path)
+
+    def test_template_satisfies_checker_lists(self):
+        problems = CHECK.check_lint_table(tomllib.loads(LINTS)["workspace"]["lints"]["clippy"],
+                                          CHECK.REQUIRED_CLIPPY, "template")
+        self.assertEqual(problems, [])
 
 
 @unittest.skipUnless(shutil.which("cargo") and subprocess.run(

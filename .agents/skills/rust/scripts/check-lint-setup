@@ -59,7 +59,9 @@ REQUIRED_CONFIG: dict[str, object] = {
 }
 
 REQUIRED_DISALLOWED_TYPES = ("anyhow::Error", "anyhow::Result")
-REQUIRED_DISALLOWED_METHODS = ("std::env::args", "std::env::var")
+REQUIRED_DISALLOWED_METHODS = (
+    "std::env::args", "std::env::args_os", "std::env::var", "std::env::var_os",
+)
 
 
 def load_toml(path: Path) -> tuple[dict, str | None]:
@@ -104,8 +106,9 @@ def check_config(repo: Path) -> list[str]:
     if "lints" in data:
         problems.append(f"{path}: has a [lints] table; clippy ignores it here, move lint levels to Cargo.toml")
     for key, want in REQUIRED_CONFIG.items():
-        if data.get(key) != want:
-            problems.append(f"{path}: `{key}` must be {want!r}, found {data.get(key)!r}")
+        got = data.get(key)
+        if type(got) is not type(want) or got != want:
+            problems.append(f"{path}: `{key}` must be {want!r}, found {got!r}")
     types = {entry_path(e) for e in data.get("disallowed-types", [])}
     methods = {entry_path(e) for e in data.get("disallowed-methods", [])}
     problems += [f"{path}: disallowed-types lacks `{t}`" for t in REQUIRED_DISALLOWED_TYPES if t not in types]
