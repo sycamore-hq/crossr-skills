@@ -14,6 +14,8 @@ RL-04  An error type stays in its layer. Crossing a boundary is a `From` convers
 
 RL-05  A calculation about one type lives in `impl Type` when Self has no type or lifetime parameters. Leave it free only when the impl header would carry a type parameter the fn does not use, or a lifetime the caller needs late-bound for a `for<'a> fn(...)` coercion.
 
+RL-06  Functions return their results. No `&mut` out-parameters for outputs; return a value, a tuple or a small struct. A reusable buffer passed in for performance is the exception.
+
 ## How
 
 A handler that parses, queries SQL, and formats HTML is three layers pretending to be one. Split it.

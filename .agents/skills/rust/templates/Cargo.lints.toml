@@ -9,6 +9,7 @@
 
 [workspace.lints.rust]
 missing_docs = "deny"
+missing_debug_implementations = "deny"
 unreachable_pub = "deny"
 unsafe_code = "deny"            # a crate that needs unsafe uses a scoped #[expect(unsafe_code, reason = "...")]
 

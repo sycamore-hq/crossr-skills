@@ -43,6 +43,7 @@ REQUIRED_CLIPPY: dict[str, str] = {
 
 REQUIRED_RUST: dict[str, str] = {
     "missing_docs": "deny",
+    "missing_debug_implementations": "deny",
     "unreachable_pub": "deny",
     "unsafe_code": "deny",
 }
