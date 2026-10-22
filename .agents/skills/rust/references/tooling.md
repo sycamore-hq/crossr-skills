@@ -10,7 +10,7 @@ RC-01  `cargo fmt` is clean before any change is complete.
 RC-02  `cargo clippy --all-targets -- -W clippy::pedantic -D warnings` is clean.
        check: cargo clippy --all-targets -- -W clippy::pedantic -D warnings
 
-RC-03  Never add `#[allow(clippy::too_many_*)]`. Refactor instead.
+RC-03  Never suppress `clippy::too_many_*`, `cognitive_complexity` or `excessive_nesting` with `#[allow]` or `#[expect]`. Refactor instead.
 
 RC-04  No wildcard imports except preludes or `use super::*` in tests.
 
