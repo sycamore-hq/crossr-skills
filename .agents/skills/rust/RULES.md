@@ -10,10 +10,10 @@ rust/RA-02  Keep the public surface small. `pub` is a promise, not a default. A 
 
 rust/RA-03  A breaking change to a `pub` item is a major version.
 
-rust/RA-04  Names follow Rust convention. Conversions: `as_` is free and borrowed, `to_` is costly or borrowed-to-owned, `into_` consumes self. Getters are `field()` / `field_mut()`, never `get_field()`. Constructors are inherent `new` / `with_*` / `from_*`. Iterator methods are `iter` / `iter_mut` / `into_iter`. Error types name the failed action, verb first: `ParseConfigError`, not `ConfigParseError`.
+rust/RA-04  Names follow Rust convention. Conversions: `as_` is free and borrowed, `to_` is costly or borrowed-to-owned, `into_` consumes self. Getters are `field()` / `field_mut()`, never `get_field()`. Constructors are inherent `new` / `with_*` / `from_*`. Iterator methods are `iter` / `iter_mut` / `into_iter`. An error type for one specific operation puts the verb first (`ParseConfigError`, not `ConfigParseError`); a layer's error enum keeps the layer name (`QueryError`, RE-01).
 
 rust/RA-05  Public fallible, panicking or unsafe functions document it under `# Errors`, `# Panics` and `# Safety`. Doc examples propagate with `?`, never `.unwrap()`.
-            check: RC-02 pedantic lints `missing_errors_doc`, `missing_panics_doc` and default lint `missing_safety_doc`
+            check: RC-02 pedantic lints `missing_errors_doc`, `missing_panics_doc` and default lint `missing_safety_doc` cover the doc sections; `?` in doc examples stays a review check
 
 ## control-flow
 
@@ -183,7 +183,7 @@ rust/RD-01  Use newtypes for semantically distinct values (`UserId(u64)` vs `Ord
 rust/RD-02  Prefer `Option<T>` over sentinel values. A parameter that selects behaviour is an enum (`Mode::Strict`), not a `bool` or an `Option` used as a switch.
 
 rust/RD-03  Derive `Debug`, `Clone`, `PartialEq`, `Eq`, `Hash` where those traits are honest. Every public type implements `Debug`, and its output is never empty.
-            check: RC-09 lint `missing_debug_implementations`
+            check: RC-09 lint `missing_debug_implementations` (existence only; non-empty output stays a review check)
 
 rust/RD-04  `#[derive(Default)]` only when a truly sensible default exists.
 

@@ -9,7 +9,7 @@ RD-01  Use newtypes for semantically distinct values (`UserId(u64)` vs `OrderId(
 RD-02  Prefer `Option<T>` over sentinel values. A parameter that selects behaviour is an enum (`Mode::Strict`), not a `bool` or an `Option` used as a switch.
 
 RD-03  Derive `Debug`, `Clone`, `PartialEq`, `Eq`, `Hash` where those traits are honest. Every public type implements `Debug`, and its output is never empty.
-       check: RC-09 lint `missing_debug_implementations`
+       check: RC-09 lint `missing_debug_implementations` (existence only; non-empty output stays a review check)
 
 RD-04  `#[derive(Default)]` only when a truly sensible default exists.
 
