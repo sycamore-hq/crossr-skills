@@ -6,9 +6,14 @@
 
 rust/RA-01  Every public item is documented in the Rust rustdoc style.
 
-rust/RA-02  Keep the public surface small. `pub` is a promise, not a default.
+rust/RA-02  Keep the public surface small. `pub` is a promise, not a default. A public struct keeps its fields private unless it is plain data with no invariants; callers go through constructors and methods.
 
 rust/RA-03  A breaking change to a `pub` item is a major version.
+
+rust/RA-04  Names follow Rust convention. Conversions: `as_` is free and borrowed, `to_` is costly or borrowed-to-owned, `into_` consumes self. Getters are `field()` / `field_mut()`, never `get_field()`. Constructors are inherent `new` / `with_*` / `from_*`. Iterator methods are `iter` / `iter_mut` / `into_iter`. An error type for one specific operation puts the verb first (`ParseConfigError`, not `ConfigParseError`); a layer's error enum keeps the layer name (`QueryError`, RE-01).
+
+rust/RA-05  Public fallible, panicking or unsafe functions document it under `# Errors`, `# Panics` and `# Safety`. Doc examples propagate with `?`, never `.unwrap()`.
+            check: RC-02 pedantic lints `missing_errors_doc`, `missing_panics_doc` and default lint `missing_safety_doc` cover the doc sections; `?` in doc examples stays a review check
 
 ## control-flow
 
@@ -54,6 +59,8 @@ rust/RE-06  The public API boundary converts domain errors into the gateway type
 rust/RE-07  No string-payload errors: no `Result<_, String>`, no catch-all `Invalid(String)` / `Other(String)` variant filled with `format!`. One variant per failure; the data goes in fields, the wording in `#[error(...)]`.
             check: rg 'Result<[^>]*, String>|Invalid\(format!|Invalid\(String\)' --glob '*.rs' → 0
 
+rust/RE-08  Error types are well behaved: they implement `std::error::Error` and `Display` (thiserror does both), are `Send + Sync + 'static`, keep the underlying cause reachable through `source()` (`#[source]` / `#[from]`), and their messages are lowercase with no trailing punctuation (`"config file is missing"`).
+
 ## input-parsing
 
 rust/RP-01  Parse wire values into domain newtypes at the adapter edge. Do not validate later. Naked `String` / `&str` must not cross into the core.
@@ -76,6 +83,8 @@ rust/RL-03  Higher layers compose lower ones. The call graph must be obvious.
 rust/RL-04  An error type stays in its layer. Crossing a boundary is a `From` conversion, not a mix-in.
 
 rust/RL-05  A calculation about one type lives in `impl Type` when Self has no type or lifetime parameters. Leave it free only when the impl header would carry a type parameter the fn does not use, or a lifetime the caller needs late-bound for a `for<'a> fn(...)` coercion.
+
+rust/RL-06  Functions return their results. No `&mut` out-parameters for outputs; return a value, a tuple or a small struct. A reusable buffer passed in for performance is the exception.
 
 ## safety-performance-and-security
 
@@ -164,19 +173,22 @@ rust/RC-07  No `dbg!`, `println!`, or commented-out code in production paths. Di
 
 rust/RC-08  `cargo build` and `cargo test` run with zero warnings.
 
-rust/RC-09  Encode the checkable rules as lints so the RC-02 clippy run in CI (`cargo clippy --all-targets -- -W clippy::pedantic -D warnings`) enforces them, not the reviewer (`cargo build` and `cargo test` do not run clippy lints). Lint levels live only in `Cargo.toml`: the workspace root has `[workspace.lints.rust]` and `[workspace.lints.clippy]` copied from `templates/Cargo.lints.toml`, and every package has `[lints] workspace = true` (a single-crate repo adds an empty `[workspace]` table). `clippy.toml` holds configuration only (`templates/clippy.toml`); a `[lints]` table there is silently ignored. Required at deny: rustc `missing_docs`, `unreachable_pub`, `unsafe_code`; clippy `print_stdout`, `print_stderr`, `dbg_macro`, `use_debug`, `unwrap_used`, `expect_used`, `panic`, `todo`, `unimplemented`, `unwrap_in_result`, `map_err_ignore`, `error_impl_error`, `disallowed_types`, `disallowed_methods`, `wildcard_enum_match_arm`, `undocumented_unsafe_blocks`, `multiple_unsafe_ops_per_block`, `tests_outside_test_module`, `allow_attributes`, `allow_attributes_without_reason`, `rc_mutex`, `mutex_atomic`, `clone_on_ref_ptr`, `cognitive_complexity`, `excessive_nesting`, `too_many_arguments`, `too_many_lines`. Required at warn (gated by `-D warnings`): `pedantic` and the nursery lints `redundant_clone`, `needless_pass_by_ref_mut`, `option_if_let_else`, `derive_partial_eq_without_eq`. An allowed exception is a scoped `#[expect(lint, reason = "...")]`, never `#[allow]`. CI also fails on any hit of RE-07's zero-hit `check:` grep; the RP-04 and RE-02 greps stay review checks.
+rust/RC-09  Encode the checkable rules as lints so the RC-02 clippy run in CI (`cargo clippy --all-targets -- -W clippy::pedantic -D warnings`) enforces them, not the reviewer (`cargo build` and `cargo test` do not run clippy lints). Lint levels live only in `Cargo.toml`: the workspace root has `[workspace.lints.rust]` and `[workspace.lints.clippy]` copied from `templates/Cargo.lints.toml`, and every package has `[lints] workspace = true` (a single-crate repo adds an empty `[workspace]` table). `clippy.toml` holds configuration only (`templates/clippy.toml`); a `[lints]` table there is silently ignored. Required at deny: rustc `missing_docs`, `missing_debug_implementations`, `unreachable_pub`, `unsafe_code`; clippy `print_stdout`, `print_stderr`, `dbg_macro`, `use_debug`, `unwrap_used`, `expect_used`, `panic`, `todo`, `unimplemented`, `unwrap_in_result`, `map_err_ignore`, `error_impl_error`, `disallowed_types`, `disallowed_methods`, `wildcard_enum_match_arm`, `undocumented_unsafe_blocks`, `multiple_unsafe_ops_per_block`, `tests_outside_test_module`, `allow_attributes`, `allow_attributes_without_reason`, `rc_mutex`, `mutex_atomic`, `clone_on_ref_ptr`, `cognitive_complexity`, `excessive_nesting`, `too_many_arguments`, `too_many_lines`. Required at warn (gated by `-D warnings`): `pedantic` and the nursery lints `redundant_clone`, `needless_pass_by_ref_mut`, `option_if_let_else`, `derive_partial_eq_without_eq`. An allowed exception is a scoped `#[expect(lint, reason = "...")]`, never `#[allow]`. CI also fails on any hit of RE-07's zero-hit `check:` grep; the RP-04 and RE-02 greps stay review checks.
             check: python3 <rust skill>/scripts/check-lint-setup <repo> exits 0, then the RC-02 clippy run passes
 
 ## type-system
 
-rust/RD-01  Use newtypes for semantically distinct values (`UserId(u64)` vs `OrderId(u64)`). Wire-originated strings are RP-01's case, not a second rule here.
+rust/RD-01  Use newtypes for semantically distinct values (`UserId(u64)` vs `OrderId(u64)`). Wire-originated strings are RP-01's case, not a second rule here. Do not implement `Deref` on a newtype to inherit the inner type's methods; only smart pointers implement `Deref` / `DerefMut`.
 
-rust/RD-02  Prefer `Option<T>` over sentinel values or boolean flags.
+rust/RD-02  Prefer `Option<T>` over sentinel values. A parameter that selects behaviour is an enum (`Mode::Strict`), not a `bool` or an `Option` used as a switch.
 
-rust/RD-03  Derive `Debug`, `Clone`, `PartialEq`, `Eq`, `Hash` where those traits are honest.
+rust/RD-03  Derive `Debug`, `Clone`, `PartialEq`, `Eq`, `Hash` where those traits are honest. Every public type implements `Debug`, and its output is never empty.
+            check: RC-09 lint `missing_debug_implementations` (existence only; non-empty output stays a review check)
 
 rust/RD-04  `#[derive(Default)]` only when a truly sensible default exists.
 
 rust/RD-05  Treat data as immutable by default.
 
 rust/RD-06  Use a builder for complex construction with private fields (invariants enforced in `build()`).
+
+rust/RD-07  Conversions use the standard traits: `From` / `Into` when infallible, `TryFrom` / `FromStr` with a typed error when they can fail, `AsRef` / `AsMut` for cheap borrowed views. No ad-hoc `convert_x` functions.
