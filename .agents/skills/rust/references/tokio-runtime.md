@@ -30,7 +30,6 @@ RY-08  Pin Tokio workers off cores that run other processes or long non-yielding
 RY-09  Do not block inside `join!` or `select!`. There is no work-stealing inside a task.
 
 RY-10  Explicit timeouts and idempotency keys on every boundary before the happy path gets written.
-       Every external I/O, RPC, or side-effecting call sets a timeout and carries an idempotency key when the operation is not naturally idempotent.
 
 ## How
 
@@ -54,10 +53,10 @@ async fn handle_conn(conn: &mut Conn) -> Result<(), ConnError> {
 
 A metrics registry behind a mutex that flushes while holding the lock will park every worker that records a point. Keep the critical section to one map update. `RwLock` still contends on the atomic and is the wrong primitive on a worker. RS-05 is off-runtime guidance. `tokio::sync::Mutex` is heavier and has FutureLock-shaped hazards; use it only when the section itself is milliseconds.
 
-Fan-out is a Semaphore, not hope. Pin Tokio workers off Java leftovers, `tracing_appender` threads that run 100 ms without yield, and any other tenant of the box. You rarely need every core for Tokio.
+Fan-out is a Semaphore, not hope. Every async loop or worker pool needs a hard cap and explicit backpressure. Pin Tokio workers off Java leftovers, `tracing_appender` threads that run 100 ms without yield, and any other tenant of the box. You rarely need every core for Tokio.
 
 Two further moves are exceptions, not defaults. Split latency-sensitive work onto its own runtime (and niceness) when background work shares the host. Spin a reserved core for tens of microseconds only when the SLO is measured in microseconds.
 
 Mental model: futures progress only while polled; idle futures wait; N workers each own a local queue and overflow to the global queue; a worker steals only if it is running and the runtime notices the imbalance.
 
-Boundaries (network, RPC, external writes) declare their timeout and idempotency key before any happy-path logic. The timeout is a hard deadline; the key makes retries safe. Compute the request under the lock, drop the lock, then send with the timeout and key attached.
+Every external boundary (network, RPC, queue, storage) gets an explicit timeout and an idempotency key before the happy path is written. Compute under the lock, release, then I/O.
