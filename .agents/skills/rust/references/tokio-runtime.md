@@ -18,14 +18,19 @@ RY-04  Do not spawn a task whose useful work is measured in microseconds.
 RY-05  Treat the blocking pool and the global queue as contended globals.
        Do not flood them from outside a worker.
 
-RY-06  Never hold a blocking mutex, `parking_lot` lock, or `RwLock` across I/O, flush, or `.await` on a Tokio worker.
+RY-06  Never hold a lock across I/O: compute state in memory, release the lock, then hit the network.
+       Never hold a blocking mutex, `parking_lot` lock, or `RwLock` across I/O, flush, or `.await` on a Tokio worker.
        `tokio::sync::Mutex` only when the critical section lasts milliseconds.
 
-RY-07  Bound task fan-out with a `Semaphore`. Unbounded spawn against a downstream is a defect.
+RY-07  No unbounded fan-out: every async loop or worker pool needs a hard cap and explicit backpressure.
+       Bound task fan-out with a `Semaphore`. Unbounded spawn against a downstream is a defect.
 
 RY-08  Pin Tokio workers off cores that run other processes or long non-yielding Rust threads.
 
 RY-09  Do not block inside `join!` or `select!`. There is no work-stealing inside a task.
+
+RY-10  Explicit timeouts and idempotency keys on every boundary before the happy path gets written.
+       Every external I/O, RPC, or side-effecting call sets a timeout and carries an idempotency key when the operation is not naturally idempotent.
 
 ## How
 
@@ -54,3 +59,5 @@ Fan-out is a Semaphore, not hope. Pin Tokio workers off Java leftovers, `tracing
 Two further moves are exceptions, not defaults. Split latency-sensitive work onto its own runtime (and niceness) when background work shares the host. Spin a reserved core for tens of microseconds only when the SLO is measured in microseconds.
 
 Mental model: futures progress only while polled; idle futures wait; N workers each own a local queue and overflow to the global queue; a worker steals only if it is running and the runtime notices the imbalance.
+
+Boundaries (network, RPC, external writes) declare their timeout and idempotency key before any happy-path logic. The timeout is a hard deadline; the key makes retries safe. Compute the request under the lock, drop the lock, then send with the timeout and key attached.
