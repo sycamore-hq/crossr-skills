@@ -95,8 +95,15 @@ class Declarations(unittest.TestCase):
 
     def test_bare_na_is_rejected(self):
         fails = fails_for(VALID.replace("- DX: n/a — no shared mutable state", "- DX: n/a"))
-        self.assertEqual(len(fails), 1)
-        self.assertIn("applicability DX", fails[0])
+        self.assertEqual(fails, ["applicability DX: status must be `applies` or `n/a — <reason>`"])
+
+    def test_hyphen_instead_of_em_dash_gets_a_hint(self):
+        fails = fails_for(VALID.replace("- DX: n/a — no", "- DX: n/a - no"))
+        self.assertEqual(fails, ["applicability DX: use an em dash: `n/a — <reason>`"])
+
+    def test_declaration_inside_a_fence_does_not_count(self):
+        fenced = without("DI") + "```\n- DI: n/a — only an example\n```\n"
+        self.assertEqual(fails_for(fenced), ["applicability DI is not declared"])
 
     def test_whitespace_only_reason_is_rejected(self):
         fails = fails_for(VALID.replace("- DX: n/a — no shared mutable state", "- DX: n/a —   "))
@@ -153,6 +160,17 @@ class DerivedKeys(unittest.TestCase):
         _, errors = audit_plan.topic_keys_from_rules([text])
         self.assertEqual(errors, ["book: duplicate rule id DQ-01"])
 
+    def test_rules_with_no_topic_keys_are_an_error(self):
+        da_only = "## applicability\n\nsystem-design/DA-01  Declare.\n"
+        for text in ("", da_only):
+            with self.subTest(text=text[:20]):
+                keys, errors = audit_plan.topic_keys_from_rules([text])
+                self.assertEqual((keys, errors), (frozenset(), ["disclosed rules #1 yield no topic keys"]))
+
+    def test_same_book_disclosed_twice_is_an_error(self):
+        _, errors = audit_plan.topic_keys_from_rules([SYSTEM_DESIGN_RULES, SYSTEM_DESIGN_RULES])
+        self.assertEqual(errors, ["book system-design disclosed more than once"])
+
     def test_prefix_collision_across_books_is_an_error(self):
         other = "## clash\n\nother-book/DF-01  Same prefix, different idea.\n"
         _, errors = audit_plan.topic_keys_from_rules([SYSTEM_DESIGN_RULES, other])
@@ -180,6 +198,24 @@ class Cli(unittest.TestCase):
             path.write_text(plan("- MQ: applies\n"))
             self.assertEqual(self.run_main(["--rules", str(rules), str(path)]), 0)
             self.assertEqual(self.run_main([str(path)]), 1)
+
+    def test_language_book_rules_are_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "plan.md"
+            path.write_text(plan())
+            rust = ROOT / ".agents" / "skills" / "rust" / "RULES.md"
+            self.assertEqual(self.run_main(["--rules", str(rust), str(path)]), 1)
+
+    def test_empty_rules_file_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rules = Path(tmp) / "RULES.md"
+            rules.write_text("")
+            path = Path(tmp) / "plan.md"
+            path.write_text(plan())
+            self.assertEqual(self.run_main(["--rules", str(rules), str(path)]), 1)
+
+    def test_flag_where_a_rules_path_belongs_is_a_usage_error(self):
+        self.assertEqual(self.run_main(["--rules", "--loc-threshold", "5", "plan.md"]), 2)
 
     def test_missing_rules_file_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
