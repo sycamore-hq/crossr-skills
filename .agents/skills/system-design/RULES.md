@@ -2,11 +2,29 @@
 
 # system-design — Rules projection
 
+## boundaries
+
+system-design/DB-01  The plan identifies every trust boundary: wire protocols, files, environment variables, user input, external services, and model or agent output. Each inbound boundary has one authoritative validation and parsing path that produces trusted domain types; that path may take several steps. Interior components consume those types without repeating boundary validation.
+
+system-design/DB-02  Every new component belongs to one architectural layer. Boundary components are thin adapters that parse inbound and serialize or perform effects outbound. Business decisions live in pure domain calculations behind them.
+
+system-design/DB-03  Every domain invariant has exactly one authoritative owner (a type, module, or aggregate) that defines and enforces it. Other components do not reimplement its rules; constraints, assertions, and tests that derive from or delegate to the owner are allowed. New domain terms go in the glossary `code-writer` requires.
+
+system-design/DB-04  Do not introduce a boundary, layer, or abstraction around code that is already clear and local. Every new architectural separation names the concrete responsibility or dependency that justifies it.
+
 ## foundations
 
 system-design/DF-01  Before implementing logic that depends on a data model, the plan settles that model: domain types, schemas, wire shapes, and state ownership. Dependent logic never precedes the model it relies on. Settled means validated enough for the dependent work, not frozen.
 
 system-design/DF-02  The plan schedules first the foundational work that enables or de-risks later phases in the same plan, and each foundational phase names the phases it enables. Work justified only by hypothetical future needs is not foundational. When two phases are both ready, the one that enables downstream work goes first. This is a dependency order, not a global barrier: independent work may run concurrently.
+
+## idempotency
+
+system-design/DI-01  Every Action that changes externally observable state is idempotent. That includes writes, job submissions, provisioning, migrations, deployments, financial entries, and outbound messages. Pure computations and side-effect-free reads are exempt.
+
+system-design/DI-02  Every in-scope Action declares an idempotency key and a convergence check that detects whether its intended effects are already complete.
+
+system-design/DI-03  Every in-scope Action has a crash-midway recovery test: interrupt it after a partial effect, rerun it with the same key, and verify that the externally observable outcome equals one successful run, with no unintended duplicate effects.
 
 ## premise
 
@@ -15,6 +33,14 @@ system-design/DP-01  When two fixes that share one premise fail the same gate (t
 system-design/DP-02  State the shared premise in one sentence. Take a rerunnable census of which actors hold the imbalance, so systematic skew can be told apart from incidental distribution, and name the mechanism that repeatedly assigns it to them.
 
 system-design/DP-03  Remove that assignment mechanism by eliminating the responsibility, redistributing or rotating it, or giving it a single owner where appropriate, then redesign from first principles. Unique responsibilities the failures do not implicate stay. No further fix until the mechanism is addressed.
+
+## shared-state
+
+system-design/DX-01  Before introducing locks, queues, or other serialization, the plan shows that the actors need the same mutable state. Otherwise it partitions the state or gives each actor its own.
+
+system-design/DX-02  Every remaining piece of shared mutable state has a single structurally enforced mutation authority, through ownership, types, encapsulation, or non-bypassable synchronization. Conventions and advisory locks do not qualify.
+
+system-design/DX-03  For each remaining piece of shared mutable state, the plan names its mutation authority, the structural mechanism that enforces it, and how other actors reach it: messages, immutable snapshots, or read-only interfaces.
 
 ## subtraction
 
