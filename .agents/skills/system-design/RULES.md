@@ -8,19 +8,19 @@ system-design/DA-01  Every plan declares each system-design topic (DF, DP, DS, D
 
 ## boundaries
 
-system-design/DB-01  The plan identifies every trust boundary: wire protocols, files, environment variables, user input, external services, and model or agent output. Each inbound boundary has one authoritative validation and parsing path that produces trusted domain types. Interior components consume those types without repeating boundary validation.
+system-design/DB-01  The plan identifies every trust boundary: wire protocols, files, environment variables, user input, external services, and model or agent output. Each inbound boundary has one authoritative validation and parsing path that produces trusted domain types; that path may take several steps. Interior components consume those types without repeating boundary validation.
 
 system-design/DB-02  Every new component belongs to one architectural layer. Boundary components are thin adapters that parse inbound and serialize or perform effects outbound. Business decisions live in pure domain calculations behind them.
 
-system-design/DB-03  Every domain invariant has exactly one authoritative owner (a type, module, or aggregate) that defines and enforces it. Other components do not reimplement its rules. New domain terms go in the glossary `code-writer` requires.
+system-design/DB-03  Every domain invariant has exactly one authoritative owner (a type, module, or aggregate) that defines and enforces it. Other components do not reimplement its rules; constraints, assertions, and tests that derive from or delegate to the owner are allowed. New domain terms go in the glossary `code-writer` requires.
 
 system-design/DB-04  Do not introduce a boundary, layer, or abstraction around code that is already clear and local. Every new architectural separation names the concrete responsibility or dependency that justifies it.
 
 ## foundations
 
-system-design/DF-01  Before implementing logic that depends on a data model, the plan settles that model: domain types, schemas, wire shapes, and state ownership. Dependent logic never precedes the model it relies on.
+system-design/DF-01  Before implementing logic that depends on a data model, the plan settles that model: domain types, schemas, wire shapes, and state ownership. Dependent logic never precedes the model it relies on. Settled means validated enough for the dependent work, not frozen.
 
-system-design/DF-02  The plan schedules first the foundational work that enables or de-risks later phases in the same plan, and each foundational phase names the phases it enables. Work justified only by hypothetical future needs is not foundational. When two phases are both ready, the one that enables downstream work goes first.
+system-design/DF-02  The plan schedules first the foundational work that enables or de-risks later phases in the same plan, and each foundational phase names the phases it enables. Work justified only by hypothetical future needs is not foundational. When two phases are both ready, the one that enables downstream work goes first. This is a dependency order, not a global barrier: independent work may run concurrently.
 
 ## idempotency
 
@@ -36,7 +36,7 @@ system-design/DP-01  When two fixes that share one premise fail the same gate (t
 
 system-design/DP-02  State the shared premise in one sentence. Take a rerunnable census of which actors hold the imbalance, so systematic skew can be told apart from incidental distribution, and name the mechanism that repeatedly assigns it to them.
 
-system-design/DP-03  Remove that assignment mechanism by eliminating the responsibility, redistributing or rotating it, or giving it a single owner, then redesign from first principles. Unique responsibilities the failures do not implicate stay. No further fix until the mechanism is addressed.
+system-design/DP-03  Remove that assignment mechanism by eliminating the responsibility, redistributing or rotating it, or giving it a single owner where appropriate, then redesign from first principles. Unique responsibilities the failures do not implicate stay. No further fix until the mechanism is addressed.
 
 ## shared-state
 
@@ -50,4 +50,4 @@ system-design/DX-03  For each remaining piece of shared mutable state, the plan 
 
 system-design/DS-01  Before adding any component, layer, dependency, configuration flag, code path, or mutable state, the plan runs a subtraction pass over the affected scope and lists what can be deleted, consolidated, or eliminated. An explicit empty list with a reason is valid; an omitted pass is not. If net architectural complexity still increases, the plan says why subtraction alone cannot meet the requirement.
 
-system-design/DS-02  Identified removals precede the additions that depend on them, as a separately verifiable phase, and the plan shows the additions build on the simplified design. Ordering follows `foundations.md`.
+system-design/DS-02  Identified removals precede the additions that depend on them (subtract → foundation → dependent work), as a separately verifiable phase, and the plan shows the additions build on the simplified design. When an intermediate state would be unsafe, removal and replacement may execute atomically; the removal is still verified separately.
