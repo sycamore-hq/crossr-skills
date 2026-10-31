@@ -13,8 +13,11 @@ rule ids in each book's RULES.md, minus its `applicability` topic.
 Usage:
   ./scripts/audit-plan [--loc-threshold N] [--rules RULES.md ...] <plan.md>
 
-`--rules` names the disclosed cross-cutting RULES.md files (repeatable).
-Without it, the cross-cutting books in this catalog are used.
+`--rules` names the disclosed cross-cutting RULES.md files (repeatable);
+the conductor passes exactly the set it disclosed to the planner. Without
+it, every cross-cutting book in this catalog is used, which is the set the
+harness discloses from a pin of this catalog. A disclosed file must belong
+to a cross-cutting book, yield at least one topic key, and appear once.
 
 `--loc-threshold N` fails any phase whose `- est. LOC:` is missing,
 unparsable, or exceeds N. No flag, no check. Exit 0 on pass, 1 on fail,
@@ -285,6 +288,8 @@ def status_failure(decl: Declaration) -> str | None:
         if decl.status[len(NA_PREFIX):].strip():
             return None
         return f"applicability {decl.key}: `n/a` needs a reason"
+    if re.match(r"n/a\s*[-–]", decl.status):
+        return f"applicability {decl.key}: use an em dash: `{NA_PREFIX} <reason>`"
     return f"applicability {decl.key}: status must be `applies` or `{NA_PREFIX} <reason>`"
 
 
@@ -346,9 +351,15 @@ def topic_keys_from_rules(texts: list[str]) -> tuple[frozenset[str], list[str]]:
     """Required applicability keys across disclosed books, plus collisions."""
     owner: dict[str, str] = {}
     errors: list[str] = []
-    for text in texts:
+    books_seen: set[str] = set()
+    for index, text in enumerate(texts, start=1):
         prefixes, errs = rules_prefixes(text)
         errors.extend(errs)
+        books = set(prefixes.values())
+        errors.extend(f"book {b} disclosed more than once" for b in sorted(books & books_seen))
+        books_seen |= books
+        if not prefixes and not errs:
+            errors.append(f"disclosed rules #{index} yield no topic keys")
         for prefix, book in prefixes.items():
             if prefix in owner and owner[prefix] != book:
                 errors.append(f"prefix {prefix} claimed by both {owner[prefix]} and {book}")
@@ -469,6 +480,18 @@ def catalog_cross_cutting_rules() -> list[Path]:
     ]
 
 
+def is_cross_cutting_rules(rules: Path) -> bool:
+    """Action: a RULES.md beside a book card must come from a cross-cutting book.
+
+    A file with no sibling SKILL.md (a disclosed copy) is judged by its ids alone.
+    """
+    card = rules.parent / "SKILL.md"
+    if not card.is_file():
+        return True
+    match = re.search(r"(?m)^\s*scope:\s*[\"']?([\w-]+)", card.read_text())
+    return bool(match) and match.group(1) == "cross-cutting"
+
+
 def parse_argv(args: list[str]) -> tuple[str, int | None, list[str]] | None:
     """Return (path, loc_threshold, rules) or None on usage error."""
     loc_threshold: int | None = None
@@ -478,7 +501,7 @@ def parse_argv(args: list[str]) -> tuple[str, int | None, list[str]] | None:
     while i < len(args):
         arg = args[i]
         if arg == "--rules":
-            if i + 1 >= len(args):
+            if i + 1 >= len(args) or args[i + 1].startswith("-"):
                 return None
             rules.append(args[i + 1])
             i += 2
@@ -518,6 +541,13 @@ def main(argv: list[str]) -> int:
     missing = [r for r in rules_paths if not r.is_file()]
     if missing:
         print(f"✗ rules file not found: {', '.join(map(str, missing))}", file=sys.stderr)
+        return 1
+    not_cross_cutting = [r for r in rules_paths if not is_cross_cutting_rules(r)]
+    if not_cross_cutting:
+        print(
+            f"✗ not a cross-cutting book's RULES.md: {', '.join(map(str, not_cross_cutting))}",
+            file=sys.stderr,
+        )
         return 1
     topic_keys, rule_errors = topic_keys_from_rules([r.read_text() for r in rules_paths])
     if rule_errors:
