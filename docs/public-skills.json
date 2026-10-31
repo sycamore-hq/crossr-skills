@@ -22,6 +22,11 @@
       "purpose": "OCaml language book: situational Rules + How, generated RULES.md"
     },
     {
+      "name": "system-design",
+      "category": "Design Book",
+      "purpose": "Cross-cutting system-design book: plan-time Rules + How, generated RULES.md"
+    },
+    {
       "name": "code-review",
       "category": "Quality",
       "purpose": "Ruthless code quality guardian"

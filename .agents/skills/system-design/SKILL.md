@@ -1,0 +1,40 @@
+---
+name: system-design
+description: |
+  Cross-cutting system-design book. Load when making an architectural decision or plan: data model and phase order, removing complexity, repeated failed fixes. Card routes to situational references. Plan generator loads this card + RULES.md + the references for the situation; the architecture gate loads RULES.md only; execute, review, and test agents do not load it.
+  Fully portable across agentskills.io environments and models. Always activate together with `code-writer`.
+metadata:
+  book: "true"
+  scope: "cross-cutting"
+---
+
+# System Design Book
+
+Load `code-writer` first. This card says which reference applies. It is not the law.
+
+`code-writer` owns the function-level half of these ideas. This book owns the plan-level half: what to build first, what to take out, and when to stop patching.
+
+## When to load which reference
+
+| Situation | Load |
+|---|---|
+| Ordering phases; settling types, schemas, wire shapes, state ownership | `references/foundations.md` |
+| A second fix on the same premise failed the same gate; a requirement the old design never anticipated | `references/premise.md` |
+| Any plan that adds a component, layer, dependency, flag, path, or state | `references/subtraction.md` |
+
+Plan generator: this card + the reference for the situation (Rules + How).
+Adversaries: `RULES.md` only. Never `references/`.
+Execute generator, reviewer, tester: not loaded. `code-writer` carries the overlap.
+
+## Topic prefixes
+
+Registry: `docs/book-topics.md`. This book mints `D*` prefixes: `DF` foundations, `DP` premise, `DS` subtraction.
+
+## One-Sentence Mandate (Memorize This)
+
+> Load the system-design book with `code-writer` when deciding structure; apply the reference that matches the decision; adversaries read RULES.md only.
+
+**When using this skill**: Always combine it with `code-writer`. Pick the reference that matches the decision. Do not load every reference.
+
+**Activation Statement**
+> Using `code-writer` + `system-design` for this architectural decision.
