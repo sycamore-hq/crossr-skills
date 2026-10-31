@@ -24,14 +24,17 @@ Load `code-writer` first. This card says which reference applies. It is not the 
 | Where outside data enters; layers and adapters; who owns an invariant | `references/boundaries.md` |
 | Two or more actors that may write the same state | `references/shared-state.md` |
 | Any Action that changes externally observable state | `references/idempotency.md` |
+| Every plan: declaring which topics apply | `references/applicability.md` |
 
 Plan generator: this card + the reference for the situation (Rules + How).
 Adversaries: `RULES.md` only. Never `references/`.
 Execute generator, reviewer, tester: not loaded. `code-writer` carries the overlap.
 
+Contract refs (not topics; extractor skips them): `references/specialization.md`, `references/verification.md`.
+
 ## Topic prefixes
 
-Registry: `docs/book-topics.md`. This book mints `D*` prefixes: `DF` foundations, `DP` premise, `DS` subtraction, `DB` boundaries, `DX` shared state, `DI` idempotency.
+Registry: `docs/book-topics.md`. This book mints `D*` prefixes: `DF` foundations, `DP` premise, `DS` subtraction, `DB` boundaries, `DX` shared state, `DI` idempotency, `DA` applicability.
 
 ## One-Sentence Mandate (Memorize This)
 

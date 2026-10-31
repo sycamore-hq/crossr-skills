@@ -2,6 +2,10 @@
 
 # system-design — Rules projection
 
+## applicability
+
+system-design/DA-01  Every plan declares each system-design topic (DF, DP, DS, DB, DX, DI) as `applies` or `n/a — <reason>`. A missing declaration is rejected, and an `n/a` is valid only when the plan supports its reason. The gate verifies each declaration against the plan, then evaluates every applicable rule by its own trigger.
+
 ## boundaries
 
 system-design/DB-01  The plan identifies every trust boundary: wire protocols, files, environment variables, user input, external services, and model or agent output. Each inbound boundary has one authoritative validation and parsing path that produces trusted domain types. Interior components consume those types without repeating boundary validation.
