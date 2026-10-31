@@ -2,7 +2,7 @@
 name: system-design
 description: |
   Cross-cutting system-design book. Load when making an architectural decision or plan: data model and phase order, removing complexity, repeated failed fixes, trust boundaries, shared mutable state, idempotent effects. Card routes to situational references. Plan generator loads this card + RULES.md + the references for the situation; the architecture gate loads RULES.md only; execute, review, and test agents do not load it.
-  Fully portable across agentskills.io environments and models. Always activate together with `code-writer`.
+  Fully portable across agentskills.io environments and models. At plan time it pairs with `plan-writer`, which does not load `code-writer`; outside the plan loop, activate it with `code-writer`.
 metadata:
   book: "true"
   scope: "cross-cutting"
@@ -10,7 +10,7 @@ metadata:
 
 # System Design Book
 
-Load `code-writer` first. This card says which reference applies. It is not the law.
+At plan time, load with `plan-writer` (which does not load `code-writer`). Outside the plan loop, load `code-writer` first. This card says which reference applies. It is not the law.
 
 `code-writer` owns the function-level half of these ideas. This book owns the plan-level half: what to build first, what to take out, when to stop patching, where trust changes, who may write shared state, and how effects survive a rerun.
 
@@ -38,9 +38,9 @@ Registry: `docs/book-topics.md`. This book mints `D*` prefixes: `DF` foundations
 
 ## One-Sentence Mandate (Memorize This)
 
-> Load the system-design book with `code-writer` when deciding structure; apply the reference that matches the decision; adversaries read RULES.md only.
+> Load the system-design book when deciding structure, with `plan-writer` at plan time and `code-writer` otherwise; apply the reference that matches the decision; adversaries read RULES.md only.
 
-**When using this skill**: Always combine it with `code-writer`. Pick the reference that matches the decision. Do not load every reference.
+**When using this skill**: Combine it with `plan-writer` at plan time, `code-writer` otherwise. Pick the reference that matches the decision. Do not load every reference.
 
 **Activation Statement**
-> Using `code-writer` + `system-design` for this architectural decision.
+> Using `plan-writer` + `system-design` for this architectural plan.
