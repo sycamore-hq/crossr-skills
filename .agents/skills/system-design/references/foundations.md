@@ -4,9 +4,9 @@ Settle what later work stands on before the work that stands on it.
 
 ## Rules
 
-DF-01  Before implementing logic that depends on a data model, the plan settles that model: domain types, schemas, wire shapes, and state ownership. Dependent logic never precedes the model it relies on.
+DF-01  Before implementing logic that depends on a data model, the plan settles that model: domain types, schemas, wire shapes, and state ownership. Dependent logic never precedes the model it relies on. Settled means validated enough for the dependent work, not frozen.
 
-DF-02  The plan schedules first the foundational work that enables or de-risks later phases in the same plan, and each foundational phase names the phases it enables. Work justified only by hypothetical future needs is not foundational. When two phases are both ready, the one that enables downstream work goes first.
+DF-02  The plan schedules first the foundational work that enables or de-risks later phases in the same plan, and each foundational phase names the phases it enables. Work justified only by hypothetical future needs is not foundational. When two phases are both ready, the one that enables downstream work goes first. This is a dependency order, not a global barrier: independent work may run concurrently.
 
 ## How
 
