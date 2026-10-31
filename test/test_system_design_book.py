@@ -113,7 +113,7 @@ class Wiring(unittest.TestCase):
         self.assertIn("System-design applicability", card)
 
     def test_execute_review_and_test_cards_do_not_name_the_book(self):
-        for name in ("code-review", "testing"):
+        for name in ("code-writer", "code-review", "testing"):
             with self.subTest(card=name):
                 self.assertNotIn("system-design", (SKILLS / name / "SKILL.md").read_text())
 
