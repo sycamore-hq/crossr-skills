@@ -4,11 +4,11 @@
 
 ## boundaries
 
-system-design/DB-01  The plan identifies every trust boundary: wire protocols, files, environment variables, user input, external services, and model or agent output. Each inbound boundary has one authoritative validation and parsing path that produces trusted domain types. Interior components consume those types without repeating boundary validation.
+system-design/DB-01  The plan identifies every trust boundary: wire protocols, files, environment variables, user input, external services, and model or agent output. Each inbound boundary has one authoritative validation and parsing path that produces trusted domain types; that path may take several steps. Interior components consume those types without repeating boundary validation.
 
 system-design/DB-02  Every new component belongs to one architectural layer. Boundary components are thin adapters that parse inbound and serialize or perform effects outbound. Business decisions live in pure domain calculations behind them.
 
-system-design/DB-03  Every domain invariant has exactly one authoritative owner (a type, module, or aggregate) that defines and enforces it. Other components do not reimplement its rules. New domain terms go in the glossary `code-writer` requires.
+system-design/DB-03  Every domain invariant has exactly one authoritative owner (a type, module, or aggregate) that defines and enforces it. Other components do not reimplement its rules; constraints, assertions, and tests that derive from or delegate to the owner are allowed. New domain terms go in the glossary `code-writer` requires.
 
 system-design/DB-04  Do not introduce a boundary, layer, or abstraction around code that is already clear and local. Every new architectural separation names the concrete responsibility or dependency that justifies it.
 
