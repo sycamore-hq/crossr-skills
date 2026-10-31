@@ -89,6 +89,18 @@ PACKET_PLAN = """\
 """
 
 
+# The CLI audits against this catalog's cross-cutting books (system-design).
+SYSTEM_DESIGN_APPLICABILITY = """\
+## System-design applicability
+- DF: applies
+- DP: n/a — no repeated fixes sharing a failed gate
+- DS: n/a — nothing added
+- DB: applies
+- DX: n/a — no shared mutable state
+- DI: n/a — no externally observable state changes
+"""
+
+
 def good_plan() -> str:
     return GOOD_PLAN
 
@@ -356,9 +368,13 @@ class AuditCalculations(unittest.TestCase):
             path = Path(tmp) / "plan.md"
             path.write_text(
                 with_line(
-                    good_plan(),
-                    "### Phase 1 of 1: land the parser\n",
-                    "### Phase 1 of 1: land the parser\n- est. LOC: 2000\n",
+                    with_line(
+                        good_plan(),
+                        "### Phase 1 of 1: land the parser\n",
+                        "### Phase 1 of 1: land the parser\n- est. LOC: 2000\n",
+                    ),
+                    "## Phases\n",
+                    SYSTEM_DESIGN_APPLICABILITY + "\n## Phases\n",
                 )
             )
             self.assertEqual(audit_plan.main(["audit-plan", str(path)]), 0)

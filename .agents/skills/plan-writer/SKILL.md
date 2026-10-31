@@ -10,7 +10,8 @@ description: |
 
 **You write the implementation plan. You do not write code.**
 
-Load this card + the disclosed book's Rules + the PBI.
+Load this card + the disclosed book's Rules + the PBI, plus each
+cross-cutting book's card, Rules, and the references it routes you to.
 Do not load `code-writer`. That law is for diffs.
 
 ## Taxonomy
@@ -24,7 +25,8 @@ Judgment ≤ 30% of active claims. Ids `C-01` are append-only.
 `docs/plans/pbi/<id>.plan.md`, or the disclosed plan path.
 Never inside the board's own store. `references/artifact.md`.
 
-Required: Phases (the decomposition; each states an estimated LOC when
+Required: System-design applicability (before Phases; every topic
+`applies` or `n/a — <reason>`), Phases (the decomposition; each states an estimated LOC when
 decomposition mode is disclosed), Acceptance Criteria, Claims
 (`C-01: <type> · AC-01 · text`), Preserve, Unresolved questions.
 
