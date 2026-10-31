@@ -4,7 +4,7 @@ Every plan says which design concerns it touches, and why the others don't apply
 
 ## Rules
 
-DA-01  Every plan declares each system-design topic (DF, DP, DS, DB, DX, DI) as `applies` or `n/a — <reason>`. A missing declaration is rejected, and an `n/a` is valid only when the plan supports its reason. The gate verifies each declaration against the plan, then evaluates every applicable rule by its own trigger.
+DA-01  Every plan declares each system-design topic key (every rule prefix in this book except `DA`) as `applies` or `n/a — <reason>`. A missing declaration is rejected; an `n/a` is valid only when the plan supports its reason; declaring `applies` where no rule triggers is not a violation. The gate verifies each declaration against the plan, then evaluates every applicable rule by its own trigger.
 
 ## How
 
