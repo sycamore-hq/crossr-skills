@@ -41,19 +41,23 @@ Inspired by *Grokking Simplicity* (Eric Normand) and *Structure and Interpretati
 
 Bad patterns carry real cost and are **prevented at generation time**, not merely caught in review:
 
-- Deep nesting, unreadable code, large commits/PRs, "AI slop", or language-specific mechanisms that suppress important static analysis warnings (e.g. lints) are treated as technical debt.
+- Deep nesting, unreadable code, large commits/PRs, "AI slop", or language-specific mechanisms that suppress important static analysis warnings (e.g. lints) are treated as technical debt. This includes silencing compiler or type-checker diagnostics through unjustified casts, escape hatches, or suppressed warnings; a justified, explained suppression is not debt.
 
 ### Actions, Calculations & Data
 - Prefer calculations. Push logic into pure functions.
 - Isolate actions at the edges of the system. Never mix actions with calculations.
 - Treat data as immutable by default.
 - Explicitly separate actions vs calculations when writing or reviewing code.
+- Get the data shape right before writing the logic that uses it.
+- Validate outside data at its authoritative entry boundary. Inside, trust the domain types; do not repeat boundary validation.
 
 ### Abstraction & Modularity
 - Use procedural and data abstraction relentlessly.
 - Every module and function must have a single, clear purpose.
 - Prefer small, focused, reusable modules.
 - Use higher-order functions and composition liberally (`map`, `filter`, `reduce`, function composition, etc.).
+- Take complexity out before adding any: delete or collapse first, then build.
+- Model the domain so illegal states are unrepresentable. Leave code that is already clear and local alone.
 
 ### Third-Party Dependencies
 - **Prefer the language’s standard library first**.
@@ -105,6 +109,7 @@ In a fresh activation the following behaviors are directly observable and scorab
 - The agent always offers a standard-library solution first and only proposes third-party dependencies after clear justification plus explicit user approval.
 - Every function in output code is short and focused, uses intention-revealing names, and produces self-documenting code understandable without comments.
 - The agent detects and refactors away deep nesting, large functions, entangled logic, or low-quality patterns in favor of composition, higher-order functions, and minimalism.
+- Outside data follows an authoritative entry-validation path; domain types prevent representation of invalid states; relevant complexity is removed or explicitly assessed before additions.
 - The agent avoids adding documentation beyond the three allowed artifacts (project purpose, glossary of terms, project setup instructions) and ensures or updates the glossary when domain terms appear.
 
 Violations against any of these observable criteria during fresh activation indicate the skill was not followed and must be corrected before the work can be considered complete.
