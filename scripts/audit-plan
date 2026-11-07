@@ -5,8 +5,19 @@ Checks bidirectional AC↔claim coverage, the 30% judgment quota, append-only
 id integrity, and preserve-vs-grow (rule 5). When an evidence packet is
 named, every gap and preservation constraint must be a claim.
 
+Also checks the `## System-design applicability` declaration against the
+topic keys of the disclosed cross-cutting books: every key exactly once,
+`applies` or `n/a — <reason>`, before `## Phases`. Keys come from the
+rule ids in each book's RULES.md, minus its `applicability` topic.
+
 Usage:
-  ./scripts/audit-plan [--loc-threshold N] <plan.md>
+  ./scripts/audit-plan [--loc-threshold N] [--rules RULES.md ...] <plan.md>
+
+`--rules` names the disclosed cross-cutting RULES.md files (repeatable);
+the conductor passes exactly the set it disclosed to the planner. Without
+it, every cross-cutting book in this catalog is used, which is the set the
+harness discloses from a pin of this catalog. A disclosed file must belong
+to a cross-cutting book, yield at least one topic key, and appear once.
 
 `--loc-threshold N` fails any phase whose `- est. LOC:` is missing,
 unparsable, or exceeds N. No flag, no check. Exit 0 on pass, 1 on fail,
@@ -16,6 +27,8 @@ Calculations are pure; loading the file is the action.
 
 from __future__ import annotations
 
+import importlib.machinery
+import importlib.util
 import re
 import sys
 from dataclasses import dataclass, field
@@ -39,6 +52,13 @@ PACKET_PATH_RE = re.compile(r"^- path:\s+(\S+)")
 PHASE_RE = re.compile(r"^### Phase\s+(\d+)")
 EST_LOC_RE = re.compile(r"^- est\. LOC:\s+(\d+)")
 SECTION_RE = re.compile(r"^## (.+)$")
+APPLICABILITY = "System-design applicability"
+APPLICABILITY_TOPIC = "applicability"
+DECLARATION_RE = re.compile(r"^- ([A-Z][A-Z0-9]*):\s*(.*)$")
+NA_PREFIX = "n/a —"
+RULES_TOPIC_RE = re.compile(r"^## (\S+)\s*$")
+RULES_ID_LINE_RE = re.compile(r"^([A-Za-z0-9_-]+)/(\S+)")
+RULES_ID_RE = re.compile(r"^([A-Z][A-Z0-9]*)-(\d{2,})$")
 
 
 @dataclass(frozen=True)
@@ -69,6 +89,12 @@ class GapMap:
     claim: str
 
 
+@dataclass(frozen=True)
+class Declaration:
+    key: str
+    status: str
+
+
 @dataclass
 class Phase:
     num: int
@@ -88,6 +114,8 @@ class Plan:
     phases: list[Phase] = field(default_factory=list)
     has_questions: bool = False
     sections: list[str] = field(default_factory=list)
+    declarations: list[Declaration] = field(default_factory=list)
+    malformed_declarations: list[str] = field(default_factory=list)
 
 
 def parse_ac_list(raw: str) -> tuple[str, ...]:
@@ -116,6 +144,14 @@ def parse_plan(text: str) -> Plan:
             plan.sections.append(section)
             if section == "Unresolved questions":
                 plan.has_questions = True
+            continue
+        if section == APPLICABILITY:
+            if line.startswith("- "):
+                m = DECLARATION_RE.match(line)
+                if m:
+                    plan.declarations.append(Declaration(m.group(1), m.group(2)))
+                else:
+                    plan.malformed_declarations.append(line)
             continue
         if section == "Phases":
             phase = PHASE_RE.match(line)
@@ -245,12 +281,104 @@ def required_sections_missing(plan: Plan) -> list[str]:
     return [s for s in needed if s not in have]
 
 
-def audit(plan: Plan, loc_threshold: int | None = None) -> list[str]:
+def status_failure(decl: Declaration) -> str | None:
+    if decl.status == "applies":
+        return None
+    if decl.status.startswith(NA_PREFIX):
+        if decl.status[len(NA_PREFIX):].strip():
+            return None
+        return f"applicability {decl.key}: `n/a` needs a reason"
+    if re.match(r"n/a\s*[-–]", decl.status):
+        return f"applicability {decl.key}: use an em dash: `{NA_PREFIX} <reason>`"
+    return f"applicability {decl.key}: status must be `applies` or `{NA_PREFIX} <reason>`"
+
+
+def applicability_failures(plan: Plan, topic_keys: frozenset[str] | None) -> list[str]:
+    """Mechanical shape only. Whether an `n/a` is true is the gate's call."""
+    if not topic_keys:
+        return []
+    if APPLICABILITY not in plan.sections:
+        return [f"missing section ## {APPLICABILITY}"]
+    fails: list[str] = []
+    if "Phases" in plan.sections and plan.sections.index(APPLICABILITY) > plan.sections.index("Phases"):
+        fails.append(f"## {APPLICABILITY} must come before ## Phases")
+    fails.extend(f"malformed applicability line: {line}" for line in plan.malformed_declarations)
+    seen: set[str] = set()
+    for decl in plan.declarations:
+        if decl.key in seen:
+            fails.append(f"applicability {decl.key} declared more than once")
+        seen.add(decl.key)
+        if decl.key not in topic_keys:
+            fails.append(f"applicability {decl.key} is not a disclosed topic")
+        failure = status_failure(decl)
+        if failure:
+            fails.append(failure)
+    fails.extend(f"applicability {k} is not declared" for k in sorted(topic_keys - seen))
+    return fails
+
+
+def rules_prefixes(text: str) -> tuple[dict[str, str], list[str]]:
+    """Map prefix → book from one generated RULES.md, skipping applicability.
+
+    Returns (prefixes, errors). Malformed or duplicate ids are errors.
+    """
+    prefixes: dict[str, str] = {}
+    errors: list[str] = []
+    seen: set[str] = set()
+    topic = ""
+    for line in text.splitlines():
+        heading = RULES_TOPIC_RE.match(line)
+        if heading:
+            topic = heading.group(1)
+            continue
+        m = RULES_ID_LINE_RE.match(line)
+        if not m:
+            continue
+        book, raw_id = m.group(1), m.group(2)
+        ident = RULES_ID_RE.match(raw_id)
+        if not ident:
+            errors.append(f"{book}: malformed rule id {raw_id}")
+            continue
+        if raw_id in seen:
+            errors.append(f"{book}: duplicate rule id {raw_id}")
+        seen.add(raw_id)
+        if topic != APPLICABILITY_TOPIC:
+            prefixes.setdefault(ident.group(1), book)
+    return prefixes, errors
+
+
+def topic_keys_from_rules(texts: list[str]) -> tuple[frozenset[str], list[str]]:
+    """Required applicability keys across disclosed books, plus collisions."""
+    owner: dict[str, str] = {}
+    errors: list[str] = []
+    books_seen: set[str] = set()
+    for index, text in enumerate(texts, start=1):
+        prefixes, errs = rules_prefixes(text)
+        errors.extend(errs)
+        books = set(prefixes.values())
+        errors.extend(f"book {b} disclosed more than once" for b in sorted(books & books_seen))
+        books_seen |= books
+        if not prefixes and not errs:
+            errors.append(f"disclosed rules #{index} yield no topic keys")
+        for prefix, book in prefixes.items():
+            if prefix in owner and owner[prefix] != book:
+                errors.append(f"prefix {prefix} claimed by both {owner[prefix]} and {book}")
+                continue
+            owner[prefix] = book
+    return frozenset(owner), errors
+
+
+def audit(
+    plan: Plan,
+    loc_threshold: int | None = None,
+    topic_keys: frozenset[str] | None = None,
+) -> list[str]:
     """Return human-readable failure lines. Empty means pass."""
     fails: list[str] = []
     if not plan.pbi:
         fails.append("missing `# Plan: <id>` heading")
     fails.extend(f"missing section ## {s}" for s in required_sections_missing(plan))
+    fails.extend(applicability_failures(plan, topic_keys))
     if not plan.phases:
         fails.append("no ### Phase N heading")
     if not plan.acs:
@@ -326,17 +454,58 @@ def audit(plan: Plan, loc_threshold: int | None = None) -> list[str]:
     return fails
 
 
-def audit_text(text: str, loc_threshold: int | None = None) -> list[str]:
-    return audit(parse_plan(text), loc_threshold=loc_threshold)
+def audit_text(
+    text: str,
+    loc_threshold: int | None = None,
+    topic_keys: frozenset[str] | None = None,
+) -> list[str]:
+    return audit(parse_plan(text), loc_threshold=loc_threshold, topic_keys=topic_keys)
 
 
-def parse_argv(args: list[str]) -> tuple[str, int | None] | None:
-    """Return (path, loc_threshold) or None on usage error."""
+def catalog_cross_cutting_rules() -> list[Path]:
+    """Action: the cross-cutting books' RULES.md in the catalog holding this script."""
+    root = Path(__file__).resolve().parent.parent
+    spec = importlib.util.spec_from_loader(
+        "extract_rules",
+        importlib.machinery.SourceFileLoader("extract_rules", str(root / "scripts" / "extract-rules")),
+    )
+    extract_rules = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(extract_rules)
+    books = extract_rules.discover_books(root / ".agents" / "skills")
+    return [
+        book / "RULES.md"
+        for book in books
+        if extract_rules.book_scope(book / "SKILL.md") == "cross-cutting"
+    ]
+
+
+def is_cross_cutting_rules(rules: Path) -> bool:
+    """Action: a RULES.md beside a book card must come from a cross-cutting book.
+
+    A file with no sibling SKILL.md (a disclosed copy) is judged by its ids alone.
+    """
+    card = rules.parent / "SKILL.md"
+    if not card.is_file():
+        return True
+    match = re.search(r"(?m)^\s*scope:\s*[\"']?([\w-]+)", card.read_text())
+    return bool(match) and match.group(1) == "cross-cutting"
+
+
+def parse_argv(args: list[str]) -> tuple[str, int | None, list[str]] | None:
+    """Return (path, loc_threshold, rules) or None on usage error."""
     loc_threshold: int | None = None
     path: str | None = None
+    rules: list[str] = []
     i = 0
     while i < len(args):
         arg = args[i]
+        if arg == "--rules":
+            if i + 1 >= len(args) or args[i + 1].startswith("-"):
+                return None
+            rules.append(args[i + 1])
+            i += 2
+            continue
         if arg == "--loc-threshold":
             if loc_threshold is not None or i + 1 >= len(args):
                 return None
@@ -352,20 +521,41 @@ def parse_argv(args: list[str]) -> tuple[str, int | None] | None:
         i += 1
     if path is None:
         return None
-    return path, loc_threshold
+    return path, loc_threshold, rules
 
 
 def main(argv: list[str]) -> int:
     parsed = parse_argv(argv[1:])
     if parsed is None:
-        print("usage: audit-plan [--loc-threshold N] <plan.md>", file=sys.stderr)
+        print(
+            "usage: audit-plan [--loc-threshold N] [--rules RULES.md ...] <plan.md>",
+            file=sys.stderr,
+        )
         return 2
-    raw_path, loc_threshold = parsed
+    raw_path, loc_threshold, raw_rules = parsed
     path = Path(raw_path)
     if not path.is_file():
         print(f"✗ {path} is not a file", file=sys.stderr)
         return 1
-    fails = audit_text(path.read_text(), loc_threshold=loc_threshold)
+    rules_paths = [Path(r) for r in raw_rules] or catalog_cross_cutting_rules()
+    missing = [r for r in rules_paths if not r.is_file()]
+    if missing:
+        print(f"✗ rules file not found: {', '.join(map(str, missing))}", file=sys.stderr)
+        return 1
+    not_cross_cutting = [r for r in rules_paths if not is_cross_cutting_rules(r)]
+    if not_cross_cutting:
+        print(
+            f"✗ not a cross-cutting book's RULES.md: {', '.join(map(str, not_cross_cutting))}",
+            file=sys.stderr,
+        )
+        return 1
+    topic_keys, rule_errors = topic_keys_from_rules([r.read_text() for r in rules_paths])
+    if rule_errors:
+        print("✗ disclosed cross-cutting rules are malformed")
+        for line in rule_errors:
+            print(f"  - {line}")
+        return 1
+    fails = audit_text(path.read_text(), loc_threshold=loc_threshold, topic_keys=topic_keys)
     if fails:
         print(f"✗ {path}: {len(fails)} plan-audit failure(s)")
         for line in fails:

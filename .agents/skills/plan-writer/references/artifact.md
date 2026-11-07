@@ -21,6 +21,11 @@ id and lands **before** the first implementation commit.
 ```markdown
 # Plan: <pbi-id>
 
+## System-design applicability
+- DF: applies
+- DP: n/a — <reason>
+…one line per topic key of each disclosed cross-cutting book
+
 ## Phases
 ### Phase 1 of n: <name>
 - est. LOC: <added + deleted, only when decomposition mode is disclosed>
@@ -40,6 +45,14 @@ id and lands **before** the first implementation commit.
 ## Unresolved questions
 - …
 ```
+
+`## System-design applicability` comes before `## Phases`. It has one line per
+topic key of each disclosed cross-cutting book (`system-design`: DF, DP, DS, DB,
+DX, DI). Each key appears exactly once, as `applies` or `n/a — <reason>`, in any
+order. `scripts/audit-plan` derives the keys from the disclosed `RULES.md` and
+checks the shape. Whether an `n/a` is true is the Architect's call (`DA-01`).
+Applicable obligations become claims that prove them, and those claims count
+toward the judgment quota like any other.
 
 `## Phases` **is** the decomposition. The conductor does not invent
 phase boundaries after the fact. An over-threshold phase is rejected
