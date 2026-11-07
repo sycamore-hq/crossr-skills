@@ -97,5 +97,26 @@ class DriftInACopy(unittest.TestCase):
         self.assertEqual(quiet_check(self.book), 1)
 
 
+class Wiring(unittest.TestCase):
+    """The planner loads the How; the gate loads Rules only; DA-01 is enforced."""
+
+    def test_gate_consumes_cross_cutting_rules_not_references(self):
+        gate = (SKILLS / "architecture" / "SKILL.md").read_text()
+        self.assertIn("cross-cutting", gate)
+        self.assertIn("system-design/RULES.md", gate)
+        self.assertIn("DA-01", gate)
+        self.assertRegex(gate, r"Never a book's `references/`")
+
+    def test_planner_loads_cross_cutting_card_rules_and_routed_references(self):
+        card = (SKILLS / "plan-writer" / "SKILL.md").read_text()
+        self.assertRegex(card, r"cross-cutting book's card, Rules, and the references")
+        self.assertIn("System-design applicability", card)
+
+    def test_execute_review_and_test_cards_do_not_name_the_book(self):
+        for name in ("code-writer", "code-review", "testing"):
+            with self.subTest(card=name):
+                self.assertNotIn("system-design", (SKILLS / name / "SKILL.md").read_text())
+
+
 if __name__ == "__main__":
     unittest.main()
