@@ -34,3 +34,13 @@ Shares the baseline prefixes for the same ideas. Mints `RM`. Has no `RD`: OCaml'
 | RA | api-surface | ocaml |
 | RC | tooling | ocaml |
 | RS | safety-performance-and-security | ocaml |
+
+## system-design
+
+Cross-cutting book (`metadata.scope: "cross-cutting"`). Mints `D*` prefixes so its ids never collide with the language books' `R*`.
+
+| Prefix | Topic | Book |
+|---|---|---|
+| DF | foundations | system-design |
+| DP | premise | system-design |
+| DS | subtraction | system-design |

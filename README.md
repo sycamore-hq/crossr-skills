@@ -37,7 +37,7 @@ New projects: bootstrap from [sycamore-hq/crossr-harness](https://github.com/syc
 
 All skills are designed with the same standards applied to production Rust code: functional purity, stratified design, zero technical debt, and handover-clean artifacts.
 
-Public catalog SSOT: [`docs/public-skills.json`](docs/public-skills.json) (23 skills). Names below must match that file.
+Public catalog SSOT: [`docs/public-skills.json`](docs/public-skills.json) (24 skills). Names below must match that file.
 
 | Skill                  | Purpose                                              | Category      |
 |------------------------|------------------------------------------------------|---------------|
@@ -45,6 +45,7 @@ Public catalog SSOT: [`docs/public-skills.json`](docs/public-skills.json) (23 sk
 | `plan-writer`          | Plan-time generator: typed claims, bidirectional AC coverage | Foundation |
 | `rust`                 | Rust language book: situational Rules + How, generated RULES.md | Rust Book |
 | `ocaml`                | OCaml language book: situational Rules + How, generated RULES.md | OCaml Book |
+| `system-design`        | Cross-cutting system-design book: plan-time Rules + How, generated RULES.md | Design Book |
 | `code-review`          | Ruthless code quality guardian                       | Quality       |
 | `testing`              | Obsessive test coverage and error-path verification  | Quality       |
 | `architecture`         | System-level architecture gate: stratification, layers, 2-year maintainability | Architecture  |
