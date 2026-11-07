@@ -57,6 +57,14 @@ def is_book(skill_md: Path) -> bool:
     return raw.strip("\"'").lower() in {"true", "yes", "1"}
 
 
+def book_scope(skill_md: Path) -> str:
+    # `metadata.scope: "cross-cutting"` marks a book disclosed alongside the
+    # per-PBI language book. Absent scope keeps the language-book meaning.
+    fm = parse_frontmatter(skill_md.read_text(encoding="utf-8"))
+    raw = (fm.get("scope") or "").strip("\"'").lower()
+    return raw or "language"
+
+
 def discover_books(skills_root: Path) -> list[Path]:
     books: list[Path] = []
     for skill_md in sorted(skills_root.glob("*/SKILL.md")):

@@ -47,3 +47,4 @@ Cross-cutting book (`metadata.scope: "cross-cutting"`). Mints `D*` prefixes so i
 | DB | boundaries | system-design |
 | DX | shared-state | system-design |
 | DI | idempotency | system-design |
+| DA | applicability | system-design |
