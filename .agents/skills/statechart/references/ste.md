@@ -72,14 +72,13 @@ the replacement against the dictionary.
 | commence, initiate | start |
 | terminate | stop, end |
 | prior to | before |
-| subsequent to, subsequently | after, then |
+| subsequent to | after |
 | in order to | to |
 | perform | do |
 | obtain | get |
 | attempt | try |
-| sufficient | enough |
+| about (for a quantity) | approximately |
 | additional | more |
-| approximately | about |
 | assist | help |
 | indicate | show |
 | modify | change |
@@ -106,9 +105,18 @@ With a dictionary, it also checks each word (rule 1 and 2):
   before it reports a word. It does not check the part of speech or the
   approved meaning.
 
-The dictionary is copyrighted. Never commit it. Keep it in a private
-location and give the path with `--dictionary PATH` or the `STE_DICTIONARY`
-environment variable. Format: one entry per line, tab-separated:
+The dictionary is copyrighted. Never commit it. Make a private copy from
+your own copy of the standard:
+
+```bash
+python3 scripts/extract_ste_dictionary.py ASD-STE100.pdf ~/.config/crossr/ste100.tsv
+```
+
+The script needs `pdftotext` (poppler) for a PDF. It was written against
+Issue 9 (2025-01-15), where it reads about 2,800 entries. If a new issue
+gives a much smaller count, the layout changed. Give the path to the checker
+with `--dictionary PATH` or the `STE_DICTIONARY` environment variable.
+Format: one entry per line, tab-separated:
 
 ```
 # word	status	part-of-speech	alternative
@@ -116,8 +124,13 @@ stop	approved	v
 terminate	rejected	v	stop
 ```
 
-The checker cannot check rules 3, 6, 9, 12, 13, 19, or 20, or the meaning
-of an approved word. Read the prose once against this list before you ship it.
+Numbers and time units (`minute`, `hours`) are exempt. The page defines a
+fixed set of chart terms (state, event, transition, condition, scenario,
+chart, box, button, page, software, SCXML, timer, history), so the prose can
+use them without a glossary entry.
+
+The checker cannot check rules 3, 6, 9, 12, 13, 19, or 20, the part of
+speech, or the meaning of an approved word. Read the prose once against this list before you ship it.
 
 ## Example
 

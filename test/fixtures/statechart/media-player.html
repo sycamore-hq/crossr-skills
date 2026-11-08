@@ -114,7 +114,7 @@ svg marker#ah-hot path { fill: var(--hot); }
 </head>
 <body>
 <main id="app">
-  <noscript><p>This page needs JavaScript to draw the chart. The SCXML source is in the page source.</p></noscript>
+  <noscript><p>This page must have JavaScript to show the chart. The SCXML source is in the source of the page.</p></noscript>
 </main>
 
 <!-- DATA BLOCK 1: the SCXML chart. Replace the content. Keep the tag. -->
@@ -183,24 +183,68 @@ svg marker#ah-hot path { fill: var(--hot); }
     "rev": "0123abc"
   },
   "summary": [
-    "This machine controls the audio player in a phone app. It decides when the player plays, stops, and waits."
+    "This machine controls the audio player in an app on a phone. It selects when the player plays, stops, and waits."
   ],
   "context": [
     "A user selects a track. Then the player loads the track and plays it.",
-    "A phone call can stop the audio. After the call, the player goes back to the step it was in before the call."
+    "A phone call can stop the audio. After the phone call, the player goes back to the step that it was in before the phone call."
   ],
   "glossary": [
     {
+      "term": "phone",
+      "definition": "A small electronic device that a person can hold."
+    },
+    {
+      "term": "app",
+      "definition": "Software that operates on a phone."
+    },
+    {
+      "term": "user",
+      "definition": "The person who uses the app."
+    },
+    {
+      "term": "audio",
+      "definition": "Sound that the phone makes."
+    },
+    {
       "term": "track",
-      "definition": "One audio file, for example one song."
+      "definition": "One unit of audio."
+    },
+    {
+      "term": "player",
+      "definition": "The part of the app that plays a track."
+    },
+    {
+      "term": "screen",
+      "definition": "The part of the phone that shows information. The user touches it to select items."
+    },
+    {
+      "term": "memory",
+      "definition": "The part of the phone that keeps data for a short time."
+    },
+    {
+      "term": "load",
+      "definition": "To put data into memory."
     },
     {
       "term": "buffer",
-      "definition": "To load part of a track into memory before the player plays it."
+      "definition": "To load the start of a track before the player plays it."
+    },
+    {
+      "term": "pause",
+      "definition": "To stop a track at its position for a short time. The position does not change."
     },
     {
       "term": "mute",
       "definition": "To set the sound to zero. The track continues to play."
+    },
+    {
+      "term": "phone call",
+      "definition": "A connection through the phone between two persons. They can speak and hear."
+    },
+    {
+      "term": "remember",
+      "definition": "To keep a record of a state for subsequent use."
     }
   ],
   "states": {
@@ -214,7 +258,7 @@ svg marker#ah-hot path { fill: var(--hot); }
       "meaning": "This part controls the position in the track."
     },
     "playback_last": {
-      "meaning": "This marker remembers the last playback state. A return to it goes back to that state."
+      "meaning": "This symbol remembers the last playback state. A transition to it goes back to that state."
     },
     "buffering": {
       "meaning": "The player loads the start of the track into memory."
@@ -223,7 +267,7 @@ svg marker#ah-hot path { fill: var(--hot); }
       "meaning": "The user hears the track."
     },
     "paused": {
-      "meaning": "The track stops at the current position. The position does not change."
+      "meaning": "The track pauses."
     },
     "ended": {
       "meaning": "The track is at its end."
@@ -241,45 +285,45 @@ svg marker#ah-hot path { fill: var(--hot); }
       "meaning": "A phone call stopped the audio."
     },
     "finished": {
-      "meaning": "The track is complete. The player goes back to the stopped state at once."
+      "meaning": "The track is complete. The player goes back to the stopped state immediately."
     }
   },
   "events": {
     "player.load": {
       "meaning": "The user selects a track.",
-      "origin": "The track list screen."
+      "origin": "The screen that shows the tracks."
     },
     "player.play": {
       "meaning": "The user pushes the play button.",
-      "origin": "The player screen."
+      "origin": "The screen of the player."
     },
     "player.pause": {
       "meaning": "The user pushes the pause button.",
-      "origin": "The player screen."
+      "origin": "The screen of the player."
     },
     "player.stop": {
       "meaning": "The user pushes the stop button.",
-      "origin": "The player screen."
+      "origin": "The screen of the player."
     },
     "player.reset": {
       "meaning": "The player clears the completed track.",
-      "origin": "The machine sends this event to itself."
+      "origin": "The machine sends this event to the same machine."
     },
     "track.end": {
-      "meaning": "The audio file has no more sound.",
+      "meaning": "The track has no more sound.",
       "origin": "The audio system of the phone."
     },
     "volume.toggle": {
       "meaning": "The user pushes the mute button.",
-      "origin": "The player screen."
+      "origin": "The screen of the player."
     },
     "call.start": {
       "meaning": "A phone call starts.",
-      "origin": "The phone system."
+      "origin": "The system of the phone."
     },
     "call.end": {
-      "meaning": "The phone call ends.",
-      "origin": "The phone system."
+      "meaning": "The phone call stops.",
+      "origin": "The system of the phone."
     }
   },
   "conditions": {
@@ -304,13 +348,13 @@ svg marker#ah-hot path { fill: var(--hot); }
       "meaning": "If the player has no record of a playback state, it starts again at the buffer step."
     },
     "t-finish": {
-      "meaning": "When the playback part ends, the player leaves the active state."
+      "meaning": "When the playback part gets to its end, the player goes out of the active state."
     },
     "t-buffered": {
       "meaning": "When the track is in memory, the track starts to play. No event is necessary."
     },
     "t-pause": {
-      "meaning": "The track stops at the current position."
+      "meaning": "The track pauses."
     },
     "t-end": {
       "meaning": "The track has no more sound."
@@ -325,7 +369,7 @@ svg marker#ah-hot path { fill: var(--hot); }
       "meaning": "The sound comes back."
     },
     "t-call-end": {
-      "meaning": "After the call, the player goes back to the last playback state."
+      "meaning": "After the phone call, the player goes back to the last playback state."
     },
     "t-reset": {
       "meaning": "The player goes back to the stopped state."
@@ -334,7 +378,7 @@ svg marker#ah-hot path { fill: var(--hot); }
   "scenarios": [
     {
       "name": "Play a track to the end",
-      "goal": "Show the normal path of one track.",
+      "goal": "Show the usual sequence for one track.",
       "steps": [
         {
           "event": "player.load",
@@ -368,15 +412,15 @@ svg marker#ah-hot path { fill: var(--hot); }
         },
         {
           "event": "player.pause",
-          "caption": "The user stops the track for a short time."
+          "caption": "The user pauses the track."
         },
         {
           "event": "call.start",
-          "caption": "A phone call starts. The player remembers that it was in pause."
+          "caption": "A phone call starts. The player remembers that the track paused."
         },
         {
           "event": "call.end",
-          "caption": "The call ends. The player goes back to the pause, not to the start."
+          "caption": "The phone call stops. The track is paused again. It does not go to the start."
         },
         {
           "event": "player.play",
@@ -400,13 +444,13 @@ svg marker#ah-hot path { fill: var(--hot); }
   "evidence": [
     {
       "source": "src/player.ts:10-30",
-      "note": "The `mode` field and the `isMuted` flag change together in each handler."
+      "note": "The `mode` value and the `isMuted` value change together in each function that changes the player."
     }
   ],
   "notes": [
     {
       "title": "Volume after a call",
-      "text": "The history marker records only the playback part. The volume part starts again as `unmuted` after each call."
+      "text": "The history symbol records only the playback part. The volume part starts again as `unmuted` after each phone call."
     }
   ]
 }
@@ -419,6 +463,25 @@ const SCXML_NS = "http://www.w3.org/2005/07/scxml";
 const CROSSR_NS = "https://sycamore-hq.github.io/crossr/scxml/1";
 const SVG_NS = "http://www.w3.org/2000/svg";
 const STATE_KINDS = new Set(["state", "parallel", "final"]);
+
+/* Chart terms the page itself uses. Written in ASD-STE100. Keep in sync with
+   BUILTIN_TERMS in scripts/check_statechart.py. "when" limits a term to charts that use it. */
+const BUILTIN_TERMS = [
+  { term: "state machine", definition: "A part of the software that is in one state at a time. Events move it from one state to a different state. The short name is machine." },
+  { term: "state", definition: "A condition of the machine. The machine stays in a state until a transition moves it." },
+  { term: "event", definition: "An input to the machine. A person, a different system, or the machine can send an event." },
+  { term: "transition", definition: "A move from one state to a different state. An event starts it. A condition can stop it." },
+  { term: "condition", definition: "A value that is `true` or `false`. A transition with a condition can occur only when its value is `true`.", when: (m) => Object.keys(m.data).length > 0 },
+  { term: "scenario", definition: "A short sequence of events that shows one use of the machine, step by step." },
+  { term: "chart", definition: "A set of boxes and arrows that shows the states and the transitions of one state machine." },
+  { term: "box", definition: "A shape with four sides. On the chart, a box shows a state." },
+  { term: "button", definition: "A small area on the page. When you select it, the page does the work that its name shows." },
+  { term: "page", definition: "This set of information." },
+  { term: "software", definition: "The instructions that make an electronic system operate." },
+  { term: "SCXML", definition: "A standard procedure to write a chart. Other software can read and use a chart in SCXML." },
+  { term: "timer", definition: "A part of the machine that sends an event after a set time.", when: (m) => m.hasTimers },
+  { term: "history", definition: "A symbol in a group of states. It records the last active state of the group. A transition to it goes back to that state.", when: (m) => m.all.some((n) => n.kind === "history") },
+];
 
 /* ---------- Data: parse the SCXML into a plain model ---------- */
 
@@ -501,7 +564,9 @@ function parseScxml(text) {
   const all = Array.from(nodes.values());
   const events = new Set();
   for (const t of transitions) for (const e of t.events) if (e !== "*" && !e.startsWith("done.")) events.add(e.replace(/\.\*$/, ""));
-  return { root, nodes, transitions, data, all, events: Array.from(events).sort() };
+  const hasTimers = rootEl.getElementsByTagNameNS(SCXML_NS, "send").length > 0
+    && Array.from(rootEl.getElementsByTagNameNS(SCXML_NS, "send")).some((x) => x.getAttribute("delay") || x.getAttribute("delayexpr"));
+  return { root, nodes, transitions, data, all, hasTimers, events: Array.from(events).sort() };
 }
 
 /* ---------- Calculation: the condition language ---------- */
@@ -736,7 +801,7 @@ function makeMachine(model) {
       }
       if (ts.length) microstep(ts);
     }
-    if (st.running) st.log.push("The page stopped after 500 steps. The chart can have a loop with no event.");
+    if (st.running) st.log.push("The page stopped after 500 steps. The chart can have a loop that has no event.");
   }
   function reset() {
     st = fresh();
@@ -1120,7 +1185,7 @@ function makeProse(glossary) {
   }).join("");
 }
 function sourceLinks(ref, repo) {
-  if (!ref) return "<em>No source given.</em>";
+  if (!ref) return "<em>The source is not known.</em>";
   return ref.split(",").map((r) => r.trim()).filter(Boolean).map((r) => {
     const m = r.match(/^(.*?):(\d+)(?:-(\d+))?$/);
     if (!m || !repo || !repo.url) return "<code>" + esc(r) + "</code>";
@@ -1131,14 +1196,14 @@ function sourceLinks(ref, repo) {
 function describeAction(a) {
   const at = a.attrs;
   switch (a.tag) {
-    case "raise": return `Sends the internal event <code>${esc(at.event)}</code>.`;
+    case "raise": return `Sends the event <code>${esc(at.event)}</code> to the same machine.`;
     case "send": return at.delay || at.delayexpr
       ? `Starts a timer${at.id ? " <code>" + esc(at.id) + "</code>" : ""}. After <code>${esc(at.delay || at.delayexpr)}</code>, the timer sends <code>${esc(at.event || at.eventexpr)}</code>.`
       : `Sends the event <code>${esc(at.event || at.eventexpr)}</code>.`;
     case "cancel": return `Stops the timer <code>${esc(at.sendid || at.sendidexpr)}</code>.`;
     case "assign": return `Sets <code>${esc(at.location)}</code> to <code>${esc(at.expr)}</code>.`;
-    case "log": return `Writes a log entry${at.label ? " <code>" + esc(at.label) + "</code>" : ""}.`;
-    default: return `Runs <code>&lt;${esc(a.tag)}&gt;</code>. This page does not run this element.`;
+    case "log": return `Writes an entry in the record${at.label ? " <code>" + esc(at.label) + "</code>" : ""}.`;
+    default: return `Does <code>&lt;${esc(a.tag)}&gt;</code>. This page does not show the result.`;
   }
 }
 
@@ -1188,13 +1253,13 @@ function boot() {
     info = JSON.parse(document.getElementById("explainer").textContent);
     model = parseScxml(scxmlText);
   } catch (e) {
-    app.appendChild(h("div", { class: "banner", role: "alert" }, `<h2>The page cannot show this machine</h2><p>${esc(e.message)}</p>`));
+    app.appendChild(h("div", { class: "banner", role: "alert" }, `<h2>The page cannot show this chart</h2><p>${esc(e.message)}</p>`));
     window.statechartSelfTest = () => ({ errors: [e.message], warnings: [] });
     return;
   }
   const P = makeProse(info.glossary);
   const para = (arr) => (arr || []).map((t) => `<p>${P(t)}</p>`).join("");
-  const meaning = (map, k) => (map && map[k] && map[k].meaning) ? P(map[k].meaning) : "<em>No meaning given.</em>";
+  const meaning = (map, k) => (map && map[k] && map[k].meaning) ? P(map[k].meaning) : "<em>The information is missing.</em>";
   document.title = (info.title || model.root.name) + " · state machine";
   const showChecks = /[?&]check\b/.test(location.search);
   const check = selfTest(model, info);
@@ -1204,7 +1269,7 @@ function boot() {
   head.innerHTML = `<h1>${esc(info.title || model.root.name)}</h1>
     <div class="badges">
       <span class="badge">Machine <code>${esc(model.root.name)}</code></span>
-      <span class="badge ${info.kind === "implicit" ? "implicit" : ""}">${info.kind === "implicit" ? "Implicit: the code does not declare this machine" : "Explicit: the code declares this machine"}</span>
+      <span class="badge ${info.kind === "implicit" ? "implicit" : ""}">${info.kind === "implicit" ? "Found from the code: no part of the code names this machine" : "Named in the code: the code names this machine"}</span>
       ${info.confidence ? `<span class="badge">Confidence: ${esc(info.confidence)}</span>` : ""}
       <span class="badge">${model.all.filter((n) => n.kind !== "scxml").length} states · ${model.transitions.length} transitions</span>
     </div>`;
@@ -1213,48 +1278,51 @@ function boot() {
     app.appendChild(h("section", { class: "banner", role: "alert", id: "self-check" },
       `<h2>Self-check: ${check.errors.length} errors, ${check.warnings.length} warnings</h2><ul>${[...check.errors, ...(showChecks ? check.warnings : [])].map((x) => `<li>${P(x)}</li>`).join("")}</ul>`));
   }
-  app.appendChild(h("section", { id: "summary" }, `<h2>What this machine does</h2>${para(info.summary)}`));
-  app.appendChild(h("section", { id: "context" }, `<h2>Background</h2>${para(info.context)}
-    <h3>Words on this page</h3><div class="table-wrap"><table><thead><tr><th>Word</th><th>Meaning</th></tr></thead><tbody>
-    ${(info.glossary || []).map((g) => `<tr><td><strong>${esc(g.term)}</strong></td><td>${P(g.definition)}</td></tr>`).join("")}</tbody></table></div>`));
+  app.appendChild(h("section", { id: "summary" }, `<h2>The function of this machine</h2>${para(info.summary)}`));
+  app.appendChild(h("section", { id: "context" }, `<h2>Before you start</h2>${para(info.context)}
+    <h3>Names in this machine</h3><div class="table-wrap"><table><thead><tr><th>Name</th><th>Information</th></tr></thead><tbody>
+    ${(info.glossary || []).map((g) => `<tr><td><strong>${esc(g.term)}</strong></td><td>${P(g.definition)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <details><summary>Names in the chart</summary><div class="table-wrap"><table><thead><tr><th>Name</th><th>Information</th></tr></thead><tbody>
+    ${BUILTIN_TERMS.filter((b) => !b.when || b.when(model)).map((b) => `<tr><td><strong>${esc(b.term)}</strong></td><td>${P(b.definition)}</td></tr>`).join("")}</tbody></table></div></details>`));
 
   // playground
   const play = h("section", { id: "chart" });
   play.innerHTML = `<h2>The chart</h2>
-    <p>Each box is a state. A large box holds a group of states. Each arrow is a transition. The label on the arrow is the event that starts the transition. A label in square brackets is a condition that must be true. Red boxes show the current states.</p>
-    <ol class="steps"><li>Select a box or an arrow to read what it means.</li><li>Select an event button to send that event to the machine.</li><li>Select a scenario and push Play to see a full story.</li></ol>
+    <p>Each box shows a state. A large box holds a group of states. Each arrow shows a transition. The name on an arrow is the event that starts the transition. A name between <code>[</code> and <code>]</code> is a condition. The transition can occur only when the condition is <code>true</code>. The symbols below the chart show the colors.</p>
+    <ol class="steps"><li>To see information about a state or a transition, select its box or its arrow.</li><li>To send an event to the machine, select the button of that event.</li><li>To see all the steps of a scenario, select the scenario and push Play.</li></ol>
     <div class="grid">
       <div class="card">
         <div class="chart-tools">
-          <button type="button" data-zoom="out" aria-label="Zoom out">−</button>
+          <button type="button" data-zoom="out" aria-label="Make the chart smaller">−</button>
           <button type="button" data-zoom="fit">Fit</button>
-          <button type="button" data-zoom="in" aria-label="Zoom in">+</button>
+          <button type="button" data-zoom="in" aria-label="Make the chart larger">+</button>
         </div>
         <div class="chart-wrap"><svg id="svg" role="img" aria-label="State chart"></svg></div>
         <div class="player">
           <h3>Scenarios</h3>
-          <p>A scenario is a short story. Each step sends one event or changes one condition.</p>
+          <p>A scenario is a short sequence of steps. Each step sends one event, or changes one condition, or does the two.</p>
           <div class="events"><select id="scn" aria-label="Scenario"></select>
-            <button type="button" class="primary" id="playbtn">Play</button><button type="button" id="stepbtn">Step</button><button type="button" id="scnreset">Reset</button></div>
-          <p id="goal"></p><div class="caption" id="caption" aria-live="polite">Push Play or Step to start.</div>
-          <details><summary>All steps</summary><ol class="steps" id="steplist"></ol></details>
-          <p><small>Keys: Space plays or pauses. N goes one step. R resets.</small></p>
+            <button type="button" class="primary" id="playbtn">Play</button><button type="button" id="stepbtn">Step</button><button type="button" id="scnreset">Start again</button></div>
+          <p id="goal"></p><div class="caption" id="caption" aria-live="polite">To start, push Play or Step.</div>
+          <details><summary>Show all steps</summary><ol class="steps" id="steplist"></ol></details>
+          <p><small>Keyboard: <code>Space</code> is Play or Pause. <code>N</code> is Step. <code>R</code> is Start again.</small></p>
         </div>
         <div class="legend">
-          <span><i class="sw" style="background:var(--hot);border-color:var(--hot)"></i>Current state</span>
-          <span><i class="sw" style="border-width:3px"></i>Thick arrow: the event can occur now</span>
+          <span><i class="sw" style="background:var(--hot);border-color:var(--hot)"></i>Active state</span>
+          <span><i class="sw" style="border-width:3px"></i>Thick arrow: the transition can occur at this time</span>
           <span><i class="sw" style="border-style:double;border-width:4px"></i>End state</span>
           <span><svg width="24" height="12" aria-hidden="true"><circle cx="5" cy="6" r="4" fill="#171412"/><path d="M9,6 L22,6" stroke="#171412" stroke-width="1.6"/></svg>First state</span>
         </div>
       </div>
       <div class="card" id="side">
-        <div><span>Current states: </span><span class="now" id="now"></span></div>
+        <div><span>Active states: </span><span class="now" id="now"></span></div>
         <h3>Send an event</h3><div class="events" id="events"></div>
         <div id="conds-wrap"><h3>Conditions</h3><div class="conds" id="conds"></div></div>
-        <div id="timers-wrap"><h3>Timers</h3><div class="timers" id="timers"></div></div>
+        <div id="timers-wrap"><h3>Active timers</h3><div class="timers" id="timers"></div></div>
         <div class="events"><button type="button" id="back">Back</button><button type="button" id="reset">Start again</button></div>
-        <h3>Details</h3><div class="detail" id="detail"><p>Select a box or an arrow in the chart.</p></div>
-        <details><summary>Log</summary><ol class="log" id="log"></ol></details>
+        <h3>Information</h3><div class="detail" id="detail"><p>Select a box or an arrow in the chart.</p></div>
+        <details><summary>Record of steps</summary><ol class="log" id="log"></ol></details>
       </div>
     </div>`;
   app.appendChild(play);
@@ -1270,17 +1338,17 @@ function boot() {
   const condRows = Object.keys(model.data).map((k) => `<tr><td><code>${esc(k)}</code></td><td>${meaning(info.conditions, k)}</td><td><code>${esc(model.data[k])}</code></td></tr>`).join("");
   const trRows = model.transitions.map((t) => `<tr><td><button type="button" class="linklike" data-tr="${esc(t.id)}"><code>${esc(t.id)}</code></button></td><td><code>${esc(t.source.id)}</code> → <code>${esc(t.targets.map((x) => x.id).join(", ") || "(stays)")}</code></td><td>${esc(edgeLabel(t))}</td><td>${meaning(info.transitions, t.id)}</td><td>${sourceLinks(t.sourceRef, info.repo)}</td></tr>`).join("");
   ref.innerHTML = `<h2>All parts of the machine</h2>
-    <h3>States</h3><div class="table-wrap"><table><thead><tr><th>State</th><th>Type</th><th>Meaning</th><th>Code</th></tr></thead><tbody>${stateRows}</tbody></table></div>
-    <h3>Events</h3><div class="table-wrap"><table><thead><tr><th>Event</th><th>Meaning</th><th>Sent by</th><th>Transitions</th></tr></thead><tbody>${evRows}</tbody></table></div>
-    ${condRows ? `<h3>Conditions</h3><div class="table-wrap"><table><thead><tr><th>Condition</th><th>Meaning when true</th><th>First value</th></tr></thead><tbody>${condRows}</tbody></table></div>` : ""}
-    <h3>Transitions</h3><div class="table-wrap"><table><thead><tr><th>Id</th><th>From → to</th><th>Event [condition]</th><th>Meaning</th><th>Code</th></tr></thead><tbody>${trRows}</tbody></table></div>`;
+    <h3>States</h3><div class="table-wrap"><table><thead><tr><th>State</th><th>Type</th><th>Information</th><th>Code</th></tr></thead><tbody>${stateRows}</tbody></table></div>
+    <h3>Events</h3><div class="table-wrap"><table><thead><tr><th>Event</th><th>Information</th><th>Source of the event</th><th>Transitions</th></tr></thead><tbody>${evRows}</tbody></table></div>
+    ${condRows ? `<h3>Conditions</h3><div class="table-wrap"><table><thead><tr><th>Condition</th><th>Information when <code>true</code></th><th>Value at the start</th></tr></thead><tbody>${condRows}</tbody></table></div>` : ""}
+    <h3>Transitions</h3><div class="table-wrap"><table><thead><tr><th>Id</th><th>From → to</th><th>Event [condition]</th><th>Information</th><th>Code</th></tr></thead><tbody>${trRows}</tbody></table></div>`;
   app.appendChild(ref);
 
   if ((info.notes || []).length) app.appendChild(h("section", { id: "notes" }, `<h2>Notes and risks</h2>${info.notes.map((n) => `<h3>${esc(n.title || "")}</h3><p>${P(n.text)}</p>`).join("")}`));
   if ((info.evidence || []).length) app.appendChild(h("section", { id: "evidence" }, `<h2>Where this machine is in the code</h2><ul>${info.evidence.map((e) => `<li>${sourceLinks(e.source, info.repo)}: ${P(e.note)}</li>`).join("")}</ul>`));
   if ((info.related || []).length) app.appendChild(h("section", { id: "related" }, `<h2>Related machines</h2><ul>${info.related.map((r) => `<li><a href="${esc(r.href)}">${esc(r.title)}</a></li>`).join("")}</ul>`));
   const src = h("section", { id: "source" });
-  src.innerHTML = `<h2>SCXML source</h2><p>This is the chart in the W3C SCXML format. Other tools can read and run it.</p>
+  src.innerHTML = `<h2>SCXML source</h2><p>This is the chart in SCXML, a standard of the W3C. Other software can read and use it.</p>
     <div class="events"><button type="button" id="copy">Copy</button><button type="button" id="download">Download</button></div>
     <details><summary>Show the source</summary><pre class="src"><code></code></pre></details>`;
   src.querySelector("pre code").textContent = scxmlText;
@@ -1288,8 +1356,8 @@ function boot() {
 
   function kindText(n) {
     if (n.kind === "final") return "End state";
-    if (n.kind === "history") return n.historyType === "deep" ? "Deep history" : "History";
-    if (n.kind === "parallel") return "Parallel group: all child groups are active together";
+    if (n.kind === "history") return n.historyType === "deep" ? "History (all levels)" : "History";
+    if (n.kind === "parallel") return "Parallel group: all its parts are active at the same time";
     if (n.children.some((c) => STATE_KINDS.has(c.kind))) return n.parent && n.parent.kind === "parallel" ? "Group of states (a parallel part)" : "Group of states";
     return "State";
   }
@@ -1336,13 +1404,13 @@ function boot() {
       g.querySelectorAll("path.edge").forEach((p) => p.setAttribute("marker-end", lastTaken.includes(id) ? "url(#ah-hot)" : "url(#ah)"));
     }
     const leaves = [...st.config].filter(machine.isAtomic).sort((a, b) => a.order - b.order).map((s) => s.id);
-    document.getElementById("now").innerHTML = st.running ? leaves.map((x) => `<code>${esc(x)}</code>`).join(", ") : `<code>${esc(leaves.join(", "))}</code> (the machine stopped)`;
+    document.getElementById("now").innerHTML = st.running ? leaves.map((x) => `<code>${esc(x)}</code>`).join(", ") : `<code>${esc(leaves.join(", "))}</code> (the machine is at its end)`;
     const evBox = document.getElementById("events"); evBox.textContent = "";
     for (const e of model.events) {
       const ok = machine.enabledFor(e).length > 0;
       const blocked = !ok && machine.blockedFor(e).length > 0;
-      const b = h("button", { type: "button", title: ok ? "Send this event now" : blocked ? "A condition blocks this event now" : "This event has no effect now" });
-      b.innerHTML = `<code>${esc(e)}</code>${blocked ? " (blocked)" : ""}`;
+      const b = h("button", { type: "button", title: ok ? "Send this event" : blocked ? "A condition stops this event at this time" : "This event has no effect at this time" });
+      b.innerHTML = `<code>${esc(e)}</code>${blocked ? " (stopped by a condition)" : ""}`;
       b.disabled = !ok; b.addEventListener("click", () => fire(e));
       evBox.appendChild(b);
     }
@@ -1358,7 +1426,7 @@ function boot() {
     const tBox = document.getElementById("timers"); tBox.textContent = "";
     document.getElementById("timers-wrap").hidden = !st.timers.length;
     for (const t of st.timers) {
-      const b = h("button", { type: "button" }, `Let <code>${esc(t.id || t.event)}</code> run (${esc(t.delay)})`);
+      const b = h("button", { type: "button" }, `Let the timer <code>${esc(t.id || t.event)}</code> end (${esc(t.delay)})`);
       b.addEventListener("click", () => fire(t.event)); tBox.appendChild(b);
     }
     document.getElementById("back").disabled = !undo.length;
@@ -1376,23 +1444,23 @@ function boot() {
       const trList = (ts, dir) => ts.length ? `<ul>${ts.map((t) => `<li><button type="button" class="linklike" data-tr="${esc(t.id)}">${esc(edgeLabel(t))}</button> ${dir === "out" ? "to" : "from"} <code>${esc(dir === "out" ? (t.targets.map((x) => x.id).join(", ") || n.id) : t.source.id)}</code></li>`).join("")}</ul>` : "None";
       box.innerHTML = `<h3><code>${esc(n.id)}</code></h3><p>${meaning(info.states, n.id)}</p><dl>
         <dt>Type</dt><dd>${kindText(n)}</dd>
-        <dt>Now</dt><dd>${active.has(n.id) ? "The machine is in this state." : "The machine is not in this state."}</dd>
+        <dt>At this time</dt><dd>${active.has(n.id) ? "The machine is in this state." : "The machine is not in this state."}</dd>
         ${n.onentry.length ? `<dt>On entry</dt><dd>${n.onentry.map(describeAction).join("<br>")}</dd>` : ""}
         ${n.onexit.length ? `<dt>On exit</dt><dd>${n.onexit.map(describeAction).join("<br>")}</dd>` : ""}
-        <dt>Leaves by</dt><dd>${trList(outs, "out")}</dd>
-        <dt>Comes from</dt><dd>${trList(ins, "in")}</dd>
+        <dt>Transitions out</dt><dd>${trList(outs, "out")}</dd>
+        <dt>Transitions in</dt><dd>${trList(ins, "in")}</dd>
         <dt>Code</dt><dd>${sourceLinks(n.sourceRef, info.repo)}</dd></dl>`;
     } else {
       const t = model.transitions.find((x) => x.id === selected.id);
-      const evInfo = t.events.map((e) => `<code>${esc(e)}</code>: ${meaning(info.events, e)}${(info.events || {})[e] && info.events[e].origin ? " Sent by: " + P(info.events[e].origin) : ""}`).join("<br>");
-      const conds = [...condVars(t.cond)].map((k) => `<code>${esc(k)}</code> (${machine.state.data[k] ? "true now" : "false now"}): ${meaning(info.conditions, k)}`).join("<br>");
+      const evInfo = t.events.map((e) => `<code>${esc(e)}</code>: ${meaning(info.events, e)}${(info.events || {})[e] && info.events[e].origin ? " Source: " + P(info.events[e].origin) : ""}`).join("<br>");
+      const conds = [...condVars(t.cond)].map((k) => `<code>${esc(k)}</code> (<code>${machine.state.data[k] ? "true" : "false"}</code> at this time): ${meaning(info.conditions, k)}`).join("<br>");
       box.innerHTML = `<h3><code>${esc(t.id)}</code></h3><p>${meaning(info.transitions, t.id)}</p><dl>
         <dt>From</dt><dd><button type="button" class="linklike" data-state="${esc(t.source.id)}"><code>${esc(t.source.id)}</code></button></dd>
         <dt>To</dt><dd>${t.targets.length ? t.targets.map((x) => `<button type="button" class="linklike" data-state="${esc(x.id)}"><code>${esc(x.id)}</code></button>`).join(", ") : "The machine stays in the same state."}</dd>
-        <dt>Event</dt><dd>${evInfo || "No event. This transition occurs when its condition becomes true."}</dd>
+        <dt>Event</dt><dd>${evInfo || "No event. This transition occurs when its condition changes to <code>true</code>."}</dd>
         ${t.condText ? `<dt>Condition</dt><dd><code>${esc(t.condText)}</code>${conds ? "<br>" + conds : ""}</dd>` : ""}
-        ${t.actions.length ? `<dt>Actions</dt><dd>${t.actions.map(describeAction).join("<br>")}</dd>` : ""}
-        <dt>Now</dt><dd>${enabledIds.has(t.id) ? "This transition can occur now." : "This transition cannot occur now."}</dd>
+        ${t.actions.length ? `<dt>Also does</dt><dd>${t.actions.map(describeAction).join("<br>")}</dd>` : ""}
+        <dt>At this time</dt><dd>${enabledIds.has(t.id) ? "This transition can occur." : "This transition cannot occur."}</dd>
         <dt>Code</dt><dd>${sourceLinks(t.sourceRef, info.repo)}</dd></dl>
         ${enabledIds.has(t.id) && t.events[0] ? `<button type="button" class="primary" data-fire="${esc(t.events[0])}">Send <code>${esc(t.events[0])}</code></button>` : ""}`;
     }
@@ -1407,7 +1475,7 @@ function boot() {
   document.getElementById("back").addEventListener("click", () => { if (undo.length) { machine.restore(undo.pop()); lastTaken = []; refresh(); } });
   document.getElementById("reset").addEventListener("click", () => { machine.reset(); undo.length = 0; lastTaken = []; refresh(); });
   document.getElementById("copy").addEventListener("click", async (e) => {
-    try { await navigator.clipboard.writeText(scxmlText); e.target.textContent = "Copied"; } catch (err) { e.target.textContent = "Copy failed. Open the source below."; }
+    try { await navigator.clipboard.writeText(scxmlText); e.target.textContent = "Copy done"; } catch (err) { e.target.textContent = "The copy did not work. Open the source."; }
   });
   document.getElementById("download").addEventListener("click", () => {
     const a = document.createElement("a");
@@ -1430,7 +1498,7 @@ function boot() {
   const pause = () => { clearInterval(timer); timer = null; playBtn.textContent = "Play"; };
   const scReset = () => {
     pause(); step = 0; machine.reset(); undo.length = 0; lastTaken = []; selected = null;
-    document.getElementById("caption").textContent = "Push Play or Step to start."; showScenario(); refresh();
+    document.getElementById("caption").textContent = "To start, push Play or Step."; showScenario(); refresh();
   };
   const scStep = () => {
     const sc = scenarios[si]; if (!sc) return;

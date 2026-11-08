@@ -27,6 +27,7 @@ sys.path.insert(0, str(SKILL / "scripts"))
 
 import build_page  # noqa: E402
 import check_statechart as cs  # noqa: E402
+import extract_ste_dictionary as ex  # noqa: E402
 
 TEMPLATE = (SKILL / "assets" / "explainer-template.html").read_text(encoding="utf-8")
 SAMPLE_SCXML = cs.SCXML_BLOCK.search(TEMPLATE).group(2).strip()
@@ -269,6 +270,94 @@ class Dictionary(unittest.TestCase):
         model, _ = scxml(SAMPLE_SCXML)
         findings = cs.check_page(TEMPLATE, TEMPLATE, SAMPLE_SCXML, model, "t.html", self.DICT)
         self.assertTrue(any("STE dictionary" in f.message for f in findings))
+
+
+class DictionaryEdges(unittest.TestCase):
+    DICT = cs.parse_dictionary("large\tapproved\tadj\nphone\tapproved\tn\ncall\trejected\tv\tTELL\nbank\trejected\tv\tBANK\n")
+
+    def test_numbers_units_and_comparatives_pass(self):
+        self.assertEqual(cs.dictionary_findings("x", "four minutes larger", self.DICT, frozenset()), [])
+
+    def test_longer_technical_name_wins(self):
+        tech = frozenset({"phone", "phone call"})
+        self.assertEqual(cs.dictionary_findings("x", "phone call", self.DICT, tech), [])
+
+    def test_word_approved_only_as_technical_noun_is_a_warning(self):
+        f = cs.dictionary_findings("x", "bank", self.DICT, frozenset())
+        self.assertEqual(errors(f), [])
+        self.assertTrue(any("technical name" in m for m in warnings(f)))
+
+    def test_builtin_terms_match_the_template(self):
+        block = TEMPLATE[TEMPLATE.index("const BUILTIN_TERMS"):TEMPLATE.index("];", TEMPLATE.index("const BUILTIN_TERMS"))]
+        in_template = {t.lower() for t in re.findall(r'term: "([^"]+)"', block)}
+        self.assertEqual(in_template, cs.BUILTIN_TERMS - {"machine"})
+
+
+# Invented entries in the layout of `pdftotext -layout` output. No ASD text.
+FAKE_STANDARD = """\
+Change log: FROB (v) Help revised.
+Word               Approved meaning/
+(part of speech)   ALTERNATIVES                 STE EXAMPLE             Non-STE example
+FROB (v),          To turn a knob               FROB THE KNOB.
+FROBS,
+FROBBED,
+FROBBED
+QUUX (v),          1. To exist               IF THERE IS A QUUX
+IS, WAS,
+(also ARE, WERE)
+blorp (v)          FROB (v)                     FROB THE PANEL.         Blorp the panel.
+                   ZAP (v)                      ZAP IT.                 Blorp it.
+Issue 9                                 Part 2 - Dictionary                        Page 2-1-A1
+Word               Approved meaning/
+(part of speech)   ALTERNATIVES               STE EXAMPLE           Non-STE example
+WIDGET-            That you can              THE WIDGETABLE
+ABLE (adj)         widget                    PART.
+according to       REFER (v)                 REFER TO THE LIST.    According to the list.
+(prep)
+FROB-KNOB (n) A knob that you frob     THE FROB-KNOB.
+gizmo (n)          GADGET (TN)                  THE GADGET.             The gizmo.
+"""
+
+
+class Extractor(unittest.TestCase):
+    def entries(self):
+        return {(e.word, e.status): e for e in ex.parse(FAKE_STANDARD)}
+
+    def test_approved_word_and_its_verb_forms(self):
+        e = self.entries()
+        for w in ("frob", "frobs", "frobbed"):
+            self.assertIn((w, "approved"), e)
+
+    def test_comma_listed_forms(self):
+        e = self.entries()
+        for w in ("is", "was", "are", "were"):
+            self.assertIn((w, "approved"), e)
+
+    def test_rejected_word_keeps_all_alternatives(self):
+        self.assertEqual(self.entries()[("blorp", "rejected")].alternatives, ("FROB", "ZAP"))
+
+    def test_wrapped_headwords(self):
+        e = self.entries()
+        self.assertIn(("widgetable", "approved"), e)
+        self.assertEqual(e[("according to", "rejected")].alternatives, ("REFER",))
+        self.assertEqual(e[("according to", "rejected")].pos, "prep")
+        self.assertIn(("frob-knob", "approved"), e)
+
+    def test_technical_noun_alternative(self):
+        self.assertEqual(self.entries()[("gizmo", "rejected")].alternatives, ("GADGET",))
+
+    def test_change_log_before_the_dictionary_is_ignored(self):
+        self.assertEqual(sum(1 for e in ex.parse(FAKE_STANDARD) if e.word == "frob"), 1)
+
+    def test_no_header_is_an_error(self):
+        with self.assertRaises(ValueError):
+            ex.parse("FROB (v)  text")
+
+    def test_output_round_trips_through_the_checker(self):
+        tsv = "\n".join(e.tsv() for e in ex.parse(FAKE_STANDARD))
+        d = cs.parse_dictionary(tsv)
+        self.assertIn("frobbed", d.approved)
+        self.assertEqual(d.rejected["blorp"], "FROB; ZAP")
 
 
 class Cli(unittest.TestCase):

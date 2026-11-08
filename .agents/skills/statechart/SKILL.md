@@ -48,9 +48,17 @@ scripts and the template live next to it. From a `crossr-skills` checkout:
 
 Needs Python 3.9+ for the scripts and a browser for the look step.
 
-Optional: set `STE_DICTIONARY` to the path of a local ASD-STE100 wordlist.
-The checker then checks each word. See [references/ste.md](references/ste.md).
-Never commit the wordlist.
+Optional, recommended: make a local copy of the ASD-STE100 wordlist and set
+`STE_DICTIONARY` to its path. The checker then checks each word.
+
+```bash
+python3 scripts/extract_ste_dictionary.py ASD-STE100.pdf ~/.config/crossr/ste100.tsv
+export STE_DICTIONARY=~/.config/crossr/ste100.tsv
+```
+
+The standard is free from https://www.asd-ste100.org, but ASD owns the
+copyright. Never commit or share the wordlist. See
+[references/ste.md](references/ste.md).
 
 ## Inputs and outputs
 

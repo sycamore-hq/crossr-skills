@@ -45,16 +45,16 @@ DESCRIPTIVE_MAX = 25
 PROCEDURAL_MAX = 20
 PARAGRAPH_MAX = 6
 
-# Common words that are not approved in ASD-STE100, with a usual replacement.
-# Not the dictionary: see references/ste.md.
+# Common words that are not approved in ASD-STE100 (checked against Issue 9),
+# with the approved replacement. A fallback when no dictionary is loaded.
 AVOID = {
     "utilize": "use", "utilise": "use", "utilizes": "uses", "utilized": "used",
     "commence": "start", "commences": "starts", "initiate": "start", "initiates": "starts",
     "terminate": "stop or end", "terminates": "stops or ends", "terminated": "stopped or ended",
-    "prior to": "before", "subsequent to": "after", "subsequently": "after or then",
+    "prior to": "before", "subsequent to": "after",
     "in order to": "to", "perform": "do", "performs": "does", "performed": "done",
     "obtain": "get", "obtains": "gets", "attempt": "try", "attempts": "tries",
-    "sufficient": "enough", "additional": "more", "approximately": "about",
+    "additional": "more",
     "assist": "help", "indicate": "show", "indicates": "shows", "modify": "change",
     "modifies": "changes", "numerous": "many", "ensure": "make sure", "ensures": "makes sure",
     "facilitate": "help", "via": "through", "e.g.": "for example", "i.e.": "that is",
@@ -589,7 +589,7 @@ def ste_findings(where: str, text: str, mode: str, technical: frozenset[str]) ->
     for m in AVOID_RE.finditer(plain):
         out.append(err(where, f"STE: {m.group(1)!r} is not approved. Use {AVOID[m.group(1).lower()]!r}"))
     lowered = plain.lower()
-    for term in technical:
+    for term in sorted(technical, key=len, reverse=True):
         lowered = re.sub(r"(?<!\w)" + re.escape(term) + r"(?!\w)", " ", lowered)
     for w in sorted(set(re.findall(r"\b([a-z]{3,}ing)\b", lowered)) - ING_OK):
         out.append(warn(where, f"STE: {w!r} may be an -ing noun or adjective. Rewrite, or define it as a technical name"))
@@ -621,7 +621,8 @@ def parse_dictionary(text: str) -> Dictionary:
         if status == "approved":
             approved.add(word)
         elif status == "rejected":
-            rejected.setdefault(word, cols[3] if len(cols) > 3 else "")
+            alt = cols[3] if len(cols) > 3 else ""
+            rejected[word] = "; ".join(x for x in (rejected.get(word, ""), alt) if x)
     return Dictionary(frozenset(approved), rejected)
 
 
@@ -631,31 +632,54 @@ def base_forms(word: str) -> list[str]:
     for suffix, repl in (("ies", "y"), ("ied", "y"), ("es", ""), ("s", ""), ("ed", ""), ("d", ""), ("ing", ""), ("ing", "e")):
         if word.endswith(suffix) and len(word) - len(suffix) >= 2:
             forms.append(word[: -len(suffix)] + repl)
+    for suffix in ("er", "est"):  # larger -> large, smaller -> small
+        if word.endswith(suffix) and len(word) - len(suffix) >= 3:
+            forms += [word[: -len(suffix)], word[: -len(suffix)] + "e"]
     if len(word) > 4 and word[-3:-2] == word[-4:-3] and word.endswith(("ed", "er")):
-        forms.append(word[:-3])  # stopped -> stop
+        forms.append(word[:-3])  # stopped -> stop, bigger -> big
     return forms
 
 
 def dictionary_findings(where: str, text: str, dictionary: Dictionary, technical: frozenset[str]) -> list[Finding]:
     lowered = CODE_SPAN.sub(" ", text).lower()
-    for term in technical:
+    for term in sorted(technical, key=len, reverse=True):
         lowered = re.sub(r"(?<!\w)" + re.escape(term) + r"(?:s|es|ed|d)?(?!\w)", " ", lowered)
     out: list[Finding] = []
     for word in sorted(set(re.findall(r"[a-z][a-z'-]*[a-z]|[a-z]", lowered))):
         forms = base_forms(word)
-        if any(f in dictionary.approved for f in forms):
+        if word in NUMBER_WORDS or word in UNIT_WORDS or any(f in dictionary.approved for f in forms):
             continue
         hit = next((f for f in forms if f in dictionary.rejected), None)
         if hit is not None:
             alt = dictionary.rejected[hit]
-            out.append(err(where, f"STE dictionary: {word!r} is not approved" + (f". Use {alt!r}" if alt else "")))
+            if hit.upper() in (a.strip() for a in alt.split(";")):
+                out.append(warn(where, f"STE dictionary: {word!r} is approved only as a technical name. Define it in the glossary, or use {alt!r}"))
+            else:
+                out.append(err(where, f"STE dictionary: {word!r} is not approved" + (f". Use {alt!r}" if alt else "")))
         else:
             out.append(warn(where, f"STE dictionary: {word!r} is not in the dictionary. Use an approved word, or define it in the glossary"))
     return out
 
 
+# Chart terms the template defines on every page (BUILTIN_TERMS in the template).
+BUILTIN_TERMS = frozenset({
+    "state machine", "machine", "state", "event", "transition", "condition", "scenario", "chart",
+    "box", "button", "page", "software", "scxml", "timer", "history",
+})
+NUMBER_WORDS = frozenset(
+    "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
+    "sixteen seventeen eighteen nineteen twenty thirty forty fifty sixty seventy eighty ninety "
+    "hundred thousand million".split()
+)
+# Units of measurement are allowed in STE. Time units are the usual ones in software.
+UNIT_WORDS = frozenset(
+    "millisecond milliseconds second seconds minute minutes hour hours day days week weeks "
+    "month months year years".split()
+)
+
+
 def technical_names(model: Model, info: dict) -> frozenset[str]:
-    names = {str(g.get("term", "")).lower() for g in info.get("glossary") or []}
+    names = set(BUILTIN_TERMS) | {str(g.get("term", "")).lower() for g in info.get("glossary") or []}
     names |= {n.lower().replace("_", " ") for n in model.nodes}
     names |= {n.lower() for n in model.nodes}
     return frozenset(n for n in names if n)
