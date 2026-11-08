@@ -1,0 +1,1539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="crossr statechart template v1">
+<title>State machine explainer</title>
+<!--
+  statechart template v1.
+  Fill ONLY the two data blocks: the script elements with ids "scxml" and "explainer".
+  Do not edit the style or the program. The checker compares them to the template.
+-->
+<style>
+:root {
+  --ink: #171412;
+  --page: #F3EEE6;
+  --card: #FBF8F3;
+  --line: #C4A882;
+  --hot: #9E4E36;
+  --ok: #6A7348;
+  --shade: #2E342C;
+  --muted: #5A524A;
+  --warn-bg: #F6E2D9;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink);
+  background: var(--page);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); line-height: 1.5; font-size: 16px; }
+main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 8px; }
+h2 { font-size: 1.3rem; margin: 40px 0 12px; padding-top: 8px; border-top: 2px solid var(--line); }
+h3 { font-size: 1.05rem; margin: 16px 0 6px; }
+p { margin: 0 0 10px; max-width: 72ch; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; background: #EADFCF; padding: 0 4px; border-radius: 3px; overflow-wrap: anywhere; }
+a { color: var(--hot); }
+.badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 16px; }
+.badge { border: 1.5px solid var(--shade); border-radius: 999px; padding: 2px 10px; font-size: .85rem; }
+.badge.implicit { border-color: var(--hot); color: var(--hot); }
+.term { text-decoration: underline dotted var(--hot); text-underline-offset: 3px; cursor: help; }
+.banner { border: 2px solid var(--hot); background: var(--warn-bg); padding: 12px 16px; border-radius: 6px; margin: 0 0 16px; }
+.banner h2 { border: 0; margin: 0 0 6px; padding: 0; font-size: 1.05rem; color: var(--hot); }
+.banner ul { margin: 0; padding-left: 20px; }
+.grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } .chart-wrap { max-height: 55vh; } }
+.card { background: var(--card); border: 1.5px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
+.chart-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.player { border-top: 1.5px solid var(--line); margin-top: 10px; padding-top: 4px; }
+.chart-wrap { overflow: auto; max-height: 72vh; border-radius: 6px; background: var(--page); touch-action: pan-x pan-y; }
+.chart-wrap svg { display: block; margin: 0 auto; }
+button, select { font: inherit; min-height: 36px; min-width: 36px; padding: 4px 12px; border-radius: 6px; border: 1.5px solid var(--shade); background: var(--card); color: var(--ink); cursor: pointer; }
+button:hover:not(:disabled) { background: #EADFCF; }
+button:focus-visible, select:focus-visible, .st:focus-visible, .tr:focus-visible, .term:focus-visible { outline: 3px solid var(--hot); outline-offset: 2px; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.primary { background: var(--shade); color: var(--page); }
+button.primary:hover:not(:disabled) { background: var(--ink); }
+.events, .conds, .timers { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.cond { display: flex; gap: 6px; align-items: center; border: 1.5px solid var(--line); border-radius: 6px; padding: 4px 8px; min-height: 36px; }
+.cond input { width: 18px; height: 18px; }
+.now { font-weight: 600; }
+.log { font-size: .9rem; max-height: 180px; overflow: auto; margin: 0; padding-left: 20px; }
+.caption { min-height: 3em; font-size: 1.05rem; border-left: 4px solid var(--hot); padding: 4px 10px; margin: 8px 0; background: var(--card); }
+.steps { margin: 0; padding-left: 24px; }
+.steps li.done { color: var(--muted); }
+.steps li.hot { font-weight: 700; }
+.detail dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; margin: 8px 0; }
+.detail dt { font-weight: 600; }
+.detail dd { margin: 0; min-width: 0; }
+.detail ul { margin: 0; padding-left: 18px; }
+.linklike { background: none; border: 0; padding: 0; min-height: 0; min-width: 0; color: var(--hot); text-decoration: underline; cursor: pointer; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+th { background: #EADFCF; }
+pre.src { background: var(--ink); color: var(--page); padding: 12px; border-radius: 6px; overflow: auto; max-height: 480px; font-size: .85rem; }
+details > summary { cursor: pointer; font-weight: 600; min-height: 32px; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .85rem; margin-top: 8px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { display: inline-block; width: 18px; height: 12px; border: 1.5px solid var(--shade); border-radius: 3px; }
+
+/* chart */
+svg .st rect.box { fill: var(--card); stroke: var(--shade); stroke-width: 1.5; }
+svg .st.compound > rect.box { fill: rgba(196,168,130,.12); stroke: var(--line); stroke-width: 2; }
+svg .st.parallel > rect.box { stroke-dasharray: 6 4; }
+svg .st.region > rect.box { fill: none; stroke: var(--line); stroke-dasharray: 3 4; stroke-width: 1.5; }
+svg .st.final rect.inner { fill: none; stroke: var(--shade); stroke-width: 1.5; }
+svg .st text { font-size: 13px; fill: var(--ink); pointer-events: none; }
+svg .st.compound > text.title { font-weight: 700; }
+svg .st { cursor: pointer; outline: none; }
+svg .st.active > rect.box { fill: var(--hot); stroke: var(--hot); }
+svg .st.active > text { fill: #FFFFFF; }
+svg .st.active.final rect.inner { stroke: #FFFFFF; }
+svg .st.compound.active > rect.box, svg .st.parallel.active > rect.box, svg .st.region.active > rect.box { fill: rgba(158,78,54,.10); stroke: var(--hot); }
+svg .st.compound.active > text, svg .st.parallel.active > text, svg .st.region.active > text { fill: var(--hot); }
+svg .st.selected > rect.box, svg .st.selected > circle { stroke: var(--ink); stroke-width: 3.5; }
+svg .st.history circle { fill: var(--card); stroke: var(--shade); stroke-width: 1.5; }
+svg .tr { cursor: pointer; outline: none; }
+svg .tr path.edge { fill: none; stroke: var(--shade); stroke-width: 1.6; }
+svg .tr path.edge.targetless { stroke-dasharray: 4 3; }
+svg .tr path.hit { fill: none; stroke: transparent; stroke-width: 14; }
+svg .tr rect.lab { fill: var(--page); stroke: var(--line); stroke-width: 1; }
+svg .tr text { font-size: 12px; fill: var(--ink); pointer-events: none; }
+svg .tr.enabled path.edge { stroke-width: 2.4; }
+svg .tr.enabled rect.lab { stroke: var(--shade); stroke-width: 1.5; }
+svg .tr.hot path.edge { stroke: var(--hot); stroke-width: 3; }
+svg .tr.hot rect.lab { stroke: var(--hot); stroke-width: 2; }
+svg .tr.selected rect.lab { stroke: var(--ink); stroke-width: 3; }
+svg .init circle { fill: var(--ink); }
+svg .init path { fill: none; stroke: var(--ink); stroke-width: 1.6; }
+svg marker path { fill: var(--shade); }
+svg marker#ah-hot path { fill: var(--hot); }
+@media (prefers-reduced-motion: no-preference) { svg .st rect.box, svg .tr path.edge { transition: fill .2s, stroke .2s; } }
+</style>
+</head>
+<body>
+<main id="app">
+  <noscript><p>This page must have JavaScript to show the chart. The SCXML source is in the source of the page.</p></noscript>
+</main>
+
+<!-- DATA BLOCK 1: the SCXML chart. Replace the content. Keep the tag. -->
+<script type="application/scxml+xml" id="scxml">
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml xmlns="http://www.w3.org/2005/07/scxml"
+       xmlns:crossr="https://sycamore-hq.github.io/crossr/scxml/1"
+       version="1.0" datamodel="ecmascript" name="media-player" initial="stopped">
+  <datamodel>
+    <data id="hasTrack" expr="false"/>
+  </datamodel>
+  <state id="stopped" crossr:source="src/player.ts:10">
+    <transition crossr:id="t-load" event="player.load" crossr:source="src/player.ts:40">
+      <assign location="hasTrack" expr="true"/>
+    </transition>
+    <transition crossr:id="t-play" event="player.play" cond="hasTrack" target="active" crossr:source="src/player.ts:52"/>
+  </state>
+  <parallel id="active" crossr:source="src/player.ts:11-30">
+    <transition crossr:id="t-stop" event="player.stop" target="stopped" crossr:source="src/player.ts:70"/>
+    <transition crossr:id="t-call" event="call.start" target="interrupted" crossr:source="src/phone.ts:12"/>
+    <state id="playback" initial="buffering" crossr:source="src/player.ts:12">
+      <history id="playback_last" type="shallow" crossr:source="src/player.ts:13">
+        <transition crossr:id="t-history-default" target="buffering" crossr:source="src/player.ts:13"/>
+      </history>
+      <transition crossr:id="t-finish" event="done.state.playback" target="finished" crossr:source="src/player.ts:90"/>
+      <state id="buffering" crossr:source="src/player.ts:14">
+        <transition crossr:id="t-buffered" cond="hasTrack" target="playing" crossr:source="src/player.ts:60"/>
+      </state>
+      <state id="playing" crossr:source="src/player.ts:15">
+        <transition crossr:id="t-pause" event="player.pause" target="paused" crossr:source="src/player.ts:75"/>
+        <transition crossr:id="t-end" event="track.end" target="ended" crossr:source="src/player.ts:80"/>
+      </state>
+      <state id="paused" crossr:source="src/player.ts:16">
+        <transition crossr:id="t-resume" event="player.play" target="playing" crossr:source="src/player.ts:56"/>
+      </state>
+      <final id="ended" crossr:source="src/player.ts:17"/>
+    </state>
+    <state id="volume" initial="unmuted" crossr:source="src/volume.ts:5">
+      <state id="unmuted" crossr:source="src/volume.ts:6">
+        <transition crossr:id="t-mute" event="volume.toggle" target="muted" crossr:source="src/volume.ts:20"/>
+      </state>
+      <state id="muted" crossr:source="src/volume.ts:7">
+        <transition crossr:id="t-unmute" event="volume.toggle" target="unmuted" crossr:source="src/volume.ts:24"/>
+      </state>
+    </state>
+  </parallel>
+  <state id="interrupted" crossr:source="src/phone.ts:5">
+    <transition crossr:id="t-call-end" event="call.end" target="playback_last" crossr:source="src/phone.ts:20"/>
+  </state>
+  <state id="finished" crossr:source="src/player.ts:18">
+    <onentry><raise event="player.reset"/></onentry>
+    <transition crossr:id="t-reset" event="player.reset" target="stopped" crossr:source="src/player.ts:95"/>
+  </state>
+</scxml>
+</script>
+
+<!-- DATA BLOCK 2: the prose, in ASD-STE100. Replace the content. Keep the tag. -->
+<script type="application/json" id="explainer">
+{
+  "schema": 1,
+  "title": "Media player",
+  "kind": "implicit",
+  "confidence": "medium",
+  "repo": {
+    "url": "https://github.com/example/player",
+    "rev": "0123abc"
+  },
+  "summary": [
+    "This machine controls the audio player in an app on a phone. It selects when the player plays, stops, and waits."
+  ],
+  "context": [
+    "A user selects a track. Then the player loads the track and plays it.",
+    "A phone call can stop the audio. After the phone call, the player goes back to the step that it was in before the phone call."
+  ],
+  "glossary": [
+    {
+      "term": "phone",
+      "definition": "A small electronic device that a person can hold."
+    },
+    {
+      "term": "app",
+      "definition": "Software that operates on a phone."
+    },
+    {
+      "term": "user",
+      "definition": "The person who uses the app."
+    },
+    {
+      "term": "audio",
+      "definition": "Sound that the phone makes."
+    },
+    {
+      "term": "track",
+      "definition": "One unit of audio."
+    },
+    {
+      "term": "player",
+      "definition": "The part of the app that plays a track."
+    },
+    {
+      "term": "screen",
+      "definition": "The part of the phone that shows information. The user touches it to select items."
+    },
+    {
+      "term": "memory",
+      "definition": "The part of the phone that keeps data for a short time."
+    },
+    {
+      "term": "load",
+      "definition": "To put data into memory."
+    },
+    {
+      "term": "buffer",
+      "definition": "To load the start of a track before the player plays it."
+    },
+    {
+      "term": "pause",
+      "definition": "To stop a track at its position for a short time. The position does not change."
+    },
+    {
+      "term": "mute",
+      "definition": "To set the sound to zero. The track continues to play."
+    },
+    {
+      "term": "phone call",
+      "definition": "A connection through the phone between two persons. They can speak and hear."
+    },
+    {
+      "term": "remember",
+      "definition": "To keep a record of a state for subsequent use."
+    }
+  ],
+  "states": {
+    "stopped": {
+      "meaning": "The player does not play. It can load a track."
+    },
+    "active": {
+      "meaning": "The player has a track. Two parts work at the same time: the playback and the volume."
+    },
+    "playback": {
+      "meaning": "This part controls the position in the track."
+    },
+    "playback_last": {
+      "meaning": "This symbol remembers the last playback state. A transition to it goes back to that state."
+    },
+    "buffering": {
+      "meaning": "The player loads the start of the track into memory."
+    },
+    "playing": {
+      "meaning": "The user hears the track."
+    },
+    "paused": {
+      "meaning": "The track pauses."
+    },
+    "ended": {
+      "meaning": "The track is at its end."
+    },
+    "volume": {
+      "meaning": "This part controls the sound level."
+    },
+    "unmuted": {
+      "meaning": "The user can hear the sound."
+    },
+    "muted": {
+      "meaning": "The sound is zero."
+    },
+    "interrupted": {
+      "meaning": "A phone call stopped the audio."
+    },
+    "finished": {
+      "meaning": "The track is complete. The player goes back to the stopped state immediately."
+    }
+  },
+  "events": {
+    "player.load": {
+      "meaning": "The user selects a track.",
+      "origin": "The screen that shows the tracks."
+    },
+    "player.play": {
+      "meaning": "The user pushes the play button.",
+      "origin": "The screen of the player."
+    },
+    "player.pause": {
+      "meaning": "The user pushes the pause button.",
+      "origin": "The screen of the player."
+    },
+    "player.stop": {
+      "meaning": "The user pushes the stop button.",
+      "origin": "The screen of the player."
+    },
+    "player.reset": {
+      "meaning": "The player clears the completed track.",
+      "origin": "The machine sends this event to the same machine."
+    },
+    "track.end": {
+      "meaning": "The track has no more sound.",
+      "origin": "The audio system of the phone."
+    },
+    "volume.toggle": {
+      "meaning": "The user pushes the mute button.",
+      "origin": "The screen of the player."
+    },
+    "call.start": {
+      "meaning": "A phone call starts.",
+      "origin": "The system of the phone."
+    },
+    "call.end": {
+      "meaning": "The phone call stops.",
+      "origin": "The system of the phone."
+    }
+  },
+  "conditions": {
+    "hasTrack": {
+      "meaning": "The player has a track in memory."
+    }
+  },
+  "transitions": {
+    "t-load": {
+      "meaning": "The player keeps the track. The state does not change."
+    },
+    "t-play": {
+      "meaning": "If the player has a track, the playback and the volume parts start."
+    },
+    "t-stop": {
+      "meaning": "From each active state, the user can stop the player."
+    },
+    "t-call": {
+      "meaning": "A phone call stops the audio. The player remembers the playback state."
+    },
+    "t-history-default": {
+      "meaning": "If the player has no record of a playback state, it starts again at the buffer step."
+    },
+    "t-finish": {
+      "meaning": "When the playback part gets to its end, the player goes out of the active state."
+    },
+    "t-buffered": {
+      "meaning": "When the track is in memory, the track starts to play. No event is necessary."
+    },
+    "t-pause": {
+      "meaning": "The track pauses."
+    },
+    "t-end": {
+      "meaning": "The track has no more sound."
+    },
+    "t-resume": {
+      "meaning": "The track plays again from the same position."
+    },
+    "t-mute": {
+      "meaning": "The sound goes to zero."
+    },
+    "t-unmute": {
+      "meaning": "The sound comes back."
+    },
+    "t-call-end": {
+      "meaning": "After the phone call, the player goes back to the last playback state."
+    },
+    "t-reset": {
+      "meaning": "The player goes back to the stopped state."
+    }
+  },
+  "scenarios": [
+    {
+      "name": "Play a track to the end",
+      "goal": "Show the usual sequence for one track.",
+      "steps": [
+        {
+          "event": "player.load",
+          "caption": "The user selects a track. The player keeps it."
+        },
+        {
+          "event": "player.play",
+          "caption": "The player loads the start of the track. Then the track plays."
+        },
+        {
+          "event": "volume.toggle",
+          "caption": "The user mutes the sound. The track continues to play."
+        },
+        {
+          "event": "track.end",
+          "caption": "The track ends. The player stops and clears the track."
+        }
+      ]
+    },
+    {
+      "name": "A phone call during a pause",
+      "goal": "Show how the player remembers its last state.",
+      "steps": [
+        {
+          "event": "player.load",
+          "caption": "The user selects a track."
+        },
+        {
+          "event": "player.play",
+          "caption": "The track plays."
+        },
+        {
+          "event": "player.pause",
+          "caption": "The user pauses the track."
+        },
+        {
+          "event": "call.start",
+          "caption": "A phone call starts. The player remembers that the track paused."
+        },
+        {
+          "event": "call.end",
+          "caption": "The phone call stops. The track is paused again. It does not go to the start."
+        },
+        {
+          "event": "player.play",
+          "caption": "The user plays the track again from the same position."
+        },
+        {
+          "event": "volume.toggle",
+          "caption": "The user mutes the sound."
+        },
+        {
+          "event": "volume.toggle",
+          "caption": "The user turns the sound on again."
+        },
+        {
+          "event": "player.stop",
+          "caption": "The user stops the player."
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "source": "src/player.ts:10-30",
+      "note": "The `mode` value and the `isMuted` value change together in each function that changes the player."
+    }
+  ],
+  "notes": [
+    {
+      "title": "Volume after a call",
+      "text": "The history symbol records only the playback part. The volume part starts again as `unmuted` after each phone call."
+    }
+  ]
+}
+</script>
+
+<script>
+"use strict";
+(() => {
+const SCXML_NS = "http://www.w3.org/2005/07/scxml";
+const CROSSR_NS = "https://sycamore-hq.github.io/crossr/scxml/1";
+const SVG_NS = "http://www.w3.org/2000/svg";
+const STATE_KINDS = new Set(["state", "parallel", "final"]);
+
+/* Chart terms the page itself uses. Written in ASD-STE100. Keep in sync with
+   BUILTIN_TERMS in scripts/check_statechart.py. "when" limits a term to charts that use it. */
+const BUILTIN_TERMS = [
+  { term: "state machine", definition: "A part of the software that is in one state at a time. Events move it from one state to a different state. The short name is machine." },
+  { term: "state", definition: "A condition of the machine. The machine stays in a state until a transition moves it." },
+  { term: "event", definition: "An input to the machine. A person, a different system, or the machine can send an event." },
+  { term: "transition", definition: "A move from one state to a different state. An event starts it. A condition can stop it." },
+  { term: "condition", definition: "A value that is `true` or `false`. A transition with a condition can occur only when its value is `true`.", when: (m) => Object.keys(m.data).length > 0 },
+  { term: "scenario", definition: "A short sequence of events that shows one use of the machine, step by step." },
+  { term: "chart", definition: "A set of boxes and arrows that shows the states and the transitions of one state machine." },
+  { term: "box", definition: "A shape with four sides. On the chart, a box shows a state." },
+  { term: "button", definition: "A small area on the page. When you select it, the page does the work that its name shows." },
+  { term: "page", definition: "This set of information." },
+  { term: "software", definition: "The instructions that make an electronic system operate." },
+  { term: "SCXML", definition: "A standard procedure to write a chart. Other software can read and use a chart in SCXML." },
+  { term: "timer", definition: "A part of the machine that sends an event after a set time.", when: (m) => m.hasTimers },
+  { term: "history", definition: "A symbol in a group of states. It records the last active state of the group. A transition to it goes back to that state.", when: (m) => m.all.some((n) => n.kind === "history") },
+];
+
+/* ---------- Data: parse the SCXML into a plain model ---------- */
+
+function parseScxml(text) {
+  const doc = new DOMParser().parseFromString(text.trim(), "application/xml");
+  const err = doc.getElementsByTagName("parsererror")[0];
+  if (err) throw new Error("The SCXML does not parse: " + err.textContent.slice(0, 200));
+  const rootEl = doc.documentElement;
+  if (rootEl.localName !== "scxml" || rootEl.namespaceURI !== SCXML_NS) throw new Error("The root element is not SCXML.");
+  const nodes = new Map();
+  const transitions = [];
+  let order = 0;
+  const cx = (el, name) => el.getAttributeNS(CROSSR_NS, name) || el.getAttribute("crossr:" + name) || "";
+  const kids = (el) => Array.from(el.children).filter((c) => c.namespaceURI === SCXML_NS);
+  const words = (s) => (s || "").trim().split(/\s+/).filter(Boolean);
+
+  function actionsOf(el) {
+    return el ? kids(el).map((a) => ({
+      tag: a.localName,
+      attrs: Object.fromEntries(Array.from(a.attributes).map((x) => [x.name, x.value])),
+      children: actionsOf(a),
+    })) : [];
+  }
+  function block(el, tag) { return kids(el).filter((c) => c.localName === tag).flatMap((c) => actionsOf(c)); }
+  function makeTransition(el, source) {
+    const t = {
+      id: cx(el, "id") || ("t" + transitions.length),
+      source, events: words(el.getAttribute("event")),
+      condText: el.getAttribute("cond") || "", cond: null,
+      targetIds: words(el.getAttribute("target")), targets: [],
+      type: el.getAttribute("type") === "internal" ? "internal" : "external",
+      actions: actionsOf(el), sourceRef: cx(el, "source"), order: order++,
+    };
+    t.cond = t.condText ? parseCond(t.condText) : null;
+    transitions.push(t);
+    return t;
+  }
+  function build(el, parent) {
+    const kind = el.localName === "scxml" ? "scxml" : el.localName;
+    const n = {
+      id: kind === "scxml" ? "__root" : el.getAttribute("id"), kind, parent, children: [], transitions: [],
+      onentry: block(el, "onentry"), onexit: block(el, "onexit"), order: order++,
+      initialIds: words(el.getAttribute("initial")), initialActions: [], sourceRef: cx(el, "source"),
+      historyType: el.getAttribute("type") === "deep" ? "deep" : "shallow", defaultTransition: null,
+    };
+    if (!n.id) throw new Error("A <" + kind + "> element has no id.");
+    if (nodes.has(n.id)) throw new Error("The id " + n.id + " occurs two times.");
+    nodes.set(n.id, n);
+    for (const c of kids(el)) {
+      const tag = c.localName;
+      if (STATE_KINDS.has(tag) || tag === "history") n.children.push(build(c, n));
+      else if (tag === "transition") {
+        const t = makeTransition(c, n);
+        if (kind === "history") n.defaultTransition = t; else n.transitions.push(t);
+      } else if (tag === "initial") {
+        const it = kids(c).find((x) => x.localName === "transition");
+        if (it) { n.initialIds = words(it.getAttribute("target")); n.initialActions = actionsOf(it); }
+      }
+    }
+    return n;
+  }
+  const root = build(rootEl, null);
+  root.name = rootEl.getAttribute("name") || "machine";
+  const data = {};
+  for (const d of rootEl.getElementsByTagNameNS(SCXML_NS, "data")) {
+    data[d.getAttribute("id")] = d.getAttribute("expr") || "false";
+  }
+  const resolve = (id, where) => {
+    const n = nodes.get(id);
+    if (!n) throw new Error(where + " names the unknown state " + id + ".");
+    return n;
+  };
+  for (const t of transitions) t.targets = t.targetIds.map((id) => resolve(id, "Transition " + t.id));
+  for (const n of nodes.values()) {
+    const childStates = n.children.filter((c) => STATE_KINDS.has(c.kind));
+    if ((n.kind === "state" || n.kind === "scxml") && childStates.length) {
+      n.initial = n.initialIds.length ? n.initialIds.map((id) => resolve(id, "The initial of " + n.id)) : [childStates[0]];
+    } else n.initial = [];
+  }
+  const all = Array.from(nodes.values());
+  const events = new Set();
+  for (const t of transitions) for (const e of t.events) if (e !== "*" && !e.startsWith("done.")) events.add(e.replace(/\.\*$/, ""));
+  const hasTimers = rootEl.getElementsByTagNameNS(SCXML_NS, "send").length > 0
+    && Array.from(rootEl.getElementsByTagNameNS(SCXML_NS, "send")).some((x) => x.getAttribute("delay") || x.getAttribute("delayexpr"));
+  return { root, nodes, transitions, data, all, hasTimers, events: Array.from(events).sort() };
+}
+
+/* ---------- Calculation: the condition language ---------- */
+
+function parseCond(src) {
+  const toks = [];
+  const re = /\s*(\|\||&&|!|\(|\)|In\s*\(\s*'([^']*)'\s*\)|In\s*\(\s*"([^"]*)"\s*\)|[A-Za-z_$][\w$.]*)/y;
+  let i = 0;
+  while (i < src.length) {
+    if (/^\s*$/.test(src.slice(i))) break;
+    re.lastIndex = i;
+    const m = re.exec(src);
+    if (!m) throw new Error("The condition `" + src + "` uses unsupported syntax.");
+    const tok = m[1];
+    if (tok.startsWith("In")) toks.push({ in: m[2] !== undefined ? m[2] : m[3] });
+    else toks.push(tok);
+    i = re.lastIndex;
+  }
+  let p = 0;
+  const peek = () => toks[p];
+  function expr() { let l = term(); while (peek() === "||") { p++; l = { op: "or", l, r: term() }; } return l; }
+  function term() { let l = factor(); while (peek() === "&&") { p++; l = { op: "and", l, r: factor() }; } return l; }
+  function factor() {
+    const t = toks[p++];
+    if (t === undefined) throw new Error("The condition `" + src + "` ends too early.");
+    if (t === "!") return { op: "not", x: factor() };
+    if (t === "(") { const e = expr(); if (toks[p++] !== ")") throw new Error("The condition `" + src + "` has no closing bracket."); return e; }
+    if (typeof t === "object") return { op: "in", id: t.in };
+    if (t === "true" || t === "false") return { op: "lit", v: t === "true" };
+    if (t === "||" || t === "&&" || t === ")") throw new Error("The condition `" + src + "` has an operator in the wrong place.");
+    return { op: "var", name: t };
+  }
+  const ast = expr();
+  if (p !== toks.length) throw new Error("The condition `" + src + "` has extra text.");
+  return ast;
+}
+function evalCond(ast, data, isIn) {
+  switch (ast.op) {
+    case "or": return evalCond(ast.l, data, isIn) || evalCond(ast.r, data, isIn);
+    case "and": return evalCond(ast.l, data, isIn) && evalCond(ast.r, data, isIn);
+    case "not": return !evalCond(ast.x, data, isIn);
+    case "lit": return ast.v;
+    case "in": return isIn(ast.id);
+    default: return !!data[ast.name];
+  }
+}
+function condVars(ast, out = new Set()) {
+  if (!ast) return out;
+  if (ast.op === "var") out.add(ast.name);
+  for (const k of ["l", "r", "x"]) if (ast[k]) condVars(ast[k], out);
+  return out;
+}
+
+/* ---------- Calculation + state: an SCXML interpreter (W3C Appendix D, subset) ---------- */
+
+function makeMachine(model) {
+  const { root } = model;
+  const childStates = (s) => s.children.filter((c) => STATE_KINDS.has(c.kind));
+  const isAtomic = (s) => s.kind === "final" || (s.kind === "state" && childStates(s).length === 0);
+  const isCompound = (s) => (s.kind === "state" || s.kind === "scxml") && childStates(s).length > 0;
+  const isDesc = (a, b) => { for (let p = a.parent; p; p = p.parent) if (p === b) return true; return false; };
+  const properAnc = (s, stop) => { const out = []; for (let p = s.parent; p && p !== stop; p = p.parent) out.push(p); return out; };
+  const byDoc = (a, b) => a.order - b.order;
+  const matches = (descs, ev) => descs.some((d) => {
+    if (d === "*") return true;
+    const base = d.replace(/\.\*$/, "").replace(/\.$/, "");
+    return ev === base || ev.startsWith(base + ".");
+  });
+
+  let st;
+  function fresh() {
+    const data = {};
+    for (const [k, v] of Object.entries(model.data)) {
+      try { data[k] = evalCond(parseCond(v), {}, () => false); } catch (e) { data[k] = false; }
+    }
+    return { config: new Set(), history: new Map(), data, internal: [], external: [], timers: [], running: true, log: [], taken: [] };
+  }
+  const isIn = (id) => [...st.config].some((s) => s.id === id);
+  const condOk = (t, ignoreCond) => ignoreCond || !t.cond || evalCond(t.cond, st.data, isIn);
+
+  function selectTransitions(ev, ignoreCond = false) {
+    const enabled = [];
+    const atomic = [...st.config].filter(isAtomic).sort(byDoc);
+    for (const s of atomic) {
+      outer: for (const anc of [s, ...properAnc(s, null)]) {
+        for (const t of anc.transitions) {
+          const evOk = ev === null ? t.events.length === 0 : t.events.length > 0 && matches(t.events, ev);
+          if (evOk && condOk(t, ignoreCond)) { if (!enabled.includes(t)) enabled.push(t); break outer; }
+        }
+      }
+    }
+    return removeConflicting(enabled);
+  }
+  function effectiveTargets(t) {
+    const out = [];
+    for (const s of t.targets) {
+      if (s.kind === "history") {
+        if (st.history.has(s.id)) out.push(...st.history.get(s.id));
+        else if (s.defaultTransition) out.push(...effectiveTargets(s.defaultTransition));
+      } else out.push(s);
+    }
+    return out;
+  }
+  function findLCCA(list) {
+    for (const anc of properAnc(list[0], null).filter(isCompound)) {
+      if (list.slice(1).every((s) => isDesc(s, anc))) return anc;
+    }
+    return root;
+  }
+  function domain(t) {
+    const ts = effectiveTargets(t);
+    if (!ts.length) return null;
+    if (t.type === "internal" && isCompound(t.source) && ts.every((s) => isDesc(s, t.source))) return t.source;
+    return findLCCA([t.source, ...ts]);
+  }
+  function exitSet(ts) {
+    const out = new Set();
+    for (const t of ts) {
+      if (!t.targets.length) continue;
+      const d = domain(t);
+      for (const s of st.config) if (d && isDesc(s, d)) out.add(s);
+    }
+    return out;
+  }
+  function removeConflicting(enabled) {
+    let filtered = [];
+    for (const t1 of enabled) {
+      let pre = false; const drop = [];
+      for (const t2 of filtered) {
+        const a = exitSet([t1]); const b = exitSet([t2]);
+        if ([...a].some((x) => b.has(x))) {
+          if (isDesc(t1.source, t2.source)) drop.push(t2); else { pre = true; break; }
+        }
+      }
+      if (!pre) { filtered = filtered.filter((x) => !drop.includes(x)); filtered.push(t1); }
+    }
+    return filtered;
+  }
+  function run(actions) {
+    for (const a of actions) {
+      const at = a.attrs;
+      if (a.tag === "raise") st.internal.push(at.event);
+      else if (a.tag === "send") {
+        const ev = at.event || at.eventexpr || "";
+        if (at.delay || at.delayexpr) {
+          st.timers = st.timers.filter((x) => !(at.id && x.id === at.id));
+          st.timers.push({ event: ev, id: at.id || "", delay: at.delay || at.delayexpr });
+        } else if (at.target === "#_internal") st.internal.push(ev);
+        else st.external.push(ev);
+      } else if (a.tag === "cancel") st.timers = st.timers.filter((x) => x.id !== (at.sendid || at.sendidexpr));
+      else if (a.tag === "assign") {
+        try { st.data[at.location] = evalCond(parseCond(at.expr || "false"), st.data, isIn); }
+        catch (e) { st.log.push("The page cannot run this assign: " + (at.expr || "")); }
+      } else if (a.tag === "log") st.log.push((at.label ? at.label + ": " : "") + (at.expr || "").replace(/^'(.*)'$/, "$1"));
+    }
+  }
+  function exitStates(ts) {
+    const out = [...exitSet(ts)].sort((a, b) => b.order - a.order);
+    for (const s of out) {
+      for (const h of s.children.filter((c) => c.kind === "history")) {
+        const rec = h.historyType === "deep"
+          ? [...st.config].filter((x) => isAtomic(x) && isDesc(x, s))
+          : [...st.config].filter((x) => x.parent === s);
+        st.history.set(h.id, rec);
+      }
+    }
+    for (const s of out) { run(s.onexit); st.config.delete(s); }
+  }
+  function enterStates(ts) {
+    const toEnter = new Set(); const forDefault = new Set(); const histContent = new Map();
+    const addDesc = (s) => {
+      if (s.kind === "history") {
+        const rec = st.history.get(s.id);
+        if (rec) { rec.forEach(addDesc); rec.forEach((x) => addAnc(x, s.parent)); }
+        else if (s.defaultTransition) {
+          histContent.set(s.parent.id, s.defaultTransition.actions);
+          s.defaultTransition.targets.forEach(addDesc);
+          s.defaultTransition.targets.forEach((x) => addAnc(x, s.parent));
+        }
+        return;
+      }
+      toEnter.add(s);
+      if (isCompound(s)) { forDefault.add(s); s.initial.forEach(addDesc); s.initial.forEach((x) => addAnc(x, s)); }
+      else if (s.kind === "parallel") {
+        for (const c of childStates(s)) if (![...toEnter].some((x) => x === c || isDesc(x, c))) addDesc(c);
+      }
+    };
+    const addAnc = (s, anc) => {
+      for (const a of properAnc(s, anc)) {
+        if (a === root) continue;
+        toEnter.add(a);
+        if (a.kind === "parallel") for (const c of childStates(a)) if (![...toEnter].some((x) => x === c || isDesc(x, c))) addDesc(c);
+      }
+    };
+    for (const t of ts) {
+      t.targets.forEach(addDesc);
+      const d = t.source === root ? root : domain(t);
+      for (const s of effectiveTargets(t)) addAnc(s, d);
+    }
+    for (const s of [...toEnter].sort(byDoc)) {
+      st.config.add(s);
+      run(s.onentry);
+      if (forDefault.has(s)) run(s.initialActions);
+      if (histContent.has(s.id)) run(histContent.get(s.id));
+      if (s.kind === "final") {
+        if (s.parent === root) st.running = false;
+        else {
+          const p = s.parent; const gp = p.parent;
+          st.internal.push("done.state." + p.id);
+          if (gp && gp.kind === "parallel" && childStates(gp).every(inFinal)) st.internal.push("done.state." + gp.id);
+        }
+      }
+    }
+  }
+  function inFinal(s) {
+    if (isCompound(s)) return childStates(s).some((c) => c.kind === "final" && st.config.has(c));
+    if (s.kind === "parallel") return childStates(s).every(inFinal);
+    return false;
+  }
+  function microstep(ts) {
+    st.taken.push(...ts);
+    exitStates(ts);
+    for (const t of ts) run(t.actions);
+    enterStates(ts);
+  }
+  function macrostep() {
+    for (let guard = 0; guard < 500 && st.running; guard++) {
+      let ts = selectTransitions(null);
+      if (!ts.length) {
+        if (!st.internal.length) return;
+        ts = selectTransitions(st.internal.shift());
+      }
+      if (ts.length) microstep(ts);
+    }
+    if (st.running) st.log.push("The page stopped after 500 steps. The chart can have a loop that has no event.");
+  }
+  function reset() {
+    st = fresh();
+    enterStates([{ source: root, targets: root.initial, actions: [], type: "internal", events: [] }]);
+    macrostep();
+    st.taken = [];
+  }
+  function fire(ev) {
+    st.taken = [];
+    if (!st.running) return [];
+    st.timers = st.timers.filter((x) => x.event !== ev);
+    const queue = [ev];
+    for (let guard = 0; queue.length && guard < 100; guard++) {
+      const e = queue.shift();
+      const ts = selectTransitions(e);
+      if (ts.length) microstep(ts);
+      macrostep();
+      queue.push(...st.external.splice(0));
+      if (!st.running) break;
+    }
+    return st.taken.slice();
+  }
+  function snapshot() {
+    return {
+      config: [...st.config].map((s) => s.id), history: [...st.history].map(([k, v]) => [k, v.map((s) => s.id)]),
+      data: { ...st.data }, timers: st.timers.map((t) => ({ ...t })), running: st.running, log: st.log.slice(),
+    };
+  }
+  function restore(snap) {
+    const n = (id) => model.nodes.get(id);
+    st = fresh();
+    st.config = new Set(snap.config.map(n));
+    st.history = new Map(snap.history.map(([k, v]) => [k, v.map(n)]));
+    st.data = { ...snap.data }; st.timers = snap.timers.map((t) => ({ ...t }));
+    st.running = snap.running; st.log = snap.log.slice();
+  }
+  reset();
+  return {
+    reset, fire, snapshot, restore, isAtomic, isCompound, childStates,
+    get state() { return st; },
+    active: () => new Set([...st.config].map((s) => s.id)),
+    enabledFor: (ev) => st.running ? selectTransitions(ev) : [],
+    blockedFor: (ev) => st.running ? selectTransitions(ev, true) : [],
+    setData: (k, v) => { st.data[k] = v; macrostep(); },
+  };
+}
+
+/* ---------- Calculation: layout (nested boxes, rows top to bottom) ---------- */
+
+const measureCtx = document.createElement("canvas").getContext("2d");
+function textW(s, size = 13, weight = 400) {
+  measureCtx.font = weight + " " + size + "px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+  return measureCtx.measureText(s).width;
+}
+const G = { pad: 16, head: 30, colGap: 48, rowGap: 92, leafH: 40, initRoom: 22, lane: 22 };
+const loopsOf = (model, n) => model.transitions.filter((t) => t.source === n && (!t.targets.length || t.targets.includes(n)));
+
+function layout(model, hints) {
+  const rankHint = (hints && hints.rank) || {};
+  const orderHint = new Map(((hints && hints.order) || []).map((id, i) => [id, i]));
+  const boxes = new Map();
+  const childStates = (s) => s.children.filter((c) => STATE_KINDS.has(c.kind));
+  const childOf = (anc, s) => { let x = s; while (x && x.parent !== anc) x = x.parent; return x; };
+
+  function size(n) {
+    if (n.kind === "history") return place(n, { w: 30, h: 30, kids: [] });
+    const kids = childStates(n);
+    if (!kids.length) {
+      const loops = loopsOf(model, n);
+      const loopRoom = loops.length ? 30 + G.lane * loops.length + Math.max(...loops.map((t) => textW(edgeLabel(t), 12) + 12)) : 0;
+      return place(n, { w: Math.max(96, textW(n.id) + 32), h: G.leafH, kids: [], loopRoom });
+    }
+    kids.forEach(size);
+    const hist = n.children.filter((c) => c.kind === "history");
+    hist.forEach(size);
+    const title = n.kind === "scxml" ? 0 : G.head;
+    const titleW = n.kind === "scxml" ? 0 : textW(n.id, 13, 700) + 40 + hist.length * 36;
+    if (n.kind === "parallel") {
+      let x = G.pad; let h = 0;
+      for (const k of kids) { const b = boxes.get(k.id); b.rx = x; b.ry = title + G.pad; x += b.w + G.pad; h = Math.max(h, b.h); }
+      const w = Math.max(x, titleW);
+      placeHist(hist, w);
+      return place(n, { w, h: title + G.pad + h + G.pad, kids });
+    }
+    // ranks: shortest distance from the initial children
+    const edges = [];
+    for (const t of model.transitions) {
+      if (!(t.source === n || isDescOf(t.source, n))) continue;
+      for (const tg of t.targets) {
+        const a = childOf(n, t.source); const b = childOf(n, tg);
+        if (a && b && a !== b && kids.includes(a) && kids.includes(b)) edges.push([a, b]);
+      }
+    }
+    const rank = new Map();
+    const queue = [];
+    const seed = (k) => { if (!rank.has(k)) { rank.set(k, 0); queue.push(k); } };
+    n.initial.map((s) => childOf(n, s)).filter(Boolean).forEach(seed);
+    const bfs = () => {
+      while (queue.length) {
+        const a = queue.shift();
+        for (const [x, y] of edges) if (x === a && !rank.has(y)) { rank.set(y, rank.get(a) + 1); queue.push(y); }
+      }
+    };
+    bfs();
+    for (const k of kids) if (!rank.has(k)) { const r = Math.max(-1, ...rank.values()) + 1; rank.set(k, r); queue.push(k); bfs(); }
+    for (const k of kids) if (Number.isInteger(rankHint[k.id])) rank.set(k, rankHint[k.id]);
+    const rows = [];
+    for (const k of kids) { const r = rank.get(k); (rows[r] = rows[r] || []).push(k); }
+    const compact = rows.filter(Boolean);
+    compact.forEach((row) => row.sort((a, b) => (orderHint.has(a.id) && orderHint.has(b.id) ? orderHint.get(a.id) - orderHint.get(b.id) : a.order - b.order)));
+    const pos = new Map();
+    const index = () => compact.forEach((row) => row.forEach((k, i) => pos.set(k, (i + 1) / (row.length + 1))));
+    index();
+    for (let sweep = 0; sweep < 6; sweep++) {
+      const seq = sweep % 2 ? compact.slice().reverse() : compact;
+      for (const row of seq) {
+        if (row.every((k) => orderHint.has(k.id))) continue;
+        const bary = new Map(row.map((k) => {
+          const nb = edges.filter(([x, y]) => x === k || y === k).map(([x, y]) => (x === k ? y : x)).filter((o) => !row.includes(o));
+          return [k, nb.length ? nb.reduce((s, o) => s + pos.get(o), 0) / nb.length : pos.get(k)];
+        }));
+        row.sort((a, b) => bary.get(a) - bary.get(b) || a.order - b.order);
+        index();
+      }
+    }
+    const span = (k) => boxes.get(k.id).w + (boxes.get(k.id).loopRoom || 0);
+    const rowW = compact.map((row) => row.reduce((s, k) => s + span(k), 0) + G.colGap * (row.length - 1));
+    // back edges run in lanes on the right side of the group
+    const rowOf = new Map(); compact.forEach((row, r) => row.forEach((k) => rowOf.set(k, r)));
+    const ups = edges.filter(([a, b]) => rowOf.get(b) < rowOf.get(a)).length;
+    const laneRoom = ups ? 24 + G.lane * Math.min(ups, 5) : 0;
+    const innerW = Math.max(...rowW, titleW - 2 * G.pad);
+    let y = title + G.pad + G.initRoom;
+    compact.forEach((row, r) => {
+      const h = Math.max(...row.map((k) => boxes.get(k.id).h));
+      let x = G.pad + (innerW - rowW[r]) / 2;
+      for (const k of row) { const b = boxes.get(k.id); b.rx = x + (b.loopRoom || 0); b.ry = y + (h - b.h) / 2; x += span(k) + G.colGap; }
+      y += h + G.rowGap;
+    });
+    const w = innerW + 2 * G.pad + laneRoom;
+    placeHist(hist, w);
+    return place(n, { w, h: y - G.rowGap + G.pad, kids, laneRel: G.pad + innerW + 18 });
+  }
+  function placeHist(hist, w) { hist.forEach((h, i) => { const b = boxes.get(h.id); b.rx = w - 36 - i * 36; b.ry = 0; }); }
+  function place(n, b) { const box = { id: n.id, node: n, x: 0, y: 0, rx: 0, ry: 0, ...b }; boxes.set(n.id, box); return box; }
+  function isDescOf(a, b) { for (let p = a.parent; p; p = p.parent) if (p === b) return true; return false; }
+  function absolute(n, ox, oy) {
+    const b = boxes.get(n.id); b.x = ox + b.rx; b.y = oy + b.ry;
+    if (b.laneRel !== undefined) b.laneX = b.x + b.laneRel;
+    for (const c of n.children) if (boxes.has(c.id)) absolute(c, b.x, b.y);
+  }
+  size(model.root);
+  absolute(model.root, 0, 0);
+  return boxes;
+}
+
+/* ---------- Actions: draw the SVG ---------- */
+
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function cubicAt(p, t) {
+  const m = 1 - t;
+  return {
+    x: m * m * m * p[0].x + 3 * m * m * t * p[1].x + 3 * m * t * t * p[2].x + t * t * t * p[3].x,
+    y: m * m * m * p[0].y + 3 * m * m * t * p[1].y + 3 * m * t * t * p[2].y + t * t * t * p[3].y,
+  };
+}
+function edgeLabel(t) {
+  const ev = t.events.length ? t.events.join(" ") : "(no event)";
+  const c = t.condText ? " [" + (t.condText.length > 22 ? t.condText.slice(0, 21) + "…" : t.condText) + "]" : "";
+  return ev + c;
+}
+
+function drawChart(svg, model, boxes, handlers) {
+  svg.textContent = "";
+  const defs = el("defs", {}, svg);
+  for (const [id] of [["ah"], ["ah-hot"]]) {
+    const m = el("marker", { id, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 8, markerHeight: 8, orient: "auto-start-reverse" }, defs);
+    el("path", { d: "M0,0 L10,5 L0,10 z" }, m);
+  }
+  const gStates = el("g", {}, svg);
+  const gInit = el("g", { class: "init" }, svg);
+  const gEdges = el("g", {}, svg);
+  const gLabels = el("g", {}, svg);
+  const stateEls = new Map(); const trEls = new Map();
+
+  const drawState = (n, parentG) => {
+    if (n.kind === "scxml") { n.children.forEach((c) => drawState(c, parentG)); return; }
+    const b = boxes.get(n.id);
+    const kids = n.children.filter((c) => STATE_KINDS.has(c.kind));
+    const compound = kids.length > 0;
+    const region = n.parent && n.parent.kind === "parallel";
+    const cls = ["st", n.kind, compound ? (n.kind === "parallel" ? "parallel" : "compound") : "leaf", region && compound ? "region" : ""].join(" ").trim();
+    const g = el("g", { class: cls, tabindex: 0, role: "button", "data-id": n.id, "aria-label": "State " + n.id }, parentG);
+    if (n.kind === "history") {
+      el("circle", { cx: b.x + 15, cy: b.y + 15, r: 14 }, g);
+      const tx = el("text", { x: b.x + 15, y: b.y + 19.5, "text-anchor": "middle" }, g); tx.textContent = n.historyType === "deep" ? "H*" : "H";
+    } else {
+      el("rect", { class: "box", x: b.x, y: b.y, width: b.w, height: b.h, rx: compound ? 12 : 10 }, g);
+      if (n.kind === "final") el("rect", { class: "inner", x: b.x + 4, y: b.y + 4, width: b.w - 8, height: b.h - 8, rx: 7 }, g);
+      const tx = compound
+        ? el("text", { class: "title", x: b.x + 14, y: b.y + 20 }, g)
+        : el("text", { x: b.x + b.w / 2, y: b.y + b.h / 2 + 4.5, "text-anchor": "middle" }, g);
+      tx.textContent = n.id;
+    }
+    g.addEventListener("click", (e) => { e.stopPropagation(); handlers.selectState(n.id); });
+    g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handlers.selectState(n.id); } });
+    stateEls.set(n.id, g);
+    n.children.forEach((c) => drawState(c, parentG));
+  };
+  drawState(model.root, gStates);
+
+  // initial markers
+  for (const n of model.all) {
+    for (const s of n.initial || []) {
+      const b = boxes.get(s.id); if (!b) continue;
+      const x = b.x + Math.min(18, b.w / 4);
+      el("circle", { cx: x, cy: b.y - 18, r: 5 }, gInit);
+      el("path", { d: `M${x},${b.y - 13} L${x},${b.y - 1}`, "marker-end": "url(#ah)" }, gInit);
+    }
+  }
+
+  // edges: classify each route, spread the ports on each side, then draw
+  const contains = (o, i) => i.x >= o.x && i.y >= o.y && i.x + i.w <= o.x + o.w && i.y + i.h <= o.y + o.h;
+  const lcaOf = (p, q) => { const anc = new Set(); for (let x = p.parent; x; x = x.parent) anc.add(x); for (let x = q.parent; x; x = x.parent) if (anc.has(x)) return x; return model.root; };
+  const leaves = [...boxes.values()].filter((b) => b.node.kind !== "scxml" && !(b.kids && b.kids.length));
+  const clearBetween = (A, B) => {
+    const ax = A.x + A.w / 2; const bx = B.x + B.w / 2;
+    const r = { x: Math.min(ax, bx) - 14, y: B.y + B.h, w: Math.abs(ax - bx) + 28, h: A.y - (B.y + B.h) };
+    return !leaves.some((o) => o !== A && o !== B && o.x < r.x + r.w && r.x < o.x + o.w && o.y < r.y + r.h && r.y < o.y + o.h);
+  };
+  const routes = [];
+  const loopIdx = new Map();
+  for (const t of model.transitions) {
+    if (t.source.kind === "history") continue;
+    for (const tg of (t.targets.length ? t.targets : [t.source])) {
+      const A = boxes.get(t.source.id); const B = boxes.get(tg.id);
+      let kind;
+      if (A === B) kind = "self";
+      else if (contains(A, B) || contains(B, A)) kind = "nested";
+      else if (B.y >= A.y + A.h - 1) kind = "down";
+      else if (B.y + B.h <= A.y + 1) kind = clearBetween(A, B) ? "upDirect" : "up";
+      else kind = (A.x < B.x ? B.x - (A.x + A.w) : A.x - (B.x + B.w)) <= G.colGap + (A.loopRoom || 0) + (B.loopRoom || 0) + 2 ? "beside" : "over";
+      const r = { t, A, B, kind };
+      if (kind === "self") { r.idx = loopIdx.get(A.id) || 0; loopIdx.set(A.id, r.idx + 1); }
+      routes.push(r);
+    }
+  }
+  const ports = new Map();
+  const addPort = (box, side, r, end, other) => { const k = box.id + "|" + side; if (!ports.has(k)) ports.set(k, []); ports.get(k).push({ r, end, other }); };
+  const mx = (b) => b.x + b.w / 2; const my = (b) => b.y + b.h / 2;
+  for (const r of routes) {
+    if (r.kind === "down") { addPort(r.A, "bottom", r, 0, mx(r.B)); addPort(r.B, "top", r, 1, mx(r.A)); }
+    else if (r.kind === "upDirect") { addPort(r.A, "top", r, 0, mx(r.B)); addPort(r.B, "bottom", r, 1, mx(r.A)); }
+    else if (r.kind === "up") { addPort(r.A, "right", r, 0, -my(r.B)); addPort(r.B, "right", r, 1, -my(r.A)); }
+    else if (r.kind === "over") { addPort(r.A, "top", r, 0, mx(r.B)); addPort(r.B, "top", r, 1, mx(r.A)); }
+    else if (r.kind === "beside") { const right = r.A.x < r.B.x; addPort(r.A, right ? "right" : "left", r, 0, my(r.B)); addPort(r.B, right ? "left" : "right", r, 1, my(r.A)); }
+  }
+  for (const [k, list] of ports) {
+    const [id, side] = k.split("|"); const b = boxes.get(id);
+    list.sort((p, q) => p.other - q.other || (p.r.kind === "down" ? 0 : 1) - (q.r.kind === "down" ? 0 : 1) || p.r.t.order - q.r.t.order);
+    const horiz = side === "top" || side === "bottom";
+    const len = horiz ? b.w : b.h; const from = horiz ? b.x : b.y;
+    const usable = horiz ? Math.min(len * 0.7, len - 24) : len * 0.6;
+    list.forEach((p, i) => {
+      const at = from + (len - usable) / 2 + usable * (i + 1) / (list.length + 1);
+      p.r[p.end ? "e" : "s"] = side === "top" ? { x: at, y: b.y } : side === "bottom" ? { x: at, y: b.y + b.h } : side === "right" ? { x: b.x + b.w, y: at } : { x: b.x, y: at };
+      if (!p.end && horiz && list.length > 1) p.r.side = at < b.x + b.w / 2 ? "left" : "right";
+    });
+  }
+  const laneUsed = new Map();
+  for (const r of routes) {
+    const { A, B } = r; let { s, e } = r; let d; let cands;
+    if (r.kind === "self") {
+      const x = A.x; const y = A.y + A.h / 2; const k = 22 + r.idx * G.lane;
+      d = `M${x},${y - 8} C${x - k},${y - 8 - k} ${x - k},${y + 8 + k} ${x},${y + 8}`;
+      cands = [0, -22, 22].map((dy) => ({ x: x - k * 0.75 - 6, y: y + dy, end: true }));
+    } else if (r.kind === "down") {
+      const dy = Math.max(30, (e.y - s.y) / 2);
+      const p = [s, { x: s.x, y: s.y + dy }, { x: e.x, y: e.y - dy }, e];
+      d = `M${s.x},${s.y} C${p[1].x},${p[1].y} ${p[2].x},${p[2].y} ${e.x},${e.y}`;
+      cands = [0.5, 0.38, 0.62, 0.28, 0.72, 0.18, 0.82].map((t) => cubicAt(p, t));
+    } else if (r.kind === "upDirect") {
+      const dy = Math.max(30, (s.y - e.y) / 2);
+      const p = [s, { x: s.x, y: s.y - dy }, { x: e.x, y: e.y + dy }, e];
+      d = `M${s.x},${s.y} C${p[1].x},${p[1].y} ${p[2].x},${p[2].y} ${e.x},${e.y}`;
+      cands = [0.5, 0.38, 0.62, 0.28, 0.72].map((t) => cubicAt(p, t));
+    } else if (r.kind === "up") {
+      const lca = lcaOf(A.node, B.node); const lb = boxes.get(lca.id);
+      const used = laneUsed.get(lca.id) || 0; laneUsed.set(lca.id, used + 1);
+      const base = lb && lb.laneX !== undefined && lca.kind !== "parallel" ? lb.laneX : Math.max(s.x, e.x) + 20;
+      const X = Math.max(base + used * G.lane, Math.max(s.x, e.x) + 16); const rr = 8;
+      d = `M${s.x},${s.y} L${X - rr},${s.y} Q${X},${s.y} ${X},${s.y - rr} L${X},${e.y + rr} Q${X},${e.y} ${X - rr},${e.y} L${e.x},${e.y}`;
+      cands = [0.5, 0.35, 0.65, 0.2, 0.8].map((t) => ({ x: X, y: s.y + (e.y - s.y) * t }));
+    } else if (r.kind === "over") {
+      const top = Math.min(A.y, B.y) - 34 - Math.abs(e.x - s.x) * 0.08;
+      const p = [s, { x: s.x, y: top }, { x: e.x, y: top }, e];
+      d = `M${s.x},${s.y} C${p[1].x},${p[1].y} ${p[2].x},${p[2].y} ${e.x},${e.y}`;
+      cands = [0.5, 0.35, 0.65].map((t) => cubicAt(p, t));
+    } else if (r.kind === "beside") {
+      const m = (s.x + e.x) / 2;
+      const p = [s, { x: m, y: s.y }, { x: m, y: e.y }, e];
+      d = `M${s.x},${s.y} C${m},${s.y} ${m},${e.y} ${e.x},${e.y}`;
+      cands = [0.5].map((t) => cubicAt(p, t)).flatMap((c) => [c, { x: c.x, y: c.y - 22 }, { x: c.x, y: c.y + 22 }]);
+    } else {
+      const inner = contains(A, B) ? B : A; const outer = inner === A ? B : A;
+      s = { x: A.x, y: A === inner ? A.y + A.h / 2 : A.y + 40 }; e = { x: B.x, y: B === inner ? B.y + B.h / 2 : B.y + 40 };
+      const X = outer.x + 10;
+      d = `M${s.x},${s.y} C${X - 30},${s.y} ${X - 30},${e.y} ${e.x},${e.y}`;
+      cands = [{ x: X - 10, y: (s.y + e.y) / 2 }];
+    }
+    r.d = d; r.cands = cands;
+  }
+  const trG = new Map();
+  for (const t of model.transitions) {
+    if (t.source.kind === "history") continue;
+    const g = el("g", { class: "tr", "data-id": t.id }, gEdges);
+    const lg = el("g", { class: "tr", tabindex: 0, role: "button", "data-id": t.id, "aria-label": "Transition " + t.id + ": " + edgeLabel(t) }, gLabels);
+    for (const x of [g, lg]) x.addEventListener("click", (e) => { e.stopPropagation(); handlers.selectTransition(t.id); });
+    lg.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handlers.selectTransition(t.id); } });
+    trEls.set(t.id, [g, lg]); trG.set(t.id, { g, lg });
+  }
+  for (const r of routes) {
+    const { g } = trG.get(r.t.id);
+    el("path", { class: "hit", d: r.d }, g);
+    el("path", { class: "edge" + (r.t.targets.length ? "" : " targetless"), d: r.d, "marker-end": "url(#ah)" }, g);
+  }
+  // labels: first candidate point that hits no box, title, or other label
+  const obstacles = [];
+  for (const b of boxes.values()) {
+    if (b.node.kind === "scxml") continue;
+    if (b.kids && b.kids.length) { if (b.node.kind !== "scxml") obstacles.push({ x: b.x, y: b.y, w: textW(b.id, 13, 700) + 28, h: 28 }); }
+    else obstacles.push({ x: b.x - 2, y: b.y - 2, w: b.w + 4, h: b.h + 4 });
+  }
+  const overlap = (a, b) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+  const placed = [];
+  for (const r of routes) {
+    const text = edgeLabel(r.t); const w = textW(text, 12) + 12; const hgt = 20;
+    let best = null; let bestCost = Infinity;
+    for (const c of r.cands) {
+      const side = c.end ? "end" : r.side;
+      const rect = { x: side === "end" ? c.x - w : side === "left" ? c.x - w - 5 : side === "right" ? c.x + 5 : c.x - w / 2, y: c.y - hgt / 2, w, h: hgt };
+      const cost = [...obstacles, ...placed].reduce((sum, o) => sum + overlap(rect, o), 0);
+      if (cost < bestCost) { best = rect; bestCost = cost; }
+      if (cost === 0) break;
+    }
+    placed.push({ ...best, x: best.x - 2, w: best.w + 4 });
+    const lg = trG.get(r.t.id).lg;
+    el("rect", { class: "lab", x: best.x, y: best.y, width: best.w, height: best.h, rx: 4 }, lg);
+    const tx = el("text", { x: best.x + 6, y: best.y + 14 }, lg); tx.textContent = text;
+  }
+  // fit the view box to everything drawn
+  const bb = svg.getBBox();
+  const m = 12;
+  const vb = { x: bb.x - m, y: bb.y - m, w: bb.width + 2 * m, h: bb.height + 2 * m };
+  svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+  return { stateEls, trEls, vb };
+}
+
+/* ---------- Calculation: prose to safe HTML ---------- */
+
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function makeProse(glossary) {
+  const terms = (glossary || []).map((g) => g.term).filter(Boolean).sort((a, b) => b.length - a.length);
+  const defOf = new Map((glossary || []).map((g) => [g.term.toLowerCase(), g.definition]));
+  const re = terms.length ? new RegExp("\\b(" + terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")(s|es|ed|d)?\\b", "gi") : null;
+  return (text) => String(text || "").split("`").map((part, i) => {
+    if (i % 2) return "<code>" + esc(part) + "</code>";
+    if (!re) return esc(part);
+    let out = ""; let last = 0;
+    part.replace(re, (m, term, _suf, at) => {
+      out += esc(part.slice(last, at));
+      out += `<span class="term" tabindex="0" title="${esc(defOf.get(term.toLowerCase()) || "")}">${esc(m)}</span>`;
+      last = at + m.length; return m;
+    });
+    return out + esc(part.slice(last));
+  }).join("");
+}
+function sourceLinks(ref, repo) {
+  if (!ref) return "<em>The source is not known.</em>";
+  return ref.split(",").map((r) => r.trim()).filter(Boolean).map((r) => {
+    const m = r.match(/^(.*?):(\d+)(?:-(\d+))?$/);
+    if (!m || !repo || !repo.url) return "<code>" + esc(r) + "</code>";
+    const href = `${repo.url.replace(/\/$/, "")}/blob/${encodeURIComponent(repo.rev || "HEAD")}/${m[1].split("/").map(encodeURIComponent).join("/")}#L${m[2]}${m[3] ? "-L" + m[3] : ""}`;
+    return `<a href="${esc(href)}" target="_blank" rel="noopener"><code>${esc(r)}</code></a>`;
+  }).join(", ");
+}
+function describeAction(a) {
+  const at = a.attrs;
+  switch (a.tag) {
+    case "raise": return `Sends the event <code>${esc(at.event)}</code> to the same machine.`;
+    case "send": return at.delay || at.delayexpr
+      ? `Starts a timer${at.id ? " <code>" + esc(at.id) + "</code>" : ""}. After <code>${esc(at.delay || at.delayexpr)}</code>, the timer sends <code>${esc(at.event || at.eventexpr)}</code>.`
+      : `Sends the event <code>${esc(at.event || at.eventexpr)}</code>.`;
+    case "cancel": return `Stops the timer <code>${esc(at.sendid || at.sendidexpr)}</code>.`;
+    case "assign": return `Sets <code>${esc(at.location)}</code> to <code>${esc(at.expr)}</code>.`;
+    case "log": return `Writes an entry in the record${at.label ? " <code>" + esc(at.label) + "</code>" : ""}.`;
+    default: return `Does <code>&lt;${esc(a.tag)}&gt;</code>. This page does not show the result.`;
+  }
+}
+
+/* ---------- Self-check (also exposed as window.statechartSelfTest) ---------- */
+
+function selfTest(model, info) {
+  const errors = []; const warnings = [];
+  const need = (obj, keys, what) => keys.forEach((k) => { if (!obj || !obj[k] || !obj[k].meaning) errors.push(`The ${what} \`${k}\` has no meaning in the prose.`); });
+  need(info.states, model.all.filter((n) => n.kind !== "scxml").map((n) => n.id), "state");
+  need(info.events, model.events, "event");
+  need(info.conditions, Object.keys(model.data), "condition");
+  need(info.transitions, model.transitions.map((t) => t.id), "transition");
+  if (!info.scenarios || !info.scenarios.length) errors.push("The prose has no scenario.");
+  const fired = new Set();
+  (info.scenarios || []).forEach((sc, si) => {
+    const m = makeMachine(model);
+    (sc.steps || []).forEach((step, i) => {
+      for (const [k, v] of Object.entries(step.set || {})) {
+        if (!(k in model.data)) errors.push(`Scenario ${si + 1}, step ${i + 1}: \`${k}\` is not a condition.`);
+        m.setData(k, !!v);
+      }
+      if (step.event) {
+        const taken = m.fire(step.event);
+        if (!taken.length) errors.push(`Scenario "${sc.name}", step ${i + 1}: the event \`${step.event}\` has no effect.`);
+        taken.forEach((t) => fired.add(t.id));
+      }
+    });
+  });
+  model.transitions.filter((t) => !fired.has(t.id) && t.source.kind !== "history").forEach((t) => warnings.push(`No scenario fires the transition \`${t.id}\`.`));
+  return { errors, warnings };
+}
+
+/* ---------- Actions: build the page ---------- */
+
+function h(tag, attrs = {}, html = "") {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (html) e.innerHTML = html;
+  return e;
+}
+
+function boot() {
+  const app = document.getElementById("app");
+  const scxmlText = document.getElementById("scxml").textContent.trim();
+  let info; let model;
+  try {
+    info = JSON.parse(document.getElementById("explainer").textContent);
+    model = parseScxml(scxmlText);
+  } catch (e) {
+    app.appendChild(h("div", { class: "banner", role: "alert" }, `<h2>The page cannot show this chart</h2><p>${esc(e.message)}</p>`));
+    window.statechartSelfTest = () => ({ errors: [e.message], warnings: [] });
+    return;
+  }
+  const P = makeProse(info.glossary);
+  const para = (arr) => (arr || []).map((t) => `<p>${P(t)}</p>`).join("");
+  const meaning = (map, k) => (map && map[k] && map[k].meaning) ? P(map[k].meaning) : "<em>The information is missing.</em>";
+  document.title = (info.title || model.root.name) + " · state machine";
+  const showChecks = /[?&]check\b/.test(location.search);
+  const check = selfTest(model, info);
+  window.statechartSelfTest = () => selfTest(model, info);
+
+  const head = h("header");
+  head.innerHTML = `<h1>${esc(info.title || model.root.name)}</h1>
+    <div class="badges">
+      <span class="badge">Machine <code>${esc(model.root.name)}</code></span>
+      <span class="badge ${info.kind === "implicit" ? "implicit" : ""}">${info.kind === "implicit" ? "Found from the code: no part of the code names this machine" : "Named in the code: the code names this machine"}</span>
+      ${info.confidence ? `<span class="badge">Confidence: ${esc(info.confidence)}</span>` : ""}
+      <span class="badge">${model.all.filter((n) => n.kind !== "scxml").length} states · ${model.transitions.length} transitions</span>
+    </div>`;
+  app.appendChild(head);
+  if (check.errors.length || (showChecks && check.warnings.length)) {
+    app.appendChild(h("section", { class: "banner", role: "alert", id: "self-check" },
+      `<h2>Self-check: ${check.errors.length} errors, ${check.warnings.length} warnings</h2><ul>${[...check.errors, ...(showChecks ? check.warnings : [])].map((x) => `<li>${P(x)}</li>`).join("")}</ul>`));
+  }
+  app.appendChild(h("section", { id: "summary" }, `<h2>The function of this machine</h2>${para(info.summary)}`));
+  app.appendChild(h("section", { id: "context" }, `<h2>Before you start</h2>${para(info.context)}
+    <h3>Names in this machine</h3><div class="table-wrap"><table><thead><tr><th>Name</th><th>Information</th></tr></thead><tbody>
+    ${(info.glossary || []).map((g) => `<tr><td><strong>${esc(g.term)}</strong></td><td>${P(g.definition)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <details><summary>Names in the chart</summary><div class="table-wrap"><table><thead><tr><th>Name</th><th>Information</th></tr></thead><tbody>
+    ${BUILTIN_TERMS.filter((b) => !b.when || b.when(model)).map((b) => `<tr><td><strong>${esc(b.term)}</strong></td><td>${P(b.definition)}</td></tr>`).join("")}</tbody></table></div></details>`));
+
+  // playground
+  const play = h("section", { id: "chart" });
+  play.innerHTML = `<h2>The chart</h2>
+    <p>Each box shows a state. A large box holds a group of states. Each arrow shows a transition. The name on an arrow is the event that starts the transition. A name between <code>[</code> and <code>]</code> is a condition. The transition can occur only when the condition is <code>true</code>. The symbols below the chart show the colors.</p>
+    <ol class="steps"><li>To see information about a state or a transition, select its box or its arrow.</li><li>To send an event to the machine, select the button of that event.</li><li>To see all the steps of a scenario, select the scenario and push Play.</li></ol>
+    <div class="grid">
+      <div class="card">
+        <div class="chart-tools">
+          <button type="button" data-zoom="out" aria-label="Make the chart smaller">−</button>
+          <button type="button" data-zoom="fit">Fit</button>
+          <button type="button" data-zoom="in" aria-label="Make the chart larger">+</button>
+        </div>
+        <div class="chart-wrap"><svg id="svg" role="img" aria-label="State chart"></svg></div>
+        <div class="player">
+          <h3>Scenarios</h3>
+          <p>A scenario is a short sequence of steps. Each step sends one event, or changes one condition, or does the two.</p>
+          <div class="events"><select id="scn" aria-label="Scenario"></select>
+            <button type="button" class="primary" id="playbtn">Play</button><button type="button" id="stepbtn">Step</button><button type="button" id="scnreset">Start again</button></div>
+          <p id="goal"></p><div class="caption" id="caption" aria-live="polite">To start, push Play or Step.</div>
+          <details><summary>Show all steps</summary><ol class="steps" id="steplist"></ol></details>
+          <p><small>Keyboard: <code>Space</code> is Play or Pause. <code>N</code> is Step. <code>R</code> is Start again.</small></p>
+        </div>
+        <div class="legend">
+          <span><i class="sw" style="background:var(--hot);border-color:var(--hot)"></i>Active state</span>
+          <span><i class="sw" style="border-width:3px"></i>Thick arrow: the transition can occur at this time</span>
+          <span><i class="sw" style="border-style:double;border-width:4px"></i>End state</span>
+          <span><svg width="24" height="12" aria-hidden="true"><circle cx="5" cy="6" r="4" fill="#171412"/><path d="M9,6 L22,6" stroke="#171412" stroke-width="1.6"/></svg>First state</span>
+        </div>
+      </div>
+      <div class="card" id="side">
+        <div><span>Active states: </span><span class="now" id="now"></span></div>
+        <h3>Send an event</h3><div class="events" id="events"></div>
+        <div id="conds-wrap"><h3>Conditions</h3><div class="conds" id="conds"></div></div>
+        <div id="timers-wrap"><h3>Active timers</h3><div class="timers" id="timers"></div></div>
+        <div class="events"><button type="button" id="back">Back</button><button type="button" id="reset">Start again</button></div>
+        <h3>Information</h3><div class="detail" id="detail"><p>Select a box or an arrow in the chart.</p></div>
+        <details><summary>Record of steps</summary><ol class="log" id="log"></ol></details>
+      </div>
+    </div>`;
+  app.appendChild(play);
+
+  // reference tables
+  const ref = h("section", { id: "reference" });
+  const stateRows = model.all.filter((n) => n.kind !== "scxml").map((n) => `<tr><td><button type="button" class="linklike" data-state="${esc(n.id)}"><code>${esc(n.id)}</code></button></td><td>${kindText(n)}</td><td>${meaning(info.states, n.id)}</td><td>${sourceLinks(n.sourceRef, info.repo)}</td></tr>`).join("");
+  const evRows = model.events.map((e) => {
+    const ts = model.transitions.filter((t) => t.events.some((d) => d === e || e.startsWith(d.replace(/\.\*$/, "") + ".")));
+    const ev = (info.events || {})[e] || {};
+    return `<tr><td><code>${esc(e)}</code></td><td>${meaning(info.events, e)}</td><td>${ev.origin ? P(ev.origin) : ""}</td><td>${ts.map((t) => `<button type="button" class="linklike" data-tr="${esc(t.id)}">${esc(t.source.id)} → ${esc(t.targets.map((x) => x.id).join(", ") || t.source.id)}</button>`).join("<br>")}</td></tr>`;
+  }).join("");
+  const condRows = Object.keys(model.data).map((k) => `<tr><td><code>${esc(k)}</code></td><td>${meaning(info.conditions, k)}</td><td><code>${esc(model.data[k])}</code></td></tr>`).join("");
+  const trRows = model.transitions.map((t) => `<tr><td><button type="button" class="linklike" data-tr="${esc(t.id)}"><code>${esc(t.id)}</code></button></td><td><code>${esc(t.source.id)}</code> → <code>${esc(t.targets.map((x) => x.id).join(", ") || "(stays)")}</code></td><td>${esc(edgeLabel(t))}</td><td>${meaning(info.transitions, t.id)}</td><td>${sourceLinks(t.sourceRef, info.repo)}</td></tr>`).join("");
+  ref.innerHTML = `<h2>All parts of the machine</h2>
+    <h3>States</h3><div class="table-wrap"><table><thead><tr><th>State</th><th>Type</th><th>Information</th><th>Code</th></tr></thead><tbody>${stateRows}</tbody></table></div>
+    <h3>Events</h3><div class="table-wrap"><table><thead><tr><th>Event</th><th>Information</th><th>Source of the event</th><th>Transitions</th></tr></thead><tbody>${evRows}</tbody></table></div>
+    ${condRows ? `<h3>Conditions</h3><div class="table-wrap"><table><thead><tr><th>Condition</th><th>Information when <code>true</code></th><th>Value at the start</th></tr></thead><tbody>${condRows}</tbody></table></div>` : ""}
+    <h3>Transitions</h3><div class="table-wrap"><table><thead><tr><th>Id</th><th>From → to</th><th>Event [condition]</th><th>Information</th><th>Code</th></tr></thead><tbody>${trRows}</tbody></table></div>`;
+  app.appendChild(ref);
+
+  if ((info.notes || []).length) app.appendChild(h("section", { id: "notes" }, `<h2>Notes and risks</h2>${info.notes.map((n) => `<h3>${esc(n.title || "")}</h3><p>${P(n.text)}</p>`).join("")}`));
+  if ((info.evidence || []).length) app.appendChild(h("section", { id: "evidence" }, `<h2>Where this machine is in the code</h2><ul>${info.evidence.map((e) => `<li>${sourceLinks(e.source, info.repo)}: ${P(e.note)}</li>`).join("")}</ul>`));
+  if ((info.related || []).length) app.appendChild(h("section", { id: "related" }, `<h2>Related machines</h2><ul>${info.related.map((r) => `<li><a href="${esc(r.href)}">${esc(r.title)}</a></li>`).join("")}</ul>`));
+  const src = h("section", { id: "source" });
+  src.innerHTML = `<h2>SCXML source</h2><p>This is the chart in SCXML, a standard of the W3C. Other software can read and use it.</p>
+    <div class="events"><button type="button" id="copy">Copy</button><button type="button" id="download">Download</button></div>
+    <details><summary>Show the source</summary><pre class="src"><code></code></pre></details>`;
+  src.querySelector("pre code").textContent = scxmlText;
+  app.appendChild(src);
+
+  function kindText(n) {
+    if (n.kind === "final") return "End state";
+    if (n.kind === "history") return n.historyType === "deep" ? "History (all levels)" : "History";
+    if (n.kind === "parallel") return "Parallel group: all its parts are active at the same time";
+    if (n.children.some((c) => STATE_KINDS.has(c.kind))) return n.parent && n.parent.kind === "parallel" ? "Group of states (a parallel part)" : "Group of states";
+    return "State";
+  }
+
+  // machine + chart
+  const machine = makeMachine(model);
+  const svg = document.getElementById("svg");
+  let selected = null; let lastTaken = []; const undo = [];
+  const draw = drawChart(svg, model, layout(model, info.layout), {
+    selectState: (id) => { selected = { kind: "state", id }; refresh(); },
+    selectTransition: (id) => { selected = { kind: "tr", id }; refresh(); },
+  });
+  let zoom = 1;
+  const applyZoom = () => {
+    const wrapW = svg.parentElement.clientWidth || 600;
+    const fitW = Math.max(Math.min(wrapW, draw.vb.w * 1.1), Math.min(draw.vb.w * 0.8, wrapW * 2.2));
+    svg.setAttribute("width", Math.round(fitW * zoom));
+    svg.setAttribute("height", Math.round(fitW * zoom * draw.vb.h / draw.vb.w));
+  };
+  play.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
+    const z = b.dataset.zoom; zoom = z === "fit" ? 1 : Math.max(0.5, Math.min(4, zoom * (z === "in" ? 1.25 : 0.8))); applyZoom();
+  }));
+  window.addEventListener("resize", applyZoom);
+  applyZoom();
+
+  const fire = (ev) => {
+    undo.push(machine.snapshot());
+    lastTaken = machine.fire(ev).map((t) => t.id);
+    refresh();
+  };
+
+  function refresh() {
+    const active = machine.active();
+    const st = machine.state;
+    for (const [id, g] of draw.stateEls) {
+      g.classList.toggle("active", active.has(id));
+      g.classList.toggle("selected", !!selected && selected.kind === "state" && selected.id === id);
+    }
+    const enabledIds = new Set(model.events.flatMap((e) => machine.enabledFor(e).map((t) => t.id)));
+    for (const [id, gs] of draw.trEls) for (const g of gs) {
+      g.classList.toggle("enabled", enabledIds.has(id));
+      g.classList.toggle("hot", lastTaken.includes(id));
+      g.classList.toggle("selected", !!selected && selected.kind === "tr" && selected.id === id);
+      g.querySelectorAll("path.edge").forEach((p) => p.setAttribute("marker-end", lastTaken.includes(id) ? "url(#ah-hot)" : "url(#ah)"));
+    }
+    const leaves = [...st.config].filter(machine.isAtomic).sort((a, b) => a.order - b.order).map((s) => s.id);
+    document.getElementById("now").innerHTML = st.running ? leaves.map((x) => `<code>${esc(x)}</code>`).join(", ") : `<code>${esc(leaves.join(", "))}</code> (the machine is at its end)`;
+    const evBox = document.getElementById("events"); evBox.textContent = "";
+    for (const e of model.events) {
+      const ok = machine.enabledFor(e).length > 0;
+      const blocked = !ok && machine.blockedFor(e).length > 0;
+      const b = h("button", { type: "button", title: ok ? "Send this event" : blocked ? "A condition stops this event at this time" : "This event has no effect at this time" });
+      b.innerHTML = `<code>${esc(e)}</code>${blocked ? " (stopped by a condition)" : ""}`;
+      b.disabled = !ok; b.addEventListener("click", () => fire(e));
+      evBox.appendChild(b);
+    }
+    const condBox = document.getElementById("conds"); condBox.textContent = "";
+    document.getElementById("conds-wrap").hidden = !Object.keys(model.data).length;
+    for (const k of Object.keys(model.data)) {
+      const lab = h("label", { class: "cond", title: (info.conditions && info.conditions[k] && info.conditions[k].meaning) || "" });
+      const cb = h("input", { type: "checkbox" }); cb.checked = !!st.data[k];
+      cb.addEventListener("change", () => { undo.push(machine.snapshot()); machine.setData(k, cb.checked); lastTaken = machine.state.taken.map((t) => t.id); refresh(); });
+      lab.appendChild(cb); lab.appendChild(h("code", {}, esc(k)));
+      condBox.appendChild(lab);
+    }
+    const tBox = document.getElementById("timers"); tBox.textContent = "";
+    document.getElementById("timers-wrap").hidden = !st.timers.length;
+    for (const t of st.timers) {
+      const b = h("button", { type: "button" }, `Let the timer <code>${esc(t.id || t.event)}</code> end (${esc(t.delay)})`);
+      b.addEventListener("click", () => fire(t.event)); tBox.appendChild(b);
+    }
+    document.getElementById("back").disabled = !undo.length;
+    document.getElementById("log").innerHTML = st.log.map((x) => `<li>${esc(x)}</li>`).join("");
+    renderDetail(active, enabledIds);
+  }
+
+  function renderDetail(active, enabledIds) {
+    const box = document.getElementById("detail");
+    if (!selected) { box.innerHTML = "<p>Select a box or an arrow in the chart.</p>"; return; }
+    if (selected.kind === "state") {
+      const n = model.nodes.get(selected.id);
+      const outs = model.transitions.filter((t) => t.source === n);
+      const ins = model.transitions.filter((t) => t.targets.includes(n));
+      const trList = (ts, dir) => ts.length ? `<ul>${ts.map((t) => `<li><button type="button" class="linklike" data-tr="${esc(t.id)}">${esc(edgeLabel(t))}</button> ${dir === "out" ? "to" : "from"} <code>${esc(dir === "out" ? (t.targets.map((x) => x.id).join(", ") || n.id) : t.source.id)}</code></li>`).join("")}</ul>` : "None";
+      box.innerHTML = `<h3><code>${esc(n.id)}</code></h3><p>${meaning(info.states, n.id)}</p><dl>
+        <dt>Type</dt><dd>${kindText(n)}</dd>
+        <dt>At this time</dt><dd>${active.has(n.id) ? "The machine is in this state." : "The machine is not in this state."}</dd>
+        ${n.onentry.length ? `<dt>On entry</dt><dd>${n.onentry.map(describeAction).join("<br>")}</dd>` : ""}
+        ${n.onexit.length ? `<dt>On exit</dt><dd>${n.onexit.map(describeAction).join("<br>")}</dd>` : ""}
+        <dt>Transitions out</dt><dd>${trList(outs, "out")}</dd>
+        <dt>Transitions in</dt><dd>${trList(ins, "in")}</dd>
+        <dt>Code</dt><dd>${sourceLinks(n.sourceRef, info.repo)}</dd></dl>`;
+    } else {
+      const t = model.transitions.find((x) => x.id === selected.id);
+      const evInfo = t.events.map((e) => `<code>${esc(e)}</code>: ${meaning(info.events, e)}${(info.events || {})[e] && info.events[e].origin ? " Source: " + P(info.events[e].origin) : ""}`).join("<br>");
+      const conds = [...condVars(t.cond)].map((k) => `<code>${esc(k)}</code> (<code>${machine.state.data[k] ? "true" : "false"}</code> at this time): ${meaning(info.conditions, k)}`).join("<br>");
+      box.innerHTML = `<h3><code>${esc(t.id)}</code></h3><p>${meaning(info.transitions, t.id)}</p><dl>
+        <dt>From</dt><dd><button type="button" class="linklike" data-state="${esc(t.source.id)}"><code>${esc(t.source.id)}</code></button></dd>
+        <dt>To</dt><dd>${t.targets.length ? t.targets.map((x) => `<button type="button" class="linklike" data-state="${esc(x.id)}"><code>${esc(x.id)}</code></button>`).join(", ") : "The machine stays in the same state."}</dd>
+        <dt>Event</dt><dd>${evInfo || "No event. This transition occurs when its condition changes to <code>true</code>."}</dd>
+        ${t.condText ? `<dt>Condition</dt><dd><code>${esc(t.condText)}</code>${conds ? "<br>" + conds : ""}</dd>` : ""}
+        ${t.actions.length ? `<dt>Also does</dt><dd>${t.actions.map(describeAction).join("<br>")}</dd>` : ""}
+        <dt>At this time</dt><dd>${enabledIds.has(t.id) ? "This transition can occur." : "This transition cannot occur."}</dd>
+        <dt>Code</dt><dd>${sourceLinks(t.sourceRef, info.repo)}</dd></dl>
+        ${enabledIds.has(t.id) && t.events[0] ? `<button type="button" class="primary" data-fire="${esc(t.events[0])}">Send <code>${esc(t.events[0])}</code></button>` : ""}`;
+    }
+  }
+
+  document.addEventListener("click", (e) => {
+    const s = e.target.closest("[data-state]"); const t = e.target.closest("[data-tr]"); const f = e.target.closest("[data-fire]");
+    if (f) { fire(f.dataset.fire); return; }
+    if (s) { selected = { kind: "state", id: s.dataset.state }; refresh(); if (!play.contains(s)) play.scrollIntoView({ behavior: "smooth" }); }
+    else if (t) { selected = { kind: "tr", id: t.dataset.tr }; refresh(); if (!play.contains(t)) play.scrollIntoView({ behavior: "smooth" }); }
+  });
+  document.getElementById("back").addEventListener("click", () => { if (undo.length) { machine.restore(undo.pop()); lastTaken = []; refresh(); } });
+  document.getElementById("reset").addEventListener("click", () => { machine.reset(); undo.length = 0; lastTaken = []; refresh(); });
+  document.getElementById("copy").addEventListener("click", async (e) => {
+    try { await navigator.clipboard.writeText(scxmlText); e.target.textContent = "Copy done"; } catch (err) { e.target.textContent = "The copy did not work. Open the source."; }
+  });
+  document.getElementById("download").addEventListener("click", () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([scxmlText], { type: "application/scxml+xml" }));
+    a.download = model.root.name + ".scxml"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+
+  // scenario player
+  const scenarios = info.scenarios || [];
+  const sel = document.getElementById("scn");
+  scenarios.forEach((s, i) => sel.appendChild(h("option", { value: i }, esc(s.name))));
+  let si = 0; let step = 0; let timer = null;
+  const playBtn = document.getElementById("playbtn");
+  const showScenario = () => {
+    const sc = scenarios[si] || { steps: [] };
+    document.getElementById("goal").innerHTML = sc.goal ? P(sc.goal) : "";
+    document.getElementById("steplist").innerHTML = sc.steps.map((s, i) =>
+      `<li class="${i < step - 1 ? "done" : i === step - 1 ? "hot" : ""}">${s.event ? `<code>${esc(s.event)}</code>: ` : ""}${P(s.caption)}</li>`).join("");
+  };
+  const pause = () => { clearInterval(timer); timer = null; playBtn.textContent = "Play"; };
+  const scReset = () => {
+    pause(); step = 0; machine.reset(); undo.length = 0; lastTaken = []; selected = null;
+    document.getElementById("caption").textContent = "To start, push Play or Step."; showScenario(); refresh();
+  };
+  const scStep = () => {
+    const sc = scenarios[si]; if (!sc) return;
+    if (step >= sc.steps.length) { pause(); return; }
+    const s = sc.steps[step++];
+    undo.push(machine.snapshot());
+    lastTaken = [];
+    for (const [k, v] of Object.entries(s.set || {})) { machine.setData(k, !!v); lastTaken.push(...machine.state.taken.map((t) => t.id)); }
+    if (s.event) lastTaken = machine.fire(s.event).map((t) => t.id);
+    selected = lastTaken.length ? { kind: "tr", id: lastTaken[lastTaken.length - 1] } : selected;
+    document.getElementById("caption").innerHTML = `Step ${step} of ${sc.steps.length}: ${P(s.caption)}`;
+    showScenario(); refresh();
+    if (step >= sc.steps.length) pause();
+  };
+  const toggle = () => {
+    if (timer) { pause(); return; }
+    const sc = scenarios[si]; if (!sc) return;
+    if (step >= sc.steps.length) scReset();
+    playBtn.textContent = "Pause"; scStep(); if (step < sc.steps.length) timer = setInterval(scStep, 1800);
+  };
+  sel.addEventListener("change", () => { si = Number(sel.value); scReset(); });
+  playBtn.addEventListener("click", toggle);
+  document.getElementById("stepbtn").addEventListener("click", () => { pause(); scStep(); });
+  document.getElementById("scnreset").addEventListener("click", scReset);
+  document.addEventListener("keydown", (e) => {
+    if (e.target.closest("input, select, textarea") || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === " " && e.target.closest("button, [tabindex], summary, a")) return;
+    if (e.key === " ") { e.preventDefault(); toggle(); } else if (e.key === "n" || e.key === "N") { pause(); scStep(); } else if (e.key === "r" || e.key === "R") scReset();
+  });
+  showScenario();
+  refresh();
+}
+
+boot();
+})();
+</script>
+</body>
+</html>

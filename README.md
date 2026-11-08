@@ -37,7 +37,7 @@ New projects: bootstrap from [sycamore-hq/crossr-harness](https://github.com/syc
 
 All skills are designed with the same standards applied to production Rust code: functional purity, stratified design, zero technical debt, and handover-clean artifacts.
 
-Public catalog SSOT: [`docs/public-skills.json`](docs/public-skills.json) (24 skills). Names below must match that file.
+Public catalog SSOT: [`docs/public-skills.json`](docs/public-skills.json) (25 skills). Names below must match that file.
 
 | Skill                  | Purpose                                              | Category      |
 |------------------------|------------------------------------------------------|---------------|
@@ -62,6 +62,7 @@ Public catalog SSOT: [`docs/public-skills.json`](docs/public-skills.json) (24 sk
 | `unslop`               | Voice-agnostic pass that strips AI tells from prose  | Writing       |
 | `show-me`              | Compact visuals for PRs, plans, and architecture plans | Writing     |
 | `html-explainer`       | Self-contained explainer pages with diagrams and playable flows | Writing |
+| `statechart` | Find state machines; SCXML chart + interactive STE explainer for each | Writing |
 | `gan-verdict`          | GAN verdict tokens and report envelope schema        | Protocol      |
 | `github-pr-review`     | Structured inline PR review: severity grammar, clusters, Done-when conditions | Quality       |
 | `github-pr-fix`        | Apply PR review threads, push to the PR head, reply and resolve only what holds | Quality       |

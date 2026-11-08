@@ -5,3 +5,4 @@
 __pycache__/
 *.pyc
 board.json
+ste100*.tsv
