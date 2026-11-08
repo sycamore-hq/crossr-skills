@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "title": "Media player",
+  "kind": "implicit",
+  "confidence": "medium",
+  "repo": { "url": "https://github.com/example/player", "rev": "0123abc" },
+  "summary": [
+    "This machine controls the audio player in a phone app. It decides when the player plays, stops, and waits."
+  ],
+  "context": [
+    "A user selects a track. Then the player loads the track and plays it.",
+    "A phone call can stop the audio. After the call, the player goes back to the step it was in before the call."
+  ],
+  "glossary": [
+    { "term": "track", "definition": "One audio file, for example one song." },
+    { "term": "buffer", "definition": "To load part of a track into memory before the player plays it." },
+    { "term": "mute", "definition": "To set the sound to zero. The track continues to play." }
+  ],
+  "states": {
+    "stopped": { "meaning": "The player does not play. It can load a track." },
+    "active": { "meaning": "The player has a track. Two parts work at the same time: the playback and the volume." },
+    "playback": { "meaning": "This part controls the position in the track." },
+    "playback_last": { "meaning": "This marker remembers the last playback state. A return to it goes back to that state." },
+    "buffering": { "meaning": "The player loads the start of the track into memory." },
+    "playing": { "meaning": "The user hears the track." },
+    "paused": { "meaning": "The track stops at the current position. The position does not change." },
+    "ended": { "meaning": "The track is at its end." },
+    "volume": { "meaning": "This part controls the sound level." },
+    "unmuted": { "meaning": "The user can hear the sound." },
+    "muted": { "meaning": "The sound is zero." },
+    "interrupted": { "meaning": "A phone call stopped the audio." },
+    "finished": { "meaning": "The track is complete. The player goes back to the stopped state at once." }
+  },
+  "events": {
+    "player.load": { "meaning": "The user selects a track.", "origin": "The track list screen." },
+    "player.play": { "meaning": "The user pushes the play button.", "origin": "The player screen." },
+    "player.pause": { "meaning": "The user pushes the pause button.", "origin": "The player screen." },
+    "player.stop": { "meaning": "The user pushes the stop button.", "origin": "The player screen." },
+    "player.reset": { "meaning": "The player clears the completed track.", "origin": "The machine sends this event to itself." },
+    "track.end": { "meaning": "The audio file has no more sound.", "origin": "The audio system of the phone." },
+    "volume.toggle": { "meaning": "The user pushes the mute button.", "origin": "The player screen." },
+    "call.start": { "meaning": "A phone call starts.", "origin": "The phone system." },
+    "call.end": { "meaning": "The phone call ends.", "origin": "The phone system." }
+  },
+  "conditions": {
+    "hasTrack": { "meaning": "The player has a track in memory." }
+  },
+  "transitions": {
+    "t-load": { "meaning": "The player keeps the track. The state does not change." },
+    "t-play": { "meaning": "If the player has a track, the playback and the volume parts start." },
+    "t-stop": { "meaning": "From each active state, the user can stop the player." },
+    "t-call": { "meaning": "A phone call stops the audio. The player remembers the playback state." },
+    "t-history-default": { "meaning": "If the player has no record of a playback state, it starts again at the buffer step." },
+    "t-finish": { "meaning": "When the playback part ends, the player leaves the active state." },
+    "t-buffered": { "meaning": "When the track is in memory, the track starts to play. No event is necessary." },
+    "t-pause": { "meaning": "The track stops at the current position." },
+    "t-end": { "meaning": "The track has no more sound." },
+    "t-resume": { "meaning": "The track plays again from the same position." },
+    "t-mute": { "meaning": "The sound goes to zero." },
+    "t-unmute": { "meaning": "The sound comes back." },
+    "t-call-end": { "meaning": "After the call, the player goes back to the last playback state." },
+    "t-reset": { "meaning": "The player goes back to the stopped state." }
+  },
+  "scenarios": [
+    {
+      "name": "Play a track to the end",
+      "goal": "Show the normal path of one track.",
+      "steps": [
+        { "event": "player.load", "caption": "The user selects a track. The player keeps it." },
+        { "event": "player.play", "caption": "The player loads the start of the track. Then the track plays." },
+        { "event": "volume.toggle", "caption": "The user mutes the sound. The track continues to play." },
+        { "event": "track.end", "caption": "The track ends. The player stops and clears the track." }
+      ]
+    },
+    {
+      "name": "A phone call during a pause",
+      "goal": "Show how the player remembers its last state.",
+      "steps": [
+        { "event": "player.load", "caption": "The user selects a track." },
+        { "event": "player.play", "caption": "The track plays." },
+        { "event": "player.pause", "caption": "The user stops the track for a short time." },
+        { "event": "call.start", "caption": "A phone call starts. The player remembers that it was in pause." },
+        { "event": "call.end", "caption": "The call ends. The player goes back to the pause, not to the start." },
+        { "event": "player.play", "caption": "The user plays the track again from the same position." },
+        { "event": "volume.toggle", "caption": "The user mutes the sound." },
+        { "event": "volume.toggle", "caption": "The user turns the sound on again." },
+        { "event": "player.stop", "caption": "The user stops the player." }
+      ]
+    }
+  ],
+  "evidence": [
+    { "source": "src/player.ts:10-30", "note": "The `mode` field and the `isMuted` flag change together in each handler." }
+  ],
+  "notes": [
+    { "title": "Volume after a call", "text": "The history marker records only the playback part. The volume part starts again as `unmuted` after each call." }
+  ]
+}

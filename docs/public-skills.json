@@ -120,6 +120,11 @@
       "name": "html-explainer",
       "category": "Writing",
       "purpose": "Self-contained explainer pages with diagrams and playable flows"
+    },
+    {
+      "name": "statechart-explainer",
+      "category": "Writing",
+      "purpose": "Find state machines; SCXML chart + interactive STE explainer for each"
     }
   ],
   "out": [

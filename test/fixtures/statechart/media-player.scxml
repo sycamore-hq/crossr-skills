@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml xmlns="http://www.w3.org/2005/07/scxml"
+       xmlns:crossr="https://sycamore-hq.github.io/crossr/scxml/1"
+       version="1.0" datamodel="ecmascript" name="media-player" initial="stopped">
+  <datamodel>
+    <data id="hasTrack" expr="false"/>
+  </datamodel>
+  <state id="stopped" crossr:source="src/player.ts:10">
+    <transition crossr:id="t-load" event="player.load" crossr:source="src/player.ts:40">
+      <assign location="hasTrack" expr="true"/>
+    </transition>
+    <transition crossr:id="t-play" event="player.play" cond="hasTrack" target="active" crossr:source="src/player.ts:52"/>
+  </state>
+  <parallel id="active" crossr:source="src/player.ts:11-30">
+    <transition crossr:id="t-stop" event="player.stop" target="stopped" crossr:source="src/player.ts:70"/>
+    <transition crossr:id="t-call" event="call.start" target="interrupted" crossr:source="src/phone.ts:12"/>
+    <state id="playback" initial="buffering" crossr:source="src/player.ts:12">
+      <history id="playback_last" type="shallow" crossr:source="src/player.ts:13">
+        <transition crossr:id="t-history-default" target="buffering" crossr:source="src/player.ts:13"/>
+      </history>
+      <transition crossr:id="t-finish" event="done.state.playback" target="finished" crossr:source="src/player.ts:90"/>
+      <state id="buffering" crossr:source="src/player.ts:14">
+        <transition crossr:id="t-buffered" cond="hasTrack" target="playing" crossr:source="src/player.ts:60"/>
+      </state>
+      <state id="playing" crossr:source="src/player.ts:15">
+        <transition crossr:id="t-pause" event="player.pause" target="paused" crossr:source="src/player.ts:75"/>
+        <transition crossr:id="t-end" event="track.end" target="ended" crossr:source="src/player.ts:80"/>
+      </state>
+      <state id="paused" crossr:source="src/player.ts:16">
+        <transition crossr:id="t-resume" event="player.play" target="playing" crossr:source="src/player.ts:56"/>
+      </state>
+      <final id="ended" crossr:source="src/player.ts:17"/>
+    </state>
+    <state id="volume" initial="unmuted" crossr:source="src/volume.ts:5">
+      <state id="unmuted" crossr:source="src/volume.ts:6">
+        <transition crossr:id="t-mute" event="volume.toggle" target="muted" crossr:source="src/volume.ts:20"/>
+      </state>
+      <state id="muted" crossr:source="src/volume.ts:7">
+        <transition crossr:id="t-unmute" event="volume.toggle" target="unmuted" crossr:source="src/volume.ts:24"/>
+      </state>
+    </state>
+  </parallel>
+  <state id="interrupted" crossr:source="src/phone.ts:5">
+    <transition crossr:id="t-call-end" event="call.end" target="playback_last" crossr:source="src/phone.ts:20"/>
+  </state>
+  <state id="finished" crossr:source="src/player.ts:18">
+    <onentry><raise event="player.reset"/></onentry>
+    <transition crossr:id="t-reset" event="player.reset" target="stopped" crossr:source="src/player.ts:95"/>
+  </state>
+</scxml>
