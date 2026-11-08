@@ -3,7 +3,8 @@
 All prose in the explainer obeys ASD-STE100 (https://www.asd-ste100.org).
 This file restates the writing rules that apply to an explainer page, in
 our own words. It is not the standard. The full standard and its
-dictionary of approved words are free on request from ASD. When a rule here
+dictionary of approved words are free on request from ASD. The checker
+can use a local copy of the dictionary (see below). When a rule here
 and the standard disagree, the standard wins.
 
 ## Words
@@ -90,10 +91,33 @@ the replacement against the dictionary.
 
 ## What the checker does and does not do
 
-The checker in `scripts/check_statechart.py` enforces rules 4, 10, 11, 14,
-and 18, flags the words in the table above, and warns on likely `-ing`
-nouns and passive verbs. It cannot check rules 1, 3, 6, 9, 12, 13, 19, or
-20. Read the prose once against this list before you ship it.
+Without a dictionary, the checker in `scripts/check_statechart.py` enforces
+rules 4, 10, 11, 14, and 18, flags the words in the table above, and warns
+on likely `-ing` nouns and passive verbs.
+
+With a dictionary, it also checks each word (rule 1 and 2):
+
+- A word the dictionary marks as not approved is an error. The message
+  gives the approved alternative.
+- A word that is not in the dictionary is a warning. Replace it, or define
+  it in the glossary as a technical name or technical verb.
+- Code spans, glossary terms, and state ids are exempt.
+- It tries simple inflections (`-s`, `-es`, `-ed`, `-d`, `-ies`, `-ing`)
+  before it reports a word. It does not check the part of speech or the
+  approved meaning.
+
+The dictionary is copyrighted. Never commit it. Keep it in a private
+location and give the path with `--dictionary PATH` or the `STE_DICTIONARY`
+environment variable. Format: one entry per line, tab-separated:
+
+```
+# word	status	part-of-speech	alternative
+stop	approved	v
+terminate	rejected	v	stop
+```
+
+The checker cannot check rules 3, 6, 9, 12, 13, 19, or 20, or the meaning
+of an approved word. Read the prose once against this list before you ship it.
 
 ## Example
 

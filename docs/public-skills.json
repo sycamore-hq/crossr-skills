@@ -122,7 +122,7 @@
       "purpose": "Self-contained explainer pages with diagrams and playable flows"
     },
     {
-      "name": "statechart-explainer",
+      "name": "statechart",
       "category": "Writing",
       "purpose": "Find state machines; SCXML chart + interactive STE explainer for each"
     }

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Check one statechart-explainer machine: the SCXML chart and, if given, its page.
+"""Check one statechart machine: the SCXML chart and, if given, its page.
 
 Usage:
     check_statechart.py MACHINE.scxml [MACHINE.html] [--template PATH] [--strict]
+                        [--dictionary STE.tsv]
 
 Checks the SCXML against references/scxml-profile.md. With a page, also checks:
   - the page is the template with only the two data blocks changed
@@ -10,6 +11,8 @@ Checks the SCXML against references/scxml-profile.md. With a page, also checks:
   - the explainer JSON covers every state, event, condition, and transition,
     and names nothing the chart lacks (references/explainer-data.md)
   - every prose string passes the mechanical STE rules (references/ste.md)
+  - with a dictionary (--dictionary or $STE_DICTIONARY), every word is approved,
+    a technical name, or a glossary term
 
 Prints one line per finding. Exit 0 when there are no errors (and, with
 --strict, no warnings). Exit 1 otherwise. Exit 2 on bad usage.
@@ -19,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -595,6 +599,61 @@ def ste_findings(where: str, text: str, mode: str, technical: frozenset[str]) ->
     return out
 
 
+# The ASD-STE100 dictionary is copyrighted. The checker reads it from a local
+# TSV that never goes into a repository: word, status, part of speech, alternative.
+
+
+@dataclass(frozen=True)
+class Dictionary:
+    approved: frozenset[str]
+    rejected: dict[str, str]  # word -> approved alternative
+
+
+def parse_dictionary(text: str) -> Dictionary:
+    """Pure. Lines: word<TAB>approved|rejected<TAB>pos<TAB>alternative. '#' starts a comment."""
+    approved: set[str] = set()
+    rejected: dict[str, str] = {}
+    for line in text.splitlines():
+        cols = [c.strip() for c in line.split("\t")]
+        if not cols[0] or cols[0].startswith("#") or len(cols) < 2:
+            continue
+        word, status = cols[0].lower(), cols[1].lower()
+        if status == "approved":
+            approved.add(word)
+        elif status == "rejected":
+            rejected.setdefault(word, cols[3] if len(cols) > 3 else "")
+    return Dictionary(frozenset(approved), rejected)
+
+
+def base_forms(word: str) -> list[str]:
+    """The word and the simple bases it can inflect from, most specific first."""
+    forms = [word]
+    for suffix, repl in (("ies", "y"), ("ied", "y"), ("es", ""), ("s", ""), ("ed", ""), ("d", ""), ("ing", ""), ("ing", "e")):
+        if word.endswith(suffix) and len(word) - len(suffix) >= 2:
+            forms.append(word[: -len(suffix)] + repl)
+    if len(word) > 4 and word[-3:-2] == word[-4:-3] and word.endswith(("ed", "er")):
+        forms.append(word[:-3])  # stopped -> stop
+    return forms
+
+
+def dictionary_findings(where: str, text: str, dictionary: Dictionary, technical: frozenset[str]) -> list[Finding]:
+    lowered = CODE_SPAN.sub(" ", text).lower()
+    for term in technical:
+        lowered = re.sub(r"(?<!\w)" + re.escape(term) + r"(?:s|es|ed|d)?(?!\w)", " ", lowered)
+    out: list[Finding] = []
+    for word in sorted(set(re.findall(r"[a-z][a-z'-]*[a-z]|[a-z]", lowered))):
+        forms = base_forms(word)
+        if any(f in dictionary.approved for f in forms):
+            continue
+        hit = next((f for f in forms if f in dictionary.rejected), None)
+        if hit is not None:
+            alt = dictionary.rejected[hit]
+            out.append(err(where, f"STE dictionary: {word!r} is not approved" + (f". Use {alt!r}" if alt else "")))
+        else:
+            out.append(warn(where, f"STE dictionary: {word!r} is not in the dictionary. Use an approved word, or define it in the glossary"))
+    return out
+
+
 def technical_names(model: Model, info: dict) -> frozenset[str]:
     names = {str(g.get("term", "")).lower() for g in info.get("glossary") or []}
     names |= {n.lower().replace("_", " ") for n in model.nodes}
@@ -602,7 +661,8 @@ def technical_names(model: Model, info: dict) -> frozenset[str]:
     return frozenset(n for n in names if n)
 
 
-def check_page(page: str, template: str, scxml_text: str, model: Model, where: str) -> list[Finding]:
+def check_page(page: str, template: str, scxml_text: str, model: Model, where: str,
+               dictionary: Dictionary | None = None) -> list[Finding]:
     findings = template_findings(page, template, where)
     raw, more = embed_findings(page, scxml_text, where)
     findings += more
@@ -618,19 +678,23 @@ def check_page(page: str, template: str, scxml_text: str, model: Model, where: s
     tech = technical_names(model, info)
     for loc, text, mode in prose_strings(info):
         findings += ste_findings(f"{where}: {loc}", text, mode, tech)
+        if dictionary is not None and isinstance(text, str):
+            findings += dictionary_findings(f"{where}: {loc}", text, dictionary, tech)
     return findings
 
 
 # ------------------------------------------------------------------- actions
 
 
-def run(scxml_path: Path, html_path: Path | None, template_path: Path) -> list[Finding]:
+def run(scxml_path: Path, html_path: Path | None, template_path: Path,
+        dictionary_path: Path | None = None) -> list[Finding]:
     scxml_text = scxml_path.read_text(encoding="utf-8")
     model, findings = check_scxml_text(scxml_text, scxml_path.name)
     if html_path is not None and model is not None:
         findings += check_page(
             html_path.read_text(encoding="utf-8"), template_path.read_text(encoding="utf-8"),
             scxml_text, model, html_path.name,
+            parse_dictionary(dictionary_path.read_text(encoding="utf-8")) if dictionary_path else None,
         )
     return findings
 
@@ -651,12 +715,21 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("html", type=Path, nargs="?")
     ap.add_argument("--template", type=Path, default=DEFAULT_TEMPLATE)
     ap.add_argument("--strict", action="store_true", help="fail on warnings too")
+    ap.add_argument("--dictionary", type=Path, default=_env_path("STE_DICTIONARY"),
+                    help="local ASD-STE100 wordlist TSV (default: $STE_DICTIONARY)")
     args = ap.parse_args(argv)
-    for p in [args.scxml, args.html, args.template if args.html else None]:
+    for p in [args.scxml, args.html, args.template if args.html else None, args.dictionary]:
         if p is not None and not p.is_file():
             print(f"error: {p}: file not found", file=sys.stderr)
             return 2
-    return report(run(args.scxml, args.html, args.template), args.strict)
+    if args.html:
+        print(f"note: STE dictionary {'loaded from ' + str(args.dictionary) if args.dictionary else 'not loaded: mechanical STE rules only'}")
+    return report(run(args.scxml, args.html, args.template, args.dictionary), args.strict)
+
+
+def _env_path(name: str) -> Path | None:
+    value = os.environ.get(name, "").strip()
+    return Path(value).expanduser() if value else None
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""statechart-explainer: checker, page builder, and shipped examples.
+"""statechart: checker, page builder, and shipped examples.
 
 The checker is the mechanical half of the skill's Verification section. These
 tests pin what it accepts and rejects, and that the shipped template sample
@@ -21,7 +21,7 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 ROOT = Path(__file__).resolve().parent.parent
-SKILL = ROOT / ".agents" / "skills" / "statechart-explainer"
+SKILL = ROOT / ".agents" / "skills" / "statechart"
 FIXTURES = ROOT / "test" / "fixtures" / "statechart"
 sys.path.insert(0, str(SKILL / "scripts"))
 
@@ -236,6 +236,41 @@ class Ste(unittest.TestCase):
         self.assertEqual(warnings(self.lint("The order is in the pending state.")), [])
 
 
+class Dictionary(unittest.TestCase):
+    DICT = cs.parse_dictionary(
+        "# word\tstatus\tpos\talternative\n"
+        "the\tapproved\tart\t\nstop\tapproved\tv\t\njob\tapproved\tn\t\n"
+        "terminate\trejected\tv\tstop\nquickly\trejected\tadv\t\n"
+    )
+
+    def lint(self, text):
+        return cs.dictionary_findings("x", text, self.DICT, frozenset({"queue"}))
+
+    def test_parse_skips_comments_and_keeps_alternatives(self):
+        self.assertIn("stop", self.DICT.approved)
+        self.assertEqual(self.DICT.rejected["terminate"], "stop")
+        self.assertNotIn("# word", self.DICT.approved)
+
+    def test_inflections_of_approved_words_pass(self):
+        self.assertEqual(self.lint("The job stopped. The jobs stop."), [])
+
+    def test_rejected_word_is_an_error_with_its_alternative(self):
+        errs = errors(self.lint("The job terminates."))
+        self.assertEqual(len(errs), 1)
+        self.assertIn("Use 'stop'", errs[0])
+
+    def test_unknown_word_is_a_warning(self):
+        self.assertTrue(any("'banana'" in m for m in warnings(self.lint("The banana stops."))))
+
+    def test_code_spans_and_technical_names_are_exempt(self):
+        self.assertEqual(self.lint("The `fooBar` queues stop."), [])
+
+    def test_check_page_uses_the_dictionary(self):
+        model, _ = scxml(SAMPLE_SCXML)
+        findings = cs.check_page(TEMPLATE, TEMPLATE, SAMPLE_SCXML, model, "t.html", self.DICT)
+        self.assertTrue(any("STE dictionary" in f.message for f in findings))
+
+
 class Cli(unittest.TestCase):
     def test_exit_codes(self):
         with tempfile.TemporaryDirectory() as d:
@@ -247,6 +282,7 @@ class Cli(unittest.TestCase):
                 self.assertEqual(cs.main([str(good)]), 0)
                 self.assertEqual(cs.main([str(bad)]), 1)
                 self.assertEqual(cs.main([str(Path(d) / "missing.scxml")]), 2)
+                self.assertEqual(cs.main([str(good), "--dictionary", str(Path(d) / "none.tsv")]), 2)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 ---
-name: statechart-explainer
+name: statechart
 description: |
   Find every state machine in a codebase, explicit and implicit, and write two
   files for each one: a W3C SCXML chart and a self-contained interactive HTML
@@ -34,6 +34,23 @@ This skill is portable. The invoking harness supplies:
 
 The template uses the CrossR house palette. Do not edit the template per
 machine; another harness ships its own copy of the template.
+
+## Install
+
+The skill is this directory. Copy all of it, not only `SKILL.md`: the
+scripts and the template live next to it. From a `crossr-skills` checkout:
+
+| Agent | Command | Use |
+| --- | --- | --- |
+| Claude Code | `./scripts/sync-claude-skills statechart` | `/statechart` |
+| Codex | `./scripts/sync-claude-skills --target ~/.codex/skills statechart` | `$statechart`, or ask for state machines |
+| Other agentskills.io agents | Copy `.agents/skills/statechart/` into the agent's skills directory | By name |
+
+Needs Python 3.9+ for the scripts and a browser for the look step.
+
+Optional: set `STE_DICTIONARY` to the path of a local ASD-STE100 wordlist.
+The checker then checks each word. See [references/ste.md](references/ste.md).
+Never commit the wordlist.
 
 ## Inputs and outputs
 
@@ -81,8 +98,9 @@ not delete them.
    `python3 scripts/build_page.py <id>.scxml <id>.json <id>.html`. It puts
    the SCXML and the JSON in the template's two data blocks and changes
    nothing else. Keep `<id>.json` next to the page so a rerun can rebuild it.
-8. **Check.** Run `python3 scripts/check_statechart.py <id>.scxml <id>.html`
-   from this skill directory, or with the full path. Fix every error. Fix
+8. **Check.** Run `python3 scripts/check_statechart.py <id>.scxml <id>.html`.
+   Paths to `scripts/` are relative to this file. The checker uses the
+   STE dictionary when `STE_DICTIONARY` is set, and says so. Fix every error. Fix
    each warning, or write in the inventory why it stays.
 9. **Look.** Open the page at about 1280 px and about 390 px wide. Play each
    scenario to the end. The page shows a red self-check banner when a
