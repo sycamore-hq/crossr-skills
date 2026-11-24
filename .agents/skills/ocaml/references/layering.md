@@ -28,3 +28,5 @@ Calculations take data and return data. They do not touch the clock, the disk, o
 `code-writer` already owns this split. This topic is the OCaml shape of it: records and variants as data, functions without `ref` / I/O as calculation, adapters as action, and a `dune` `libraries` list that reads bottom-up.
 
 A functor that only renames a module is decoration. A functor over a real parameter (a hash, a store backend) is the tool.
+
+Structure between modules is the cross-cutting `deep-modules` book (`MD-01`..`MD-08`). In OCaml the compiler already forbids cycles between compilation units, so `MD-01` bites at the library level (`dune` libraries that need each other) and `MD-02` at mutually recursive modules. An abstract `type t` in the `.mli` (`RA-02`) is the usual cure for `MD-03`; an `.mli` that lists most of the `.ml` is an `MD-04` finding.

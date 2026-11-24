@@ -27,6 +27,11 @@
       "purpose": "Cross-cutting system-design book: plan-time Rules + How, generated RULES.md"
     },
     {
+      "name": "deep-modules",
+      "category": "Design Book",
+      "purpose": "Cross-cutting structure book: deep modules, narrow interfaces, generated RULES.md"
+    },
+    {
       "name": "code-review",
       "category": "Quality",
       "purpose": "Ruthless code quality guardian"

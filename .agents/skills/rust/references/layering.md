@@ -29,3 +29,5 @@ A pile of `parse_foo` / `render_foo` / `foo_from_bar` that all take `&Foo` is a 
 That move is free for a monomorphic type: same FnAbi, same body, different symbol. Keep the function free when the only home is `impl<T> Foo<T>` and the fn does not use `T`, when the impl header would early-bind a lifetime the caller needs late-bound, or when the fn is a combinator over several types with no owner.
 
 Do not invent a dummy unit struct just to namespace helpers. Attach to the type that already exists.
+
+Structure between modules is the cross-cutting `deep-modules` book (`MD-01`..`MD-08`). In Rust: a sibling cycle is two `mod`s under one parent that `use super::` each other; a field leak is outside code doing `x.items.push(..)` or calling a `fn items_mut(&mut self)`, which `pub(crate)` does not excuse; a shallow module is a `pub mod` whose outside callers reach most of its `pub fn`s. Break a cycle by moving the shared item into the lower module, not by re-exporting it from the parent.

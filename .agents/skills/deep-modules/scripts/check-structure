@@ -1,0 +1,266 @@
+#!/usr/bin/env python3
+"""check-structure: the layout checks of deep-modules (MD-05, MD-06).
+
+Usage:
+    check-structure [ROOT] [--ext .rs] [--max-lines N] [--max-entries N]
+                    [--baseline FILE | --write-baseline FILE]
+
+Reads files only; never builds or runs the code under ROOT.
+
+  MD-05 wide-directory  a directory holds more than --max-entries source
+                        files and source-bearing subdirectories.
+  MD-06 long-file       a source file has more than --max-lines lines.
+
+Exit codes: 0 clean (or only baselined findings), 1 new findings, 2 usage or
+I/O error. A baseline lists `<rule> <key>` per line; fixed entries never fail,
+and are listed as stale so the change that fixed them can delete them.
+Skipped: target, node_modules, _build, vendor, and every dot-directory.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+from collections.abc import Iterable, Iterator
+from dataclasses import dataclass
+from enum import Enum
+from pathlib import Path
+
+SKIPPED_DIRS = frozenset({"target", "node_modules", "_build", "vendor"})
+DEFAULT_MAX_LINES = 2000
+DEFAULT_MAX_ENTRIES = 15
+
+
+class Rule(Enum):
+    WIDE_DIRECTORY = "MD-05"
+    LONG_FILE = "MD-06"
+
+
+class Failure(Enum):
+    BAD_ARGUMENTS = "bad-arguments"
+    MISSING_ROOT = "missing-root"
+    BAD_BASELINE = "bad-baseline"
+    UNREADABLE = "unreadable"
+    UNWRITABLE = "unwritable"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True)
+class Error(Exception):
+    kind: Failure
+    detail: str
+
+    def __str__(self) -> str:
+        return f"{self.kind.value}: {self.detail}"
+
+
+@dataclass(frozen=True)
+class Finding:
+    rule: Rule
+    key: str
+    message: str
+
+    @property
+    def entry(self) -> str:
+        return f"{self.rule.value} {self.key}"
+
+
+@dataclass(frozen=True)
+class Options:
+    root: Path = Path(".")
+    extensions: tuple[str, ...] = (".rs",)
+    max_lines: int = DEFAULT_MAX_LINES
+    max_entries: int = DEFAULT_MAX_ENTRIES
+    baseline: Path | None = None
+    write_baseline: Path | None = None
+
+
+# ---------------------------------------------------------------- arguments
+
+VALUE_FLAGS = ("--ext", "--max-lines", "--max-entries", "--baseline", "--write-baseline")
+
+
+def parse_arguments(words: list[str]) -> Options:
+    values: dict[str, list[str]] = {}
+    roots: list[str] = []
+    stream = iter(words)
+    for word in stream:
+        if word not in VALUE_FLAGS:
+            roots.append(word)
+            continue
+        value = next(stream, None)
+        if value is None or value.startswith("--"):
+            raise Error(Failure.BAD_ARGUMENTS, f"{word} needs a value")
+        values.setdefault(word, []).append(value)
+    return build_options(roots, values)
+
+
+def build_options(roots: list[str], values: dict[str, list[str]]) -> Options:
+    unknown = [word for word in roots if word.startswith("-")]
+    if unknown:
+        raise Error(Failure.BAD_ARGUMENTS, f"unknown flag {unknown[0]}")
+    if len(roots) > 1:
+        raise Error(Failure.BAD_ARGUMENTS, "give at most one ROOT")
+    bare = [ext for ext in values.get("--ext", []) if not ext.startswith(".") or ext == "."]
+    if bare:
+        raise Error(Failure.BAD_ARGUMENTS, f"--ext needs a leading dot, got {bare[0]!r}")
+    if "--baseline" in values and "--write-baseline" in values:
+        raise Error(Failure.BAD_ARGUMENTS, "--baseline and --write-baseline exclude each other")
+    return Options(
+        root=Path(roots[0]) if roots else Path("."),
+        extensions=tuple(values.get("--ext", [".rs"])),
+        max_lines=positive(values, "--max-lines", DEFAULT_MAX_LINES),
+        max_entries=positive(values, "--max-entries", DEFAULT_MAX_ENTRIES),
+        baseline=last_path(values, "--baseline"),
+        write_baseline=last_path(values, "--write-baseline"),
+    )
+
+
+def positive(values: dict[str, list[str]], flag: str, default: int) -> int:
+    if flag not in values:
+        return default
+    text = values[flag][-1]
+    if not text.isdecimal() or int(text) == 0:
+        raise Error(Failure.BAD_ARGUMENTS, f"{flag} needs a positive integer, got {text!r}")
+    return int(text)
+
+
+def last_path(values: dict[str, list[str]], flag: str) -> Path | None:
+    return Path(values[flag][-1]) if flag in values else None
+
+
+# ---------------------------------------------------------------- source tree
+
+def skipped(name: str) -> bool:
+    return name in SKIPPED_DIRS or name.startswith(".")
+
+
+def unlistable(error: OSError) -> None:
+    raise Error(Failure.UNREADABLE, f"{error.filename}: {error.strerror}") from error
+
+
+def source_files(root: Path, extensions: tuple[str, ...]) -> list[Path]:
+    found = []
+    for directory, subdirectories, names in os.walk(root, onerror=unlistable):
+        subdirectories[:] = [name for name in subdirectories if not skipped(name)]
+        here = Path(directory).relative_to(root)
+        found.extend(here / name for name in names if Path(name).suffix in extensions)
+    return sorted(found)
+
+
+def read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError as error:
+        raise Error(Failure.UNREADABLE, f"{path}: {error.strerror}") from error
+
+
+# ---------------------------------------------------------------- checks
+
+def long_files(root: Path, files: list[Path], most: int) -> Iterator[Finding]:
+    for relative in files:
+        count = line_count(read_text(root / relative))
+        if count <= most:
+            continue
+        yield Finding(Rule.LONG_FILE, relative.as_posix(),
+                      f"{relative.as_posix()} has {count} lines, more than {most}")
+
+
+def line_count(text: str) -> int:
+    return text.count("\n") + (1 if text and not text.endswith("\n") else 0)
+
+
+def directory_entries(files: list[Path]) -> dict[str, set[str]]:
+    entries: dict[str, set[str]] = {}
+    for relative in files:
+        parts = relative.parts
+        for depth in range(len(parts)):
+            holder = "/".join(parts[:depth]) or "."
+            member = parts[depth] + ("/" if depth < len(parts) - 1 else "")
+            entries.setdefault(holder, set()).add(member)
+    return entries
+
+
+def wide_directories(files: list[Path], most: int) -> Iterator[Finding]:
+    for holder, members in sorted(directory_entries(files).items()):
+        if len(members) <= most:
+            continue
+        shown = "the root directory" if holder == "." else f"{holder}/"
+        yield Finding(Rule.WIDE_DIRECTORY, holder,
+                      f"{shown} holds {len(members)} source entries, more than {most}")
+
+
+# ---------------------------------------------------------------- baseline
+
+def read_baseline(path: Path) -> set[str]:
+    known = {rule.value for rule in Rule}
+    entries = set()
+    for number, line in enumerate(read_text(path).splitlines(), start=1):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        rule, _, key = line.partition(" ")
+        if rule not in known or not key.strip():
+            raise Error(Failure.BAD_BASELINE, f"{path}:{number}: expected '<rule> <key>'")
+        entries.add(f"{rule} {key.strip()}")
+    return entries
+
+
+def write_baseline(path: Path, findings: Iterable[Finding]) -> None:
+    lines = sorted({finding.entry for finding in findings})
+    try:
+        path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
+    except OSError as error:
+        raise Error(Failure.UNWRITABLE, f"{path}: {error.strerror}") from error
+
+
+# ---------------------------------------------------------------- actions
+
+def check(options: Options) -> list[Finding]:
+    if not options.root.is_dir():
+        raise Error(Failure.MISSING_ROOT, f"{options.root} is not a directory")
+    files = source_files(options.root, options.extensions)
+    findings = [
+        *long_files(options.root, files, options.max_lines),
+        *wide_directories(files, options.max_entries),
+    ]
+    return sorted(findings, key=lambda f: (f.rule.value, f.key))
+
+
+HELP_FLAGS = frozenset({"-h", "--help"})
+
+
+def run(options: Options) -> int:
+    findings = check(options)
+    if options.write_baseline is not None:
+        write_baseline(options.write_baseline, findings)
+        print(f"check-structure: wrote {len(findings)} entries to {options.write_baseline}")
+        return 0
+    allowed = read_baseline(options.baseline) if options.baseline else set()
+    fresh = [finding for finding in findings if finding.entry not in allowed]
+    stale = sorted(allowed - {finding.entry for finding in findings})
+    for finding in fresh:
+        print(f"{finding.rule.value} {finding.message}")
+    for entry in stale:
+        print(f"stale baseline entry, delete it: {entry}")
+    print(f"check-structure: {len(fresh)} new, {len(findings) - len(fresh)} baselined, "
+          f"{len(stale)} stale")
+    return 1 if fresh else 0
+
+
+def main(words: list[str]) -> int:
+    if HELP_FLAGS.intersection(words):
+        print(__doc__)
+        return 0
+    try:
+        return run(parse_arguments(words))
+    except Error as error:
+        print(f"check-structure: {error}", file=sys.stderr)
+        return 2
+    except OSError as error:
+        print(f"check-structure: {Error(Failure.UNKNOWN, str(error))}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

@@ -48,7 +48,7 @@ id and lands **before** the first implementation commit.
 
 `## System-design applicability` comes before `## Phases`. It has one line per
 topic key of each disclosed cross-cutting book (`system-design`: DF, DP, DS, DB,
-DX, DI). Each key appears exactly once, as `applies` or `n/a — <reason>`, in any
+DX, DI; `deep-modules`: MD). Each key appears exactly once, as `applies` or `n/a — <reason>`, in any
 order. `scripts/audit-plan` derives the keys from the disclosed `RULES.md` and
 checks the shape. Whether an `n/a` is true is the Architect's call (`DA-01`).
 Applicable obligations become claims that prove them, and those claims count
