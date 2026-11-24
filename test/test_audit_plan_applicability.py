@@ -185,8 +185,9 @@ class Cli(unittest.TestCase):
     def test_default_uses_this_catalogs_cross_cutting_books(self):
         with tempfile.TemporaryDirectory() as tmp:
             good, bad = Path(tmp) / "good.md", Path(tmp) / "bad.md"
-            good.write_text(plan())
-            bad.write_text(plan(without("DI")))
+            deep_modules = "- MD: n/a — no modules, files or directories added\n"
+            good.write_text(plan(VALID + deep_modules))
+            bad.write_text(plan(without("DI") + deep_modules))
             self.assertEqual(self.run_main([str(good)]), 0)
             self.assertEqual(self.run_main([str(bad)]), 1)
 

@@ -89,7 +89,7 @@ PACKET_PLAN = """\
 """
 
 
-# The CLI audits against this catalog's cross-cutting books (system-design).
+# The CLI audits against this catalog's cross-cutting books (system-design, deep-modules).
 SYSTEM_DESIGN_APPLICABILITY = """\
 ## System-design applicability
 - DF: applies
@@ -98,6 +98,7 @@ SYSTEM_DESIGN_APPLICABILITY = """\
 - DB: applies
 - DX: n/a — no shared mutable state
 - DI: n/a — no externally observable state changes
+- MD: n/a — no modules, files or directories added
 """
 
 
