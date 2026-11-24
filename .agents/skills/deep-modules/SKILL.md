@@ -12,7 +12,7 @@ metadata:
 
 A module earns its place by what it hides. Its interface is the price a reader pays to use it; what stays behind that interface is what they get for free. When the two are about equal, the module is overhead. When modules reach into each other, nobody can read one without the others.
 
-This book turns that idea into six structural rules and one repair rule. `code-writer` owns function-level shape (purity, layering, naming). This book owns the shape between modules and types: who depends on whom, who touches whose data, and how much each one asks a reader to learn.
+This book turns that idea into six structural rules and two repair rules. `code-writer` owns function-level shape (purity, layering, naming). This book owns the shape between modules and types: who depends on whom, who touches whose data, and how much each one asks a reader to learn.
 
 ## When to load which reference
 

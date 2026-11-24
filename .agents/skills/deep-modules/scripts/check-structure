@@ -12,14 +12,17 @@ Reads files only; never builds or runs the code under ROOT.
   MD-06 long-file       a source file has more than --max-lines lines.
 
 Exit codes: 0 clean (or only baselined findings), 1 new findings, 2 usage or
-I/O error. A baseline lists `<rule> <key>` per line; fixed entries never fail.
+I/O error. A baseline lists `<rule> <key>` per line; fixed entries never fail,
+and are listed as stale so the change that fixed them can delete them.
+Directories named in SKIPPED_DIRS, and every dot-directory, are skipped.
 """
 
 from __future__ import annotations
 
+import os
 import sys
 from collections.abc import Iterable, Iterator
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
@@ -51,11 +54,11 @@ class Error(Exception):
         return f"{self.kind.value}: {self.detail}"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class Finding:
-    rule: Rule = field(compare=False)
+    rule: Rule
     key: str
-    message: str = field(compare=False)
+    message: str
 
     @property
     def entry(self) -> str:
@@ -98,6 +101,9 @@ def build_options(roots: list[str], values: dict[str, list[str]]) -> Options:
         raise Error(Failure.BAD_ARGUMENTS, f"unknown flag {unknown[0]}")
     if len(roots) > 1:
         raise Error(Failure.BAD_ARGUMENTS, "give at most one ROOT")
+    bare = [ext for ext in values.get("--ext", []) if not ext.startswith(".") or ext == "."]
+    if bare:
+        raise Error(Failure.BAD_ARGUMENTS, f"--ext needs a leading dot, got {bare[0]!r}")
     if "--baseline" in values and "--write-baseline" in values:
         raise Error(Failure.BAD_ARGUMENTS, "--baseline and --write-baseline exclude each other")
     return Options(
@@ -114,7 +120,7 @@ def positive(values: dict[str, list[str]], flag: str, default: int) -> int:
     if flag not in values:
         return default
     text = values[flag][-1]
-    if not text.isdigit() or int(text) == 0:
+    if not text.isdecimal() or int(text) == 0:
         raise Error(Failure.BAD_ARGUMENTS, f"{flag} needs a positive integer, got {text!r}")
     return int(text)
 
@@ -125,15 +131,17 @@ def last_path(values: dict[str, list[str]], flag: str) -> Path | None:
 
 # ---------------------------------------------------------------- source tree
 
+def skipped(name: str) -> bool:
+    return name in SKIPPED_DIRS or name.startswith(".")
+
+
 def source_files(root: Path, extensions: tuple[str, ...]) -> list[Path]:
     found = []
-    for path in sorted(root.rglob("*")):
-        relative = path.relative_to(root)
-        if any(part in SKIPPED_DIRS for part in relative.parts):
-            continue
-        if path.is_file() and path.suffix in extensions:
-            found.append(relative)
-    return found
+    for directory, subdirectories, names in os.walk(root):
+        subdirectories[:] = [name for name in subdirectories if not skipped(name)]
+        here = Path(directory).relative_to(root)
+        found.extend(here / name for name in names if Path(name).suffix in extensions)
+    return sorted(found)
 
 
 def read_text(path: Path) -> str:
@@ -147,11 +155,15 @@ def read_text(path: Path) -> str:
 
 def long_files(root: Path, files: list[Path], most: int) -> Iterator[Finding]:
     for relative in files:
-        count = len(read_text(root / relative).splitlines())
+        count = line_count(read_text(root / relative))
         if count <= most:
             continue
         yield Finding(Rule.LONG_FILE, relative.as_posix(),
                       f"{relative.as_posix()} has {count} lines, more than {most}")
+
+
+def line_count(text: str) -> int:
+    return text.count("\n") + (1 if text and not text.endswith("\n") else 0)
 
 
 def directory_entries(files: list[Path]) -> dict[str, set[str]]:
@@ -169,8 +181,9 @@ def wide_directories(files: list[Path], most: int) -> Iterator[Finding]:
     for holder, members in sorted(directory_entries(files).items()):
         if len(members) <= most:
             continue
+        shown = "the root directory" if holder == "." else f"{holder}/"
         yield Finding(Rule.WIDE_DIRECTORY, holder,
-                      f"{holder}/ holds {len(members)} source entries, more than {most}")
+                      f"{shown} holds {len(members)} source entries, more than {most}")
 
 
 # ---------------------------------------------------------------- baseline
@@ -210,6 +223,9 @@ def check(options: Options) -> list[Finding]:
     return sorted(findings, key=lambda f: (f.rule.value, f.key))
 
 
+HELP_FLAGS = frozenset({"-h", "--help"})
+
+
 def run(options: Options) -> int:
     findings = check(options)
     if options.write_baseline is not None:
@@ -218,13 +234,20 @@ def run(options: Options) -> int:
         return 0
     allowed = read_baseline(options.baseline) if options.baseline else set()
     fresh = [finding for finding in findings if finding.entry not in allowed]
+    stale = sorted(allowed - {finding.entry for finding in findings})
     for finding in fresh:
         print(f"{finding.rule.value} {finding.message}")
-    print(f"check-structure: {len(fresh)} new, {len(findings) - len(fresh)} baselined")
+    for entry in stale:
+        print(f"stale baseline entry, delete it: {entry}")
+    print(f"check-structure: {len(fresh)} new, {len(findings) - len(fresh)} baselined, "
+          f"{len(stale)} stale")
     return 1 if fresh else 0
 
 
 def main(words: list[str]) -> int:
+    if HELP_FLAGS.intersection(words):
+        print(__doc__)
+        return 0
     try:
         return run(parse_arguments(words))
     except Error as error:

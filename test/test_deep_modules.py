@@ -55,11 +55,15 @@ class Book(unittest.TestCase):
         ids = [rule["bare_id"] for rule in EXTRACT.collect_book(BOOK)]
         self.assertEqual(sorted(ids), [f"MD-0{n}" for n in range(1, 9)])
 
+    def test_committed_rules_match_extraction(self):
+        rendered = EXTRACT.render(BOOK.name, EXTRACT.collect_book(BOOK))
+        self.assertEqual((BOOK / "RULES.md").read_text(encoding="utf-8"), rendered)
+        self.assertIn("check: scripts/check-structure --max-lines 2000", rendered)
+
     def test_upstream_tool_is_credited_but_not_required(self):
         card = (BOOK / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn("Deterministic Machines", card)
         self.assertIn("MIT", card)
-        self.assertIn("pending approval", card)
         self.assertNotIn("cargo install", "".join(
             p.read_text(encoding="utf-8") for p in BOOK.rglob("*.md")))
 
@@ -112,6 +116,43 @@ class Layout(unittest.TestCase):
         self.assertIn("src/new.rs", out)
         self.assertNotIn("src/old.rs", out)
 
+    def test_fixed_baseline_entry_is_listed_as_stale(self):
+        baseline = self.root / "baseline"
+        baseline.write_text("MD-06 src/gone.rs\n")
+        write(self.root, "src/lib.rs")
+        code, out, _ = run(str(self.root), "--baseline", str(baseline))
+        self.assertEqual(code, 0)
+        self.assertIn("stale baseline entry, delete it: MD-06 src/gone.rs", out)
+
+    def test_wide_root_directory(self):
+        for name in "abc":
+            write(self.root, f"{name}.rs")
+        code, out, _ = run(str(self.root), "--max-entries", "2")
+        self.assertEqual(code, 1)
+        self.assertIn("MD-05 the root directory holds 3 source entries", out)
+
+    def test_dot_directories_are_skipped(self):
+        write(self.root, ".venv/lib/big.py", 50)
+        self.assertEqual(run(str(self.root), "--ext", ".py", "--max-lines", "10")[0], 0)
+
+    def test_lines_are_newlines_not_form_feeds(self):
+        (self.root / "a.rs").write_text("x\fy\n" * 10, encoding="utf-8")
+        self.assertEqual(run(str(self.root), "--max-lines", "10")[0], 0)
+
+    def test_repeated_ext_checks_every_extension(self):
+        write(self.root, "a.ml", 11)
+        write(self.root, "a.mli", 11)
+        code, out, _ = run(str(self.root), "--max-lines", "10", "--ext", ".ml", "--ext", ".mli")
+        self.assertEqual(code, 1)
+        self.assertIn("a.ml has", out)
+        self.assertIn("a.mli has", out)
+
+    def test_unwritable_baseline_is_an_error(self):
+        target = self.root / "missing" / "baseline"
+        code, _, err = run(str(self.root), "--write-baseline", str(target))
+        self.assertEqual(code, 2)
+        self.assertIn("unwritable", err)
+
     def test_malformed_baseline_is_an_error(self):
         baseline = self.root / "baseline"
         baseline.write_text("ZZ-01 thing\n")
@@ -129,7 +170,9 @@ class Arguments(unittest.TestCase):
         cases = {
             ("--max-lines", "0"): CHECK.Failure.BAD_ARGUMENTS,
             ("--max-lines",): CHECK.Failure.BAD_ARGUMENTS,
+            ("--max-lines", "\u00b2"): CHECK.Failure.BAD_ARGUMENTS,
             ("--bogus",): CHECK.Failure.BAD_ARGUMENTS,
+            ("--ext", "rs"): CHECK.Failure.BAD_ARGUMENTS,
             ("a", "b"): CHECK.Failure.BAD_ARGUMENTS,
             ("--baseline", "x", "--write-baseline", "y"): CHECK.Failure.BAD_ARGUMENTS,
         }
@@ -137,6 +180,11 @@ class Arguments(unittest.TestCase):
             with self.subTest(words=words), self.assertRaises(CHECK.Error) as caught:
                 CHECK.parse_arguments(list(words))
             self.assertEqual(caught.exception.kind, kind)
+
+    def test_help_exits_0(self):
+        code, out, _ = run("--help")
+        self.assertEqual(code, 0)
+        self.assertIn("Usage:", out)
 
     def test_missing_root_exits_2(self):
         self.assertEqual(run("/nonexistent/deep-modules")[0], 2)

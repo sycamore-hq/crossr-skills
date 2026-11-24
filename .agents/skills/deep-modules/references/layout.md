@@ -24,4 +24,4 @@ Run the check from the repository root:
 
 `--ext` repeats for other languages (`--ext .ml --ext .mli`). Build output and vendored trees (`target`, `_build`, `node_modules`, `vendor`, `.git`) are skipped. Exit code 1 means new findings; 2 means bad arguments or an unreadable file.
 
-Thresholds are flags so a project can tighten them. Loosening them needs the same justification as a baseline entry (`MD-07`).
+Thresholds are flags so a project can tighten them. Loosening them needs the same justification as a baseline entry (`MD-08`).

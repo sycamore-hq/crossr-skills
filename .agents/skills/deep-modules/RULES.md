@@ -10,9 +10,9 @@ deep-modules/MD-02  No tangles. Types or functions that use each other in a circ
 
 ## interfaces
 
-deep-modules/MD-03  No field leaks. When a type keeps any field to itself and has its own methods over its fields, code outside the type and its tangle does not write, mutably borrow, index or call methods on those fields, directly or through getters and setters. Reading a plain value out is not a leak.
+deep-modules/MD-03  No field leaks. When a type keeps any field to itself and has its own methods over its fields, code outside the type and its tangle does not write, mutably borrow, index, or call mutating methods on those fields, directly or through getters and setters. Copying a value out, or a read-only query such as `len` or `is_empty`, is not a leak.
 
-deep-modules/MD-04  No shallow modules. A module with child modules, or a crate or package, that shows more than seven functions shows fewer than it hides, and no list a reader must learn (its exported types, or one type's functions) runs longer than seven.
+deep-modules/MD-04  No shallow modules. A crate, package, or module with child modules that shows outside callers more than seven functions must hide more functions than it shows, and no list a reader must learn (its exported types, or one type's functions) runs longer than seven.
 
 ## layout
 

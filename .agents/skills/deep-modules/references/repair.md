@@ -30,4 +30,4 @@ git add .deep-modules.baseline
 .agents/skills/deep-modules/scripts/check-structure . --baseline .deep-modules.baseline
 ```
 
-The baseline is plain text, one `<rule> <key>` per line, sorted. Fixing an entry never fails the check, so a stale line is harmless, but deleting it in the same change keeps the file honest.
+The baseline is plain text, one `<rule> <key>` per line, sorted. Fixing an entry never fails the check; instead the script lists it as a stale baseline entry, and `MD-08` requires deleting that line in the same change.
