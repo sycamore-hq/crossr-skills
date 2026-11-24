@@ -14,7 +14,7 @@ Reads files only; never builds or runs the code under ROOT.
 Exit codes: 0 clean (or only baselined findings), 1 new findings, 2 usage or
 I/O error. A baseline lists `<rule> <key>` per line; fixed entries never fail,
 and are listed as stale so the change that fixed them can delete them.
-Directories named in SKIPPED_DIRS, and every dot-directory, are skipped.
+Skipped: target, node_modules, _build, vendor, and every dot-directory.
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
-SKIPPED_DIRS = frozenset({".git", "target", "node_modules", "_build", "vendor"})
+SKIPPED_DIRS = frozenset({"target", "node_modules", "_build", "vendor"})
 DEFAULT_MAX_LINES = 2000
 DEFAULT_MAX_ENTRIES = 15
 
@@ -135,9 +135,13 @@ def skipped(name: str) -> bool:
     return name in SKIPPED_DIRS or name.startswith(".")
 
 
+def unlistable(error: OSError) -> None:
+    raise Error(Failure.UNREADABLE, f"{error.filename}: {error.strerror}") from error
+
+
 def source_files(root: Path, extensions: tuple[str, ...]) -> list[Path]:
     found = []
-    for directory, subdirectories, names in os.walk(root):
+    for directory, subdirectories, names in os.walk(root, onerror=unlistable):
         subdirectories[:] = [name for name in subdirectories if not skipped(name)]
         here = Path(directory).relative_to(root)
         found.extend(here / name for name in names if Path(name).suffix in extensions)

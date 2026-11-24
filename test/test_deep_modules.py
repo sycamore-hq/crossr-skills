@@ -9,6 +9,7 @@ import contextlib
 import importlib.machinery
 import importlib.util
 import io
+import os
 import sys
 import tempfile
 import unittest
@@ -146,6 +147,18 @@ class Layout(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("a.ml has", out)
         self.assertIn("a.mli has", out)
+
+    @unittest.skipIf(os.geteuid() == 0, "root can list any directory")
+    def test_unlistable_directory_is_an_error(self):
+        locked = self.root / "locked"
+        locked.mkdir()
+        locked.chmod(0)
+        try:
+            code, _, err = run(str(self.root))
+        finally:
+            locked.chmod(0o755)
+        self.assertEqual(code, 2)
+        self.assertIn("unreadable", err)
 
     def test_unwritable_baseline_is_an_error(self):
         target = self.root / "missing" / "baseline"
